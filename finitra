@@ -1,0 +1,530 @@
+#!/usr/bin/env bash
+# =============================================================================
+# finitra -- Fedora Workstation Bootstrap for Developers
+#
+# Usage:
+#   finitra                      Interactive menu
+#   finitra install              Run all modules in sequence
+#   finitra install --all        Run all modules (explicit)
+#   finitra -ia                  Run all modules (short form)
+#   finitra install -m <id>      Run a specific module (by number or name)
+#   finitra list                 List available modules
+#   finitra update               Self-update from the remote repository
+#   finitra config               Open user config in $EDITOR
+#   finitra --help               Show this help
+#
+# Install dir:  ~/.local/share/finitra
+# User config:  ~/.config/finitra/finitra.config
+# Log:          ~/.cache/finitra/finitra.log
+# =============================================================================
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_VERSION="$(cat "${SCRIPT_DIR}/version" 2>/dev/null | tr -d '[:space:]' || echo "unknown")"
+
+# =============================================================================
+# Detect the real (non-root) user before loading config
+# Supports: plain run, sudo, and sudo with env passthrough
+# =============================================================================
+_detect_user() {
+  # Already set via environment (e.g. from require_root re-exec)
+  if [[ -n "${SETUP_USER:-}" && "${SETUP_USER}" != "root" ]]; then
+    SETUP_HOME="${SETUP_HOME:-$(eval echo "~${SETUP_USER}")}"
+    return
+  fi
+
+  # Running as root via sudo -- get the invoking user
+  if [[ $EUID -eq 0 && -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]]; then
+    SETUP_USER="$SUDO_USER"
+    SETUP_HOME=$(eval echo "~${SUDO_USER}")
+    return
+  fi
+
+  # Running as a regular user
+  if [[ $EUID -ne 0 ]]; then
+    SETUP_USER="$USER"
+    SETUP_HOME="$HOME"
+    return
+  fi
+
+  # Running as root with no SUDO_USER -- try logname
+  local logname_user
+  logname_user=$(logname 2>/dev/null || true)
+  if [[ -n "$logname_user" && "$logname_user" != "root" ]]; then
+    SETUP_USER="$logname_user"
+    SETUP_HOME=$(eval echo "~${logname_user}")
+    return
+  fi
+
+  echo "ERROR: Could not determine the real user. Run as your regular user or via sudo." >&2
+  exit 1
+}
+
+_detect_user
+
+# =============================================================================
+# Load config (default + user override)
+# =============================================================================
+source "${SCRIPT_DIR}/utils.sh"
+source "${SCRIPT_DIR}/finitra-default.config"
+
+USER_CONFIG="${HOME}/.config/finitra/finitra.config"
+if [[ $EUID -eq 0 && -n "${SETUP_HOME:-}" ]]; then
+  USER_CONFIG="${SETUP_HOME}/.config/finitra/finitra.config"
+fi
+# shellcheck disable=SC1090
+[[ -f "$USER_CONFIG" ]] && source "$USER_CONFIG"
+
+[[ -z "${SETUP_USER:-}" ]] && SETUP_USER="$USER"
+[[ -z "${SETUP_HOME:-}" ]] && SETUP_HOME=$(eval echo "~${SETUP_USER}")
+
+# Initialize log file
+LOG_FILE="${CACHE_DIR:-${SETUP_HOME}/.cache/finitra}/finitra.log"
+mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || true
+: > "$LOG_FILE"
+
+export SETUP_USER SETUP_HOME LOG_FILE
+
+# =============================================================================
+# Module discovery
+# Reads all .sh files under modules/ sorted numerically.
+# Each file must define: module_<NN>_<name>()
+# =============================================================================
+
+declare -A MODULE_FILES   # prefix -> file path
+declare -A MODULE_NAMES   # prefix -> human-readable label
+
+_discover_modules() {
+  local modules_dir="${SCRIPT_DIR}/modules"
+  while IFS= read -r -d '' file; do
+    local base
+    base=$(basename "$file" .sh)
+    local num="${base%%-*}"
+    local name="${base#*-}"
+    MODULE_FILES["$num"]="$file"
+    MODULE_NAMES["$num"]="${num} -- ${name}"
+  done < <(find "$modules_dir" -maxdepth 1 -name "[0-9]*.sh" -print0 | sort -z)
+}
+
+# Resolve module identifier: accepts number ("30"), name ("desktop"),
+# or full prefix ("30-desktop"). Returns the canonical numeric key.
+_resolve_module_id() {
+  local input="$1"
+
+  # Exact numeric key
+  if [[ -n "${MODULE_FILES[$input]:-}" ]]; then
+    echo "$input"
+    return 0
+  fi
+
+  # Search by name or full basename
+  local key
+  for key in "${!MODULE_FILES[@]}"; do
+    local base
+    base=$(basename "${MODULE_FILES[$key]}" .sh)
+    local name_part="${base#*-}"
+    if [[ "$name_part" == "$input" || "$base" == "$input" ]]; then
+      echo "$key"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+# =============================================================================
+# Module execution
+# =============================================================================
+
+_run_module() {
+  local input="$1"
+  local resolved
+  if ! resolved=$(_resolve_module_id "$input"); then
+    log_error "Module not found: '$input'"
+    log_error "Use 'finitra --list' to see available modules."
+    return 1
+  fi
+
+  local file="${MODULE_FILES[$resolved]}"
+  log_info "Loading module: $(basename "$file")"
+  # shellcheck disable=SC1090
+  source "$file"
+
+  local funcname
+  funcname="module_$(basename "$file" .sh | tr '-' '_')"
+
+  if declare -f "$funcname" > /dev/null; then
+    "$funcname"
+  else
+    log_error "Function '$funcname' not found in $file"
+    return 1
+  fi
+}
+
+_run_all_modules() {
+  local sorted_keys
+  mapfile -t sorted_keys < <(printf '%s\n' "${!MODULE_FILES[@]}" | sort)
+
+  log_section "Running ALL modules in sequence"
+  for num in "${sorted_keys[@]}"; do
+    _run_module "$num"
+  done
+  log_success "All modules completed successfully!"
+}
+
+# =============================================================================
+# Self-update
+# =============================================================================
+
+_cmd_update() {
+  log_section "finitra self-update"
+
+  local install_dir="${SETUP_HOME}/.local/share/finitra"
+  if [[ ! -d "${install_dir}/.git" ]]; then
+    log_error "Install directory is not a git repository: $install_dir"
+    log_error "Cannot self-update. Please re-run bootstrap.sh."
+    exit 1
+  fi
+
+  local has_changes=false
+  if ! git -C "$install_dir" diff --quiet 2>/dev/null || \
+     ! git -C "$install_dir" diff --cached --quiet 2>/dev/null; then
+    has_changes=true
+  fi
+
+  if [[ "$has_changes" == "true" ]]; then
+    echo ""
+    log_warn "Local uncommitted changes detected in $install_dir:"
+    git -C "$install_dir" status --short
+    echo ""
+    echo "Choose an action:"
+    echo "  [O] Overwrite -- discard local changes and update from remote"
+    echo "  [A] Abort    -- keep local changes and cancel the update"
+    echo ""
+    read -rp "Choice [O/A]: " answer
+    answer="${answer:-A}"
+    if [[ "${answer^^}" != "O" ]]; then
+      log_warn "Update aborted. Local changes preserved."
+      exit 0
+    fi
+    log_info "Discarding local changes and pulling from remote..."
+    git -C "$install_dir" fetch origin
+    git -C "$install_dir" reset --hard origin/main
+    git -C "$install_dir" clean -fd
+  else
+    log_info "Pulling latest changes from remote..."
+    git -C "$install_dir" pull --ff-only
+  fi
+
+  chmod +x "${install_dir}/finitra"
+  find "${install_dir}/modules" -name "*.sh" -exec chmod +x {} \;
+
+  local new_version
+  new_version=$(cat "${install_dir}/version" 2>/dev/null | tr -d '[:space:]' || echo "unknown")
+  log_success "finitra updated to version ${new_version}"
+  log_info "User config preserved at: ${SETUP_HOME}/.config/finitra/finitra.config"
+}
+
+# =============================================================================
+# Open user config in $EDITOR
+# =============================================================================
+
+_cmd_config() {
+  local config_file="${SETUP_HOME}/.config/finitra/finitra.config"
+
+  if [[ ! -f "$config_file" ]]; then
+    log_info "User config not found. Creating from defaults..."
+    mkdir -p "$(dirname "$config_file")"
+    cp "${SCRIPT_DIR}/finitra-default.config" "$config_file"
+    log_success "Config created: $config_file"
+  fi
+
+  local editor="${EDITOR:-${VISUAL:-vi}}"
+  log_info "Opening config with: $editor"
+  "$editor" "$config_file"
+}
+
+# =============================================================================
+# Interactive menu (whiptail with select fallback)
+# =============================================================================
+
+_menu_whiptail() {
+  local sorted_keys
+  mapfile -t sorted_keys < <(printf '%s\n' "${!MODULE_FILES[@]}" | sort)
+
+  local opts=()
+  opts+=("all" "Run ALL modules" "OFF")
+  for num in "${sorted_keys[@]}"; do
+    opts+=("$num" "${MODULE_NAMES[$num]}" "OFF")
+  done
+
+  local chosen
+  chosen=$(whiptail \
+    --title "finitra v${SCRIPT_VERSION}" \
+    --checklist "Select modules to run (SPACE to toggle, ENTER to confirm):" \
+    20 65 12 \
+    "${opts[@]}" \
+    3>&1 1>&2 2>&3) || {
+    echo "Cancelled."
+    exit 0
+  }
+
+  chosen="${chosen//\"/}"
+
+  if [[ "$chosen" == *"all"* ]]; then
+    _run_all_modules
+    return
+  fi
+
+  local selected_sorted
+  mapfile -t selected_sorted < <(echo "$chosen" | tr ' ' '\n' | sort)
+  for num in "${selected_sorted[@]}"; do
+    [[ -z "$num" ]] && continue
+    _run_module "$num"
+  done
+}
+
+_menu_select() {
+  echo ""
+  echo "  finitra v${SCRIPT_VERSION}"
+  echo "  Fedora Workstation Bootstrap for Developers"
+  echo ""
+
+  local sorted_keys
+  mapfile -t sorted_keys < <(printf '%s\n' "${!MODULE_FILES[@]}" | sort)
+
+  local menu_items=("all: Run ALL modules")
+  for num in "${sorted_keys[@]}"; do
+    menu_items+=("${MODULE_NAMES[$num]}")
+  done
+  menu_items+=("exit: Exit without changes")
+
+  PS3=$'\nChoose an option: '
+  select choice in "${menu_items[@]}"; do
+    case "$choice" in
+      "all: Run ALL modules")
+        _run_all_modules
+        break ;;
+      "exit: Exit without changes")
+        echo "Exiting."
+        exit 0 ;;
+      *)
+        if [[ -n "$choice" ]]; then
+          local num="${choice%% --*}"
+          _run_module "$num"
+          break
+        else
+          echo "Invalid option. Please try again."
+        fi ;;
+    esac
+  done
+}
+
+_show_menu() {
+  if has_cmd whiptail; then
+    _menu_whiptail
+  else
+    _menu_select
+  fi
+}
+
+# =============================================================================
+# Pre-run checks
+# =============================================================================
+
+_preflight_check() {
+  if [[ ! -f /etc/fedora-release ]]; then
+    log_warn "Operating system is not Fedora. Proceeding anyway..."
+  else
+    local fedora_ver
+    fedora_ver=$(rpm -E %fedora)
+    log_info "Detected Fedora version: $fedora_ver"
+    if [[ "$fedora_ver" -lt 40 ]]; then
+      log_warn "This script targets Fedora 40+. Detected version: $fedora_ver"
+    fi
+  fi
+
+  log_info "Target user : ${SETUP_USER} (home: ${SETUP_HOME})"
+  log_info "Log file    : ${LOG_FILE}"
+}
+
+# =============================================================================
+# Banner
+# =============================================================================
+
+_print_banner() {
+  clear
+  echo ""
+  echo -e "${CLR_BOLD}${CLR_CYAN}  ███████╗██╗███╗   ██╗██╗████████╗██████╗  █████╗ ${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_CYAN}  ██╔════╝██║████╗  ██║██║╚══██╔══╝██╔══██╗██╔══██╗${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_CYAN}  █████╗  ██║██╔██╗ ██║██║   ██║   ██████╔╝███████║${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_CYAN}  ██╔══╝  ██║██║╚██╗██║██║   ██║   ██╔══██╗██╔══██║${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_CYAN}  ██║     ██║██║ ╚████║██║   ██║   ██║  ██║██║  ██║${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_CYAN}  ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝${CLR_RESET}"
+  echo ""
+  echo -e "  ${CLR_BOLD}Fedora Workstation Bootstrap for Developers${CLR_RESET}"
+  echo -e "  Bootstrap your Developer Fedora Workstation"
+  echo ""
+}
+
+# =============================================================================
+# Help
+# =============================================================================
+
+_show_help() {
+  cat << HELPEOF
+finitra v${SCRIPT_VERSION} -- Fedora Workstation Bootstrap for Developers
+
+Usage:
+  finitra                      Interactive menu
+  fi                           Short alias
+  
+  finitra install              Run all modules in sequence
+  finitra install --all        Run all modules (explicit)
+  finitra -ia                  Run all modules (short form)
+  
+  finitra install -m <id>      Run a specific module (by number or name)
+  finitra install --module <id>
+  finitra -i -m <id>
+  
+  finitra list                 List available modules
+  finitra update               Self-update from remote repository
+  finitra config               Open user config in \$EDITOR
+  finitra --help               Show this help
+
+Module identifier accepts:
+  Number      finitra install -m 30
+  Name        finitra install -m desktop
+  Full name   finitra install -m 30-desktop
+
+Examples:
+  finitra
+  finitra install
+  finitra -ia
+  finitra install -m 30
+  finitra install --module desktop
+  finitra -i -m dev-tools
+  finitra list
+  finitra update
+  finitra config
+HELPEOF
+}
+
+# =============================================================================
+# Entry point
+# =============================================================================
+
+main() {
+  # Handle simple commands first (no args parsing needed)
+  case "${1:-}" in
+    update)
+      _detect_user
+      _cmd_update
+      exit 0
+      ;;
+    config)
+      _cmd_config
+      exit 0
+      ;;
+    --help|-h)
+      _show_help
+      exit 0
+      ;;
+    list|--list)
+      _discover_modules
+      echo "Available modules:"
+      local sorted_keys
+      mapfile -t sorted_keys < <(printf '%s\n' "${!MODULE_FILES[@]}" | sort)
+      for num in "${sorted_keys[@]}"; do
+        local base
+        base=$(basename "${MODULE_FILES[$num]}" .sh)
+        printf "  %-6s  %-22s  %s\n" "$num" "$base" "${MODULE_FILES[$num]}"
+      done
+      exit 0
+      ;;
+  esac
+
+  _print_banner
+  _preflight_check
+  _discover_modules
+
+  # Parse arguments for install command
+  local cmd="${1:-}"
+  local action=""
+  local module_id=""
+  
+  case "$cmd" in
+    install|-i)
+      shift
+      # Parse install subcommand arguments
+      while [[ $# -gt 0 ]]; do
+        case "$1" in
+          --all|-a)
+            action="all"
+            shift
+            ;;
+          --module|-m)
+            action="module"
+            module_id="${2:-}"
+            if [[ -z "$module_id" ]]; then
+              log_error "Specify a module: install -m <number|name>"
+              _show_help
+              exit 1
+            fi
+            shift 2
+            ;;
+          *)
+            log_error "Unknown install option: $1"
+            _show_help
+            exit 1
+            ;;
+        esac
+      done
+      
+      # Default action for 'install' without args is run all
+      if [[ -z "$action" ]]; then
+        action="all"
+      fi
+      
+      case "$action" in
+        all)
+          _run_all_modules
+          ;;
+        module)
+          _run_module "$module_id"
+          ;;
+      esac
+      ;;
+      
+    # Legacy support for old command style
+    --all)
+      _run_all_modules
+      ;;
+    --module)
+      local input="${2:-}"
+      if [[ -z "$input" ]]; then
+        log_error "Specify a module: --module <number|name>"
+        _show_help
+        exit 1
+      fi
+      _run_module "$input"
+      ;;
+      
+    # No command = interactive menu
+    "")
+      _show_menu
+      ;;
+      
+    *)
+      log_error "Unknown command: $cmd"
+      log_info "Use 'finitra --help' for usage information"
+      _show_help
+      exit 1
+      ;;
+  esac
+
+  echo ""
+  log_success "finitra done. Log saved to: ${LOG_FILE}"
+}
+
+main "$@"

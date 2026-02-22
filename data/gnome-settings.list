@@ -1,0 +1,106 @@
+# =============================================================================
+# data/gnome-settings.list — Configurações GNOME via gsettings
+# Formato: schema key value
+#
+# Os valores suportam variáveis do finitra-default.config com ${VAR}.
+# A expansão é feita automaticamente por apply_gnome_settings_file() via envsubst.
+# Linhas com # são comentários. Linhas vazias são ignoradas.
+# =============================================================================
+
+# --- Tema e Aparência ---
+org.gnome.desktop.interface color-scheme '${GNOME_COLOR_SCHEME}'
+org.gnome.desktop.interface gtk-theme '${GNOME_GTK_THEME}'
+org.gnome.desktop.interface icon-theme '${GNOME_ICON_THEME}'
+
+# --- Escala de Texto ---
+org.gnome.desktop.interface text-scaling-factor ${GNOME_TEXT_SCALE}
+
+# --- Fontes ---
+org.gnome.desktop.interface font-name '${GNOME_FONT_UI}'
+org.gnome.desktop.interface document-font-name '${GNOME_FONT_DOCUMENT}'
+org.gnome.desktop.interface monospace-font-name '${GNOME_FONT_MONO}'
+org.gnome.desktop.interface font-antialiasing "rgba"
+org.gnome.desktop.interface font-hinting "slight"
+
+# --- Cursor e Animações ---
+org.gnome.desktop.interface cursor-blink ${GNOME_CURSOR_BLINK}
+org.gnome.desktop.interface enable-animations ${GNOME_ANIMATIONS}
+
+# --- Night Light ---
+org.gnome.settings-daemon.plugins.color night-light-enabled ${GNOME_NIGHT_LIGHT_ENABLED}
+org.gnome.settings-daemon.plugins.color night-light-temperature ${GNOME_NIGHT_LIGHT_TEMPERATURE}
+org.gnome.settings-daemon.plugins.color night-light-schedule-automatic ${GNOME_NIGHT_LIGHT_AUTO}
+org.gnome.settings-daemon.plugins.color night-light-schedule-from ${GNOME_NIGHT_LIGHT_FROM}
+org.gnome.settings-daemon.plugins.color night-light-schedule-to ${GNOME_NIGHT_LIGHT_TO}
+
+# --- Workspaces ---
+org.gnome.mutter dynamic-workspaces ${GNOME_DYNAMIC_WORKSPACES}
+org.gnome.desktop.wm.preferences num-workspaces ${GNOME_NUM_WORKSPACES}
+org.gnome.mutter workspaces-only-on-primary ${GNOME_WORKSPACES_PRIMARY_ONLY}
+
+# --- Atalhos de workspace (Super+1~4) ---
+org.gnome.desktop.wm.keybindings switch-to-workspace-1 "['<Super>1']"
+org.gnome.desktop.wm.keybindings switch-to-workspace-2 "['<Super>2']"
+org.gnome.desktop.wm.keybindings switch-to-workspace-3 "['<Super>3']"
+org.gnome.desktop.wm.keybindings switch-to-workspace-4 "['<Super>4']"
+
+# --- Mover janela para workspace (Super+Shift+1~4) ---
+org.gnome.desktop.wm.keybindings move-to-workspace-1 "['<Super><Shift>1']"
+org.gnome.desktop.wm.keybindings move-to-workspace-2 "['<Super><Shift>2']"
+org.gnome.desktop.wm.keybindings move-to-workspace-3 "['<Super><Shift>3']"
+org.gnome.desktop.wm.keybindings move-to-workspace-4 "['<Super><Shift>4']"
+
+# --- Botões da janela ---
+org.gnome.desktop.wm.preferences button-layout '${GNOME_BUTTON_LAYOUT}'
+
+# --- Energia e suspensão ---
+org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout ${GNOME_SLEEP_AC_TIMEOUT}
+org.gnome.settings-daemon.plugins.power sleep-inactive-battery-timeout ${GNOME_SLEEP_BATTERY_TIMEOUT}
+org.gnome.settings-daemon.plugins.power idle-dim ${GNOME_IDLE_DIM}
+org.gnome.settings-daemon.plugins.power ambient-enabled ${GNOME_AMBIENT_BRIGHTNESS}
+
+# --- Touchpad ---
+org.gnome.desktop.peripherals.touchpad tap-to-click ${GNOME_TOUCHPAD_TAP_CLICK}
+org.gnome.desktop.peripherals.touchpad two-finger-scrolling-enabled ${GNOME_TOUCHPAD_TWO_FINGER_SCROLL}
+org.gnome.desktop.peripherals.touchpad natural-scroll ${GNOME_TOUCHPAD_NATURAL_SCROLL}
+
+# --- Nautilus ---
+org.gnome.nautilus.preferences default-folder-viewer '${GNOME_NAUTILUS_VIEW}'
+org.gnome.nautilus.preferences show-hidden-files ${GNOME_NAUTILUS_SHOW_HIDDEN}
+org.gnome.nautilus.preferences show-create-link true
+org.gnome.nautilus.preferences show-delete-permanently true
+
+org.gtk.Settings.FileChooser sort-directories-first true
+org.gtk.Settings.FileChooser show-hidden true
+
+# --- GNOME Terminal ---
+org.gnome.Terminal.Legacy.Settings default-show-menubar ${GNOME_TERMINAL_MENUBAR}
+org.gnome.Terminal.Legacy.Settings theme-variant '${GNOME_TERMINAL_THEME}'
+
+# --- Privacidade ---
+org.gnome.desktop.privacy remember-recent-files ${GNOME_PRIVACY_RECENT_FILES}
+org.gnome.desktop.privacy recent-files-max-age ${GNOME_PRIVACY_RECENT_FILES_AGE}
+org.gnome.desktop.privacy remove-old-temp-files ${GNOME_PRIVACY_REMOVE_TEMP}
+org.gnome.desktop.privacy old-files-age ${GNOME_PRIVACY_OLD_FILES_AGE}
+
+org.gnome.desktop.search-providers disable-external true
+
+
+# Desabilitar verificação automática de updates no GNOME Software via gsettings
+# Impede que o app em si dispare checagens mesmo sem os serviços acima
+
+org.gnome.software download-updates false
+org.gnome.software download-updates-notify false
+org.gnome.software allow-updates false
+
+# =============================================================================
+# --- Ptyxis Terminal (app-level) ---
+# Terminal padrão do Fedora 41+. Substitui o GNOME Terminal.
+# Configurações de perfil (fonte, palette, scrollback, opacidade)
+# são aplicadas em runtime pelo módulo 30-desktop via _configure_ptyxis_profile().
+# =============================================================================
+org.gnome.Ptyxis interface-style '${PTYXIS_INTERFACE_STYLE}'
+org.gnome.Ptyxis tab-bar-policy '${PTYXIS_TAB_BAR_POLICY}'
+org.gnome.Ptyxis restore-session ${PTYXIS_RESTORE_SESSION}
+org.gnome.Ptyxis audible-bell ${PTYXIS_AUDIBLE_BELL}
+org.gnome.Ptyxis new-tab-position '${PTYXIS_NEW_TAB_POSITION}'

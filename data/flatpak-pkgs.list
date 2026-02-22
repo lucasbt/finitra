@@ -1,0 +1,15 @@
+# =============================================================================
+# data/flatpak-pkgs.list — Pacotes Flatpak a instalar
+# Formato: remote app_id
+# Um pacote por linha. Linhas com # são comentários.
+# REGRA: Flatpak APENAS se não houver pacote RPM disponível.
+# =============================================================================
+
+flathub md.obsidian.Obsidian
+flathub org.localsend.localsend_app
+flathub be.alexandervanhee.gradia
+flathub io.bassi.Amberol
+flathub com.rafaelmardojai.Blanket
+flathub org.nickvision.tubeconverter
+flathub org.gnome.gitlab.somas.Apostrophe
+flathub io.gitlab.news_flash.NewsFlash

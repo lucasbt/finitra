@@ -1,0 +1,227 @@
+# =============================================================================
+# data/rpm-pkgs.list — Pacotes RPM a instalar
+# Um pacote por linha. Linhas com # são comentários.
+# Comentários inline após o nome do pacote são ignorados.
+# =============================================================================
+
+# --- Editor / IDE ---
+code                      # VSCode (repositório Microsoft)
+vim-enhanced
+
+# --- Dev Tools ---
+git
+git-lfs
+curl
+wget
+vim
+tmux
+jq
+yq
+sed
+gawk
+grep
+openssl
+readline
+hexedit
+python3-devel
+python3-pip
+python3-virtualenv
+python3-wheel
+python3-setuptools
+ruby
+ruby-devel
+perl
+perl-devel
+lua
+lua-devel
+
+# --- Containers / Dev ---
+podman
+podman-compose
+podman-docker
+buildah
+skopeo
+
+# --- Ferramentas de busca e navegação ---
+fzf
+bat                       # cat com syntax highlighting
+fd-find                   # find mais rápido
+ripgrep                   # grep ultra rápido
+tree
+htop
+btop
+
+# --- Compactação e arquivos ---
+zip
+unzip
+p7zip
+p7zip-plugins
+unrar                     # RPM Fusion non-free
+tar
+rsync
+gzip
+bzip2
+xz
+cabextract
+
+# --- Build essentials ---
+gcc
+gcc-c++
+make
+cmake
+automake
+autoconf
+libtool
+pkg-config
+kernel-devel
+kernel-headers
+bison
+clang
+
+# --- Sistema / Utils ---
+bash-completion
+util-linux
+strace
+lsof
+ncdu                      # analisador de disco TUI
+duf                       # df mais bonito
+pciutils
+usbutils
+inxi
+hwinfo
+iotop
+iperf3
+exfatprogs
+mediainfo
+openssh-clients
+cloc
+fastfetch
+figlet
+lm_sensors
+timew
+cronie
+wl-clipboard
+tldr
+sqlite
+pv
+stow
+foliate
+httpie
+flatseal
+file-roller
+dconf-editor
+cifs-utils
+fuse
+fuse-sshfs
+gvfs-fuse
+gnome-tweaks
+gnome-extensions-app
+gtk-murrine-engine
+gtk2-engines
+libreoffice-help-pt-BR
+libreoffice-langpack-pt-BR
+autocorr-pt
+sassc
+
+# --- Rede ---
+nmap
+net-tools
+whois
+traceroute
+bind-utils
+telnet
+
+# --- Fontes ---
+jetbrains-mono-fonts-all
+fira-code-fonts
+rsms-inter-fonts
+google-roboto-fonts
+google-roboto-mono-fonts
+google-roboto-slab-fonts
+mozilla-fira-code-fonts
+google-noto-fonts-common
+google-noto-emoji-color-fonts
+google-noto-sans-fonts
+liberation-fonts
+google-carlito-fonts
+google-go-fonts
+redhat-text-fonts
+redhat-mono-fonts
+redhat-display-fonts
+adobe-source-code-pro-fonts
+bitstream-vera-sans-fonts
+bitstream-vera-sans-mono-fonts
+bitstream-vera-serif-fonts
+comic-neue-angular-fonts
+comic-neue-fonts
+comic-neue-web-fonts
+fontawesome-6-brands-fonts
+fontawesome-6-free-fonts
+fontawesome-fonts-web
+ibm-plex-sans-fonts
+ibm-plex-serif-fonts
+lato-fonts
+material-icons-fonts
+powerline-fonts
+cascadia-code-fonts
+source-foundry-hack-fonts
+liberation-narrow-fonts
+liberation-fonts-all
+levien-inconsolata-fonts
+adobe-source-sans-pro-fonts
+adobe-source-serif-pro-fonts
+fontconfig
+
+# --- Bibliotecas de desenvolvimento comuns ---
+openssl-devel
+libssl-devel
+zlib-devel
+readline-devel
+sqlite-devel
+libffi-devel
+bzip2-devel
+xz-devel
+ncurses-devel
+
+# --- STS / Spring Eclipse Tool (dependências Java IDE) ---
+gtk3
+gtk3-devel
+libXss
+libXtst
+
+# Icons
+papirus-icon-theme
+papirus-icon-theme-dark
+libreoffice-icon-theme-papirus
+paper-icon-theme
+material-icons-fonts
+flat-remix-icon-theme
+la-capitaine-icon-theme
+luv-icon-theme
+pop-icon-theme
+tela-icon-theme
+cosmic-icon-theme
+
+# Virtualization
+libvirt
+bottles
+gnome-boxes
+
+# Misc
+cozy
+lsd
+hplip
+hplip-common
+hplip-libs
+util-linux-user
+fragments
+secrets
+geary
+epiphany
+
+# Extensions
+gnome-shell-extension-appindicator
+gnome-shell-extension-auto-move-windows
+gnome-shell-extension-caffeine
+gnome-shell-extension-just-perfection
+gnome-shell-extension-user-theme
