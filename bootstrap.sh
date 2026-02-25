@@ -110,7 +110,6 @@ _setup_repo() {
     return
   fi
 
-  # Check for local uncommitted changes
   local has_local_changes=false
   if ! git -C "$INSTALL_DIR" diff --quiet 2>/dev/null || \
      ! git -C "$INSTALL_DIR" diff --cached --quiet 2>/dev/null; then
@@ -149,29 +148,6 @@ _setup_repo() {
 }
 
 # =============================================================================
-# 3. Set up user configuration file
-# =============================================================================
-_setup_config() {
-  mkdir -p "$CONFIG_DIR"
-
-  if [[ ! -f "$CONFIG_FILE" ]]; then
-    info "Creating user config at $CONFIG_FILE"
-    cp "${INSTALL_DIR}/finitra-default.config" "$CONFIG_FILE"
-
-    local current_user="${SUDO_USER:-$USER}"
-    local current_home
-    current_home=$(eval echo "~$current_user")
-
-    sed -i "s|SETUP_USER=\".*\"|SETUP_USER=\"${current_user}\"|" "$CONFIG_FILE" 2>/dev/null || true
-    sed -i "s|SETUP_HOME=.*|SETUP_HOME=\"${current_home}\"|" "$CONFIG_FILE" 2>/dev/null || true
-
-    ok "Config created. Edit $CONFIG_FILE to customize."
-  else
-    warn "Existing config preserved: $CONFIG_FILE"
-  fi
-}
-
-# =============================================================================
 # 4. Install binary to ~/.local/bin/finitra and configure alias
 # =============================================================================
 _setup_bin_and_alias() {
@@ -181,28 +157,19 @@ _setup_bin_and_alias() {
 
   mkdir -p "$BIN_DIR"
 
-  if [[ -L "$BIN_PATH" || -f "$BIN_PATH" ]]; then
-    rm -f "$BIN_PATH"
-  fi
+  [[ -e "$BIN_PATH" ]] && rm -f "$BIN_PATH"
   ln -s "${INSTALL_DIR}/finitra" "$BIN_PATH"
   ok "Binary available at: $BIN_PATH"
 
   local bashrc="${HOME}/.bashrc"
-  if ! grep -qF 'PATH="$HOME/.local/bin:$PATH"' "$bashrc" 2>/dev/null && \
-     ! grep -qF '$HOME/.local/bin' "$bashrc" 2>/dev/null; then
-    echo "" >> "$bashrc"
-    echo '# ~/.local/bin in PATH' >> "$bashrc"
-    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$bashrc"
-    info "~/.local/bin added to PATH in .bashrc"
-  fi
 
-  if ! grep -qF 'alias fi=' "$bashrc" 2>/dev/null; then
+  if ! grep -qF "alias fin=" "$bashrc" 2>/dev/null; then
     echo "" >> "$bashrc"
     echo "# finitra — Fedora Workstation Bootstrap for Developers" >> "$bashrc"
-    echo "alias fi='finitra'" >> "$bashrc"
-    ok "Alias 'fi' added to .bashrc"
+    echo "alias fin='finitra'" >> "$bashrc"
+    ok "Alias 'fin' added to .bashrc"
   else
-    warn "Alias 'fi' already present in .bashrc -- not changed"
+    warn "Alias 'fin' already present in .bashrc -- not changed"
   fi
 }
 
@@ -210,24 +177,19 @@ _setup_bin_and_alias() {
 # Main
 # =============================================================================
 main() {
-  echo ""
-  echo -e "${CLR_BOLD}${CLR_BLUE}  finitra — Fedora Workstation Bootstrap for Developers${CLR_RESET}"
-  echo ""
-
   _print_banner
   _install_deps
   _setup_repo
-  _setup_config
   _setup_bin_and_alias
 
   echo ""
   ok "Bootstrap completed!"
   echo ""
   echo -e "  Run setup with:"
-  echo -e "  ${CLR_GREEN}finitra${CLR_RESET}  (after reopening the terminal)"
+  echo -e "  ${CLR_GREEN}finitra${CLR_RESET}"
   echo ""
   echo -e "  Or with the short alias:"
-  echo -e "  ${CLR_GREEN}fi${CLR_RESET}  (short alias)"
+  echo -e "  ${CLR_GREEN}fin${CLR_RESET}"
   echo ""
 }
 
