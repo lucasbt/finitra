@@ -20,10 +20,10 @@ _UTILS_LOADED=true
 # Logging
 # =============================================================================
 
-log_info()    { echo -e "${CLR_BLUE}[INFO]${CLR_RESET}  $*" | tee -a "${LOG_FILE:-/tmp/finitra.log}"; }
-log_success() { echo -e "${CLR_GREEN}[OK]${CLR_RESET}    $*" | tee -a "${LOG_FILE:-/tmp/finitra.log}"; }
-log_warn()    { echo -e "${CLR_YELLOW}[WARN]${CLR_RESET}  $*" | tee -a "${LOG_FILE:-/tmp/finitra.log}"; }
-log_error()   { echo -e "${CLR_RED}[ERROR]${CLR_RESET} $*" | tee -a "${LOG_FILE:-/tmp/finitra.log}"; }
+log_info()    { echo -e "${CLR_BLUE}[INFO] $*${CLR_RESET}" | tee -a "${LOG_FILE:-/tmp/finitra.log}"; }
+log_success() { echo -e "${CLR_GREEN}[OK]    $*${CLR_RESET}" | tee -a "${LOG_FILE:-/tmp/finitra.log}"; }
+log_warn()    { echo -e "${CLR_YELLOW}[WARN]  $*${CLR_RESET}" | tee -a "${LOG_FILE:-/tmp/finitra.log}"; }
+log_error()   { echo -e "${CLR_RED}[ERROR] $*${CLR_RESET}" | tee -a "${LOG_FILE:-/tmp/finitra.log}"; }
 log_section() {
   echo "" | tee -a "${LOG_FILE:-/tmp/finitra.log}"
   echo -e "${CLR_BOLD}${CLR_CYAN}══════════════════════════════════════════${CLR_RESET}" | tee -a "${LOG_FILE:-/tmp/finitra.log}"

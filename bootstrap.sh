@@ -28,10 +28,10 @@ CLR_BLUE='\033[0;34m'
 CLR_CYAN='\033[0;36m'
 CLR_BOLD='\033[1m'
 
-info()  { echo -e "${CLR_BLUE}[finitra]${CLR_RESET} $*"; }
-ok()    { echo -e "${CLR_GREEN}[finitra]${CLR_RESET} ✔ $*"; }
-warn()  { echo -e "${CLR_YELLOW}[finitra]${CLR_RESET} ⚠ $*"; }
-err()   { echo -e "${CLR_RED}[finitra]${CLR_RESET} ✖ $*" >&2; }
+info()  { echo -e "${CLR_BLUE}[finitra] • $*${CLR_RESET}"; }
+ok()    { echo -e "${CLR_GREEN}[finitra] ✔ $*${CLR_RESET}"; }
+warn()  { echo -e "${CLR_YELLOW}[finitra] ⚠ $*${CLR_RESET}"; }
+err()   { echo -e "${CLR_RED}[finitra] ✖ $*${CLR_RESET}" >&2; }
 
 _print_banner() {
   clear
