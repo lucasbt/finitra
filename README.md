@@ -19,8 +19,11 @@ focused on performance, visual accessibility, and developer tooling.
 # Install git if not already present (ships with Fedora Workstation)
 sudo dnf install -y git
 
-# Clone the repository
-git clone https://github.com/SEU_USUARIO/finitra ~/.local/share/finitra
+# Via Bootstrap Direct
+curl -fsSL https://raw.githubusercontent.com/lucasbt/finitra/main/bootstrap.sh | bash
+
+# Via Clone the repository
+git clone https://github.com/lucasbt/finitra ~/.local/share/finitra
 cd ~/.local/share/finitra
 
 # Run bootstrap (installs deps, configures env, creates alias)

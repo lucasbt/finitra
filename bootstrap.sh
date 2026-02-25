@@ -6,13 +6,13 @@
 # Bootstrap your Developer Fedora Workstation
 #
 # Usage (as a regular user, not root):
-#   curl -fsSL https://raw.githubusercontent.com/SEU_USUARIO/finitra/main/bootstrap.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/lucasbt/finitra/main/bootstrap.sh | bash
 #   -- ou --
 #   bash bootstrap.sh
 # =============================================================================
 set -euo pipefail
 
-REPO_URL="${FINITRA_REPO:-https://github.com/SEU_USUARIO/finitra}"
+REPO_URL="${FINITRA_REPO:-https://github.com/lucasbt/finitra}"
 INSTALL_DIR="${HOME}/.local/share/finitra"
 BIN_DIR="${HOME}/.local/bin"
 BIN_PATH="${BIN_DIR}/finitra"
@@ -30,6 +30,21 @@ info()  { echo -e "${CLR_BLUE}[finitra]${CLR_RESET} $*"; }
 ok()    { echo -e "${CLR_GREEN}[finitra]${CLR_RESET} ✔ $*"; }
 warn()  { echo -e "${CLR_YELLOW}[finitra]${CLR_RESET} ⚠ $*"; }
 err()   { echo -e "${CLR_RED}[finitra]${CLR_RESET} ✖ $*" >&2; }
+
+_print_banner() {
+  clear
+  echo ""
+  echo -e "${CLR_BOLD}${CLR_CYAN}  ███████╗██╗███╗   ██╗██╗████████╗██████╗  █████╗ ${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_CYAN}  ██╔════╝██║████╗  ██║██║╚══██╔══╝██╔══██╗██╔══██╗${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_CYAN}  █████╗  ██║██╔██╗ ██║██║   ██║   ██████╔╝███████║${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_CYAN}  ██╔══╝  ██║██║╚██╗██║██║   ██║   ██╔══██╗██╔══██║${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_CYAN}  ██║     ██║██║ ╚████║██║   ██║   ██║  ██║██║  ██║${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_CYAN}  ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝${CLR_RESET}"
+  echo ""
+  echo -e "  ${CLR_BOLD}Fedora Workstation Bootstrap for Developers${CLR_RESET}"
+  echo -e "  Bootstrap your Developer Fedora Workstation"
+  echo ""
+}
 
 # =============================================================================
 # 1. Install required dependencies with user approval
@@ -202,6 +217,7 @@ main() {
   echo -e "${CLR_BOLD}${CLR_BLUE}  finitra — Fedora Workstation Bootstrap for Developers${CLR_RESET}"
   echo ""
 
+  _print_banner
   _install_deps
   _setup_repo
   _setup_config
