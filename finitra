@@ -19,7 +19,11 @@
 # =============================================================================
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BIN_DIR="${HOME}/.local/bin"
+BIN_PATH="${BIN_DIR}/finitra"
+CONFIG_DIR="${HOME}/.config/finitra"
+CONFIG_FILE="${CONFIG_DIR}/finitra.config"
+SCRIPT_DIR="~/.local/share/finitra"
 SCRIPT_VERSION="$(cat "${SCRIPT_DIR}/version" 2>/dev/null | tr -d '[:space:]' || echo "unknown")"
 
 # =============================================================================

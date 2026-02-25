@@ -7,7 +7,7 @@
 #
 # Usage (as a regular user, not root):
 #   curl -fsSL https://raw.githubusercontent.com/lucasbt/finitra/main/bootstrap.sh | bash
-#   -- ou --
+#   -- or --
 #   bash bootstrap.sh
 # =============================================================================
 set -euo pipefail
@@ -75,9 +75,9 @@ _install_deps() {
   echo ""
 
   read -rp "$(echo -e "${CLR_BOLD}Install now? [Y/n]:${CLR_RESET} ")" answer
-  answer="${answer:-S}"
+  answer="${answer:-Y}"
 
-  if [[ "${answer^^}" != "O" ]]; then
+  if [[ "${answer^^}" != "Y" ]]; then
     err "Dependency installation declined. Aborting."
     exit 1
   fi
@@ -97,7 +97,7 @@ _setup_repo() {
   script_source="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || echo "")"
 
   if [[ -n "$script_source" && -f "${script_source}/finitra" ]]; then
-    info "Detectado clone local em: $script_source"
+    info "Local clone detected at: $script_source"
     INSTALL_DIR="$script_source"
     return
   fi
@@ -175,32 +175,27 @@ _setup_config() {
 # 4. Install binary to ~/.local/bin/finitra and configure alias
 # =============================================================================
 _setup_bin_and_alias() {
-  # Set executable permissions
   chmod +x "${INSTALL_DIR}/finitra"
   chmod +x "${INSTALL_DIR}/utils.sh"
   find "${INSTALL_DIR}/modules" -name "*.sh" -exec chmod +x {} \;
 
-  # Create ~/.local/bin if it does not exist
   mkdir -p "$BIN_DIR"
 
-  # Install (or update) the binary symlink
   if [[ -L "$BIN_PATH" || -f "$BIN_PATH" ]]; then
     rm -f "$BIN_PATH"
   fi
   ln -s "${INSTALL_DIR}/finitra" "$BIN_PATH"
-  ok "Binário disponível em: $BIN_PATH"
+  ok "Binary available at: $BIN_PATH"
 
-  # Ensure ~/.local/bin is in PATH
   local bashrc="${HOME}/.bashrc"
   if ! grep -qF 'PATH="$HOME/.local/bin:$PATH"' "$bashrc" 2>/dev/null && \
      ! grep -qF '$HOME/.local/bin' "$bashrc" 2>/dev/null; then
     echo "" >> "$bashrc"
-    echo '# ~/.local/bin no PATH' >> "$bashrc"
+    echo '# ~/.local/bin in PATH' >> "$bashrc"
     echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$bashrc"
     info "~/.local/bin added to PATH in .bashrc"
   fi
 
-  # Alias curto: fi -> finitra
   if ! grep -qF 'alias fi=' "$bashrc" 2>/dev/null; then
     echo "" >> "$bashrc"
     echo "# finitra — Fedora Workstation Bootstrap for Developers" >> "$bashrc"
@@ -226,9 +221,9 @@ main() {
   _setup_bin_and_alias
 
   echo ""
-  ok "Bootstrap concluído!"
+  ok "Bootstrap completed!"
   echo ""
-  echo -e "  Execute o setup com:"
+  echo -e "  Run setup with:"
   echo -e "  ${CLR_GREEN}finitra${CLR_RESET}  (after reopening the terminal)"
   echo ""
   echo -e "  Or with the short alias:"
