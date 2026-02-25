@@ -19,12 +19,14 @@ BIN_PATH="${BIN_DIR}/finitra"
 CONFIG_DIR="${HOME}/.config/finitra"
 CONFIG_FILE="${CONFIG_DIR}/finitra.config"
 
-CLR_GREEN='\033[0;32m'
-CLR_BLUE='\033[0;34m'
-CLR_YELLOW='\033[1;33m'
-CLR_RED='\033[0;31m'
-CLR_BOLD='\033[1m'
+# --- Colors ---
 CLR_RESET='\033[0m'
+CLR_RED='\033[0;31m'
+CLR_GREEN='\033[0;32m'
+CLR_YELLOW='\033[1;33m'
+CLR_BLUE='\033[0;34m'
+CLR_CYAN='\033[0;36m'
+CLR_BOLD='\033[1m'
 
 info()  { echo -e "${CLR_BLUE}[finitra]${CLR_RESET} $*"; }
 ok()    { echo -e "${CLR_GREEN}[finitra]${CLR_RESET} ✔ $*"; }
