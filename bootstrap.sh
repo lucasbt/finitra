@@ -74,7 +74,7 @@ _install_deps() {
   echo -e "  ${CLR_BOLD}sudo dnf install -y ${missing[*]}${CLR_RESET}"
   echo ""
 
-  read -rp "$(echo -e "${CLR_BOLD}Install now? [Y/n]:${CLR_RESET} ")" answer
+  read -rp "$(echo -e "${CLR_BOLD}Install now? [Y/n]:${CLR_RESET} ")" answer </dev/tty || true
   answer="${answer:-Y}"
 
   if [[ "${answer^^}" != "Y" ]]; then
@@ -120,7 +120,7 @@ _setup_repo() {
   if [[ "$has_local_changes" == "true" ]]; then
     echo ""
     warn "Local uncommitted changes detected in:"
-    warn "  $INSTALL_DIR"
+    warn " -> $INSTALL_DIR"
     echo ""
     git -C "$INSTALL_DIR" status --short
     echo ""
@@ -128,7 +128,7 @@ _setup_repo() {
     echo -e "  ${CLR_YELLOW}[O]${CLR_RESET} Overwrite -- discard local changes and update from remote"
     echo -e "  ${CLR_YELLOW}[A]${CLR_RESET} Abort    -- keep local changes and cancel bootstrap"
     echo ""
-    read -rp "$(echo -e "${CLR_BOLD}Choice [O/A]:${CLR_RESET} ")" answer
+    read -rp "$(echo -e "${CLR_BOLD}Choice [O/A]:${CLR_RESET} ")" answer </dev/tty || true
     answer="${answer:-A}"
 
     if [[ "${answer^^}" != "O" ]]; then
