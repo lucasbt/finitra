@@ -8,11 +8,6 @@ Fedora bootstrap and development environment provisioning toolkit.
 Modular and idempotent post-install setup for **Fedora 41+ Workstation**,
 focused on performance, visual accessibility, and developer tooling.
 
-## Target hardware
-
-- Dell Notebook, Intel Core i7-4510U
-- 16 GB RAM, 256 GB SSD
-
 ## Quick start
 
 ```bash
