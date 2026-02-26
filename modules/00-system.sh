@@ -9,6 +9,8 @@ MODULE_NAME="00-system"
 module_00_system() {
   log_section "Module: System Base"
 
+  require_root "$@"
+
   _configure_dnf
   _add_rpmfusion
   _system_update
