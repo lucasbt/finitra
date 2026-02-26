@@ -5,6 +5,18 @@
 # Usage: source utils.sh
 # =============================================================================
 
+export NEWT_COLORS='
+root=black,black
+window=black,black
+border=yellow,black
+title=yellow,black
+textbox=yellow,black
+button=black,yellow
+actbutton=black,yellow
+checkbox=yellow,black
+actcheckbox=black,yellow
+'
+
 # --- Colors ---
 CLR_RESET='\033[0m'
 CLR_RED='\033[0;31m'
