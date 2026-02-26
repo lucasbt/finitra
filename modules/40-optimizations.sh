@@ -158,7 +158,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
   source "${SCRIPT_DIR}/utils.sh"
   source "${SCRIPT_DIR}/finitra-default.config"
-  [[ -f "${HOME}/.config/finitra/finitra.config" ]] && \
-    source "${HOME}/.config/finitra/finitra.config"
+  [[ -f "${SETUP_HOME}/.config/finitra/finitra.config" ]] && \
+    source "${SETUP_HOME}/.config/finitra/finitra.config"
   module_40_optimizations
 fi

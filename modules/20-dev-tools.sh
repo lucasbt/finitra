@@ -30,9 +30,9 @@ module_20_dev_tools() {
 
 # -----------------------------------------------------------------------------
 _install_typora() {
-    local install_dir="$HOME/.local/share/typora"
-    local bin_link="$HOME/.local/bin/typora"
-    local desktop_file="$HOME/.local/share/applications/typora.desktop"
+    local install_dir="$SETUP_HOMEE/.local/share/typora"
+    local bin_link="$SETUP_HOME/.local/bin/typora"
+    local desktop_file="$SETUP_HOME/.local/share/applications/typora.desktop"
     local archive="${CACHE_DIR}/typora.tar.gz"
 
     if command -v typora &>/dev/null; then
@@ -43,7 +43,7 @@ _install_typora() {
     fi
 
     step "Installing Typora (portable tarball)"
-    mkdir -p "$install_dir" "$HOME/.local/bin"
+    mkdir -p "$install_dir" "$SETUP_HOME/.local/bin"
 
     cached_download \
         "https://typora.io/linux/Typora-linux-x64.tar.gz" \
@@ -295,10 +295,10 @@ _install_postman() {
   fi
 
   # Desktop entry (user-level, GNOME friendly)
-  local desktop_file="$HOME/.local/share/applications/postman.desktop"
+  local desktop_file="$SETUP_HOME/.local/share/applications/postman.desktop"
   if [[ ! -f "$desktop_file" ]]; then
       log_info "Creating Postman desktop entry..."
-      mkdir -p "$HOME/.local/share/applications"
+      mkdir -p "$SETUP_HOME/.local/share/applications"
       cat > "$desktop_file" <<EOF
 [Desktop Entry]
 Encoding=UTF-8
@@ -630,7 +630,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
   source "${SCRIPT_DIR}/utils.sh"
   source "${SCRIPT_DIR}/finitra-default.config"
-  [[ -f "${HOME}/.config/finitra/finitra.config" ]] && \
-    source "${HOME}/.config/finitra/finitra.config"
+  [[ -f "${SETUP_HOME}/.config/finitra/finitra.config" ]] && \
+    source "${SETUP_HOME}/.config/finitra/finitra.config"
   module_20_dev_tools
 fi
