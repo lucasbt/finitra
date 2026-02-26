@@ -44,7 +44,6 @@ _print_banner() {
   echo -e "${CLR_BOLD}${CLR_CYAN}  ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝${CLR_RESET}"
   echo ""
   echo -e "  ${CLR_BOLD}Fedora Workstation Bootstrap for Developers${CLR_RESET}"
-  echo -e "  Bootstrap your Developer Fedora Workstation"
   echo ""
 }
 
