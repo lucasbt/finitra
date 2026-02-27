@@ -143,15 +143,24 @@ _resolve_module_id() {
 _run_module() {
   local input="$1"
   local resolved
-  echo $1
+
   if ! resolved=$(_resolve_module_id "$input"); then
     log_error "Module not found: '$input'"
-    log_error "Use 'finitra --list' to see available modules."
     return 1
+  fi
+
+  # Elevação antes de executar o módulo
+  if [[ $EUID -ne 0 ]]; then
+    exec sudo -E \
+      SETUP_USER="$SETUP_USER" \
+      SETUP_HOME="$SETUP_HOME" \
+      LOG_FILE="$LOG_FILE" \
+      "$BIN_PATH" install -m "$resolved"
   fi
 
   local file="${MODULE_FILES[$resolved]}"
   log_info "Loading module: $(basename "$file")"
+
   # shellcheck disable=SC1090
   source "$file"
 
@@ -159,7 +168,10 @@ _run_module() {
   funcname="module_$(basename "$file" .sh | tr '-' '_')"
 
   if declare -f "$funcname" > /dev/null; then
-    "$funcname"
+    if ! "$funcname"; then
+      log_error "Module '$resolved' failed."
+      return 1
+    fi
   else
     log_error "Function '$funcname' not found in $file"
     return 1
