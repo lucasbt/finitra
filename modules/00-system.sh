@@ -10,8 +10,8 @@ module_00_system() {
   log_section "Module: System Base"
 
   _configure_dnf
-  _add_rpmfusion
   _system_update
+  _add_rpmfusion
   _install_base_packages
   _check_zram
   _setup_directories
