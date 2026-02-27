@@ -143,6 +143,7 @@ _resolve_module_id() {
 _run_module() {
   local input="$1"
   local resolved
+  echo $1
   if ! resolved=$(_resolve_module_id "$input"); then
     log_error "Module not found: '$input'"
     log_error "Use 'finitra --list' to see available modules."
