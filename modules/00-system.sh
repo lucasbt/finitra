@@ -91,7 +91,7 @@ _install_multimedia() {
         x265
         vlc
     )
-    dnf_install --exclude=PackageKit-gstreamer-plugin "${multimedia_pkgs[@]}"
+    dnf_install "${multimedia_pkgs[@]}"
 
     # -------------------------------------------------------------------------
     # Verificar VA-API após instalação (não fatal se falhar)
