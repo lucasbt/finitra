@@ -168,7 +168,7 @@ flatpak_install() {
   local app="${2}"
   if ! is_flatpak_installed "$app"; then
     log_info "Installing Flatpak: $app"
-    flatpak install -y "$remote" "$app"
+    flatpak install -y --noninteractive --progress=plain "$remote" "$app"
   else
     log_info "Flatpak already installed: $app"
   fi
