@@ -11,7 +11,6 @@ module_10_packages() {
   _install_chrome
   _install_bitwarden_gui
   _install_bitwarden_cli
-  _install_multimedia
   _add_vscode_repo
   _install_rpms_from_list
   _setup_flathub
@@ -125,73 +124,6 @@ _install_bitwarden_cli() {
     run_as_root ln -sf "$install_dir/bw" /usr/local/bin/bw
 
     ok "Bitwarden CLI installed."
-}
-
-# -----------------------------------------------------------------------------
-_install_multimedia() {
-    if [[ "${INSTALL_MULTIMEDIA:-true}" != "true" ]]; then
-        skip "Multimedia install disabled in config"
-        return
-    fi
-    step "Installing multimedia support (H.264, H.265, ffmpeg, codecs)"
-
-    # -------------------------------------------------------------------------
-    # Mesa freeworld — habilita H.264/H.265 na camada VA-API/VDPAU do Mesa
-    # -------------------------------------------------------------------------
-    run_as_root dnf swap -y mesa-va-drivers  mesa-va-drivers-freeworld  2>/dev/null || true
-    run_as_root dnf swap -y mesa-vdpau-drivers mesa-vdpau-drivers-freeworld 2>/dev/null || true
-
-    # -------------------------------------------------------------------------
-    # VA-API Intel — i7-4510U é Haswell (4ª geração)
-    # libva-intel-driver  → Haswell e anteriores (até 4ª gen) ← correto aqui
-    # intel-media-driver  → Broadwell em diante (5ª gen+)     ← NÃO instalar
-    # Instalar intel-media-driver no Haswell não quebra, mas VA-API não funciona
-    # -------------------------------------------------------------------------
-    dnf_install libva-intel-driver libva-utils
-
-    # -------------------------------------------------------------------------
-    # ffmpeg completo (RPM Fusion) — substitui o ffmpeg-free do Fedora
-    # --allowerasing necessário pois ffmpeg conflita intencionalmente com ffmpeg-free
-    # -------------------------------------------------------------------------
-    run_as_root dnf swap -y ffmpeg-free ffmpeg --allowerasing 2>/dev/null || true
-
-    # -------------------------------------------------------------------------
-    # GStreamer + codecs
-    # Excluindo PackageKit-gstreamer-plugin pois PackageKit foi desabilitado
-    # -------------------------------------------------------------------------
-    local multimedia_pkgs=(
-        gstreamer1-plugins-base
-        gstreamer1-plugins-good
-        gstreamer1-plugins-good-extras
-        gstreamer1-plugins-bad-free
-        gstreamer1-plugins-bad-freeworld
-        gstreamer1-plugins-ugly
-        gstreamer1-plugin-openh264
-        gstreamer1-plugin-libav
-        libdvdread
-        libdvdnav
-        lame
-        faac
-        flac
-        faad2
-        libavcodec-freeworld
-        x264
-        x265
-        vlc
-    )
-    dnf_install --exclude=PackageKit-gstreamer-plugin "${multimedia_pkgs[@]}"
-
-    # -------------------------------------------------------------------------
-    # Verificar VA-API após instalação (não fatal se falhar)
-    # -------------------------------------------------------------------------
-    if command -v vainfo &>/dev/null; then
-        log_info "VA-API status:"
-        vainfo 2>&1 | grep -E "Driver|VAProfile|error" | head -20 || true
-    else
-        log_warn "vainfo not found — instale 'libva-utils' para verificar VA-API manualmente"
-    fi
-
-    ok "Multimedia packages installed"
 }
 
 # -----------------------------------------------------------------------------
