@@ -125,8 +125,19 @@ _remove_unwanted_repos() {
   done
 
   # Atualiza cache do DNF para refletir mudanças
-  run_as_root dnf clean all >/dev/null 2>&1 || true
-  run_as_root dnf makecache >/dev/null 2>&1 || true
+  log_info "Refreshing DNF metadata..."
+
+  if run_as_root dnf clean all -q; then
+    log_info "DNF cache cleaned"
+  else
+    log_warn "DNF clean failed (continuing)"
+  fi
+
+  if run_as_root dnf makecache --refresh -q; then
+    ok "DNF metadata refreshed"
+  else
+    log_warn "DNF makecache failed (continuing)"
+  fi
 
   ok "Unwanted repositories cleaned up"
 }
