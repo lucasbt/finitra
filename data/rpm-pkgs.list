@@ -188,12 +188,10 @@ papirus-icon-theme-dark
 libreoffice-icon-theme-papirus
 paper-icon-theme
 material-icons-fonts
-flat-remix-icon-theme
-la-capitaine-icon-theme
 luv-icon-theme
 pop-icon-theme
-tela-icon-theme
 cosmic-icon-theme
+breeze-icon-theme
 
 # Virtualization
 libvirt
@@ -208,7 +206,6 @@ hplip-common
 hplip-libs
 util-linux-user
 fragments
-secrets
 geary
 epiphany
 
