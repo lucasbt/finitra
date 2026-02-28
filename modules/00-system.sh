@@ -10,8 +10,9 @@ module_00_system() {
   log_section "Module: System Base"
 
   _configure_dnf
-  _system_update
+  _remove_unwanted_repos
   _add_rpmfusion
+  _system_update
   _install_base_packages
   _check_zram
   _setup_directories
@@ -99,6 +100,35 @@ _add_rpmfusion() {
     rpmfusion-nonfree-appstream-data 2>/dev/null || true
 
   ok "RPM Fusion configured"
+}
+
+# -----------------------------------------------------------------------------
+_remove_unwanted_repos() {
+  step "Removing unwanted repositories"
+
+  local repos=(
+    "_copr:copr.fedorainfracloud.org:phracek:PyCharm.repo"
+    "rpmfusion-nonfree-nvidia-driver.repo"
+    "rpmfusion-nonfree-steam.repo"
+  )
+
+  for repo in "${repos[@]}"; do
+    local repo_path="/etc/yum.repos.d/${repo}"
+
+    if [[ -f "$repo_path" ]]; then
+      log_info "Removing $repo..."
+      run_as_root rm -f "$repo_path"
+      ok "$repo removed"
+    else
+      skip "$repo not present"
+    fi
+  done
+
+  # Atualiza cache do DNF para refletir mudanças
+  run_as_root dnf clean all >/dev/null 2>&1 || true
+  run_as_root dnf makecache >/dev/null 2>&1 || true
+
+  ok "Unwanted repositories cleaned up"
 }
 
 # -----------------------------------------------------------------------------
