@@ -151,7 +151,7 @@ _run_module() {
 
   # Elevação antes de executar o módulo
   if [[ $EUID -ne 0 ]]; then
-    exec sudo -E \
+    exec sudo \
       SETUP_USER="$SETUP_USER" \
       SETUP_HOME="$SETUP_HOME" \
       LOG_FILE="$LOG_FILE" \
