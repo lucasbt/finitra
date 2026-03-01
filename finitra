@@ -59,6 +59,7 @@ _detect_user() {
 
 _detect_user
 
+export HOME="$SETUP_HOME"
 BIN_DIR="${SETUP_HOME}/.local/bin"
 BIN_PATH="${BIN_DIR}/finitra"
 CONFIG_DIR="${SETUP_HOME}/.config/finitra"
