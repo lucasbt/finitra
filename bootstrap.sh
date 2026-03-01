@@ -172,6 +172,17 @@ _setup_bin_and_alias() {
   fi
 }
 
+_setup_default_config() {
+  mkdir -p "$CONFIG_DIR"
+
+  if [[ ! -f "$CONFIG_FILE" ]]; then
+    cp "${INSTALL_DIR}/finitra-default.config" "$CONFIG_FILE"
+    ok "Default config created at: $CONFIG_FILE"
+  else
+    warn "Config already exists at: $CONFIG_FILE -- not overwritten"
+  fi
+}
+
 # =============================================================================
 # Main
 # =============================================================================
@@ -180,6 +191,7 @@ main() {
   _install_deps
   _setup_repo
   _setup_bin_and_alias
+  _setup_default_config
 
   echo ""
   ok "Bootstrap completed!"

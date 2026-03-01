@@ -77,8 +77,16 @@ USER_CONFIG="${SETUP_HOME}/.config/finitra/finitra.config"
 if [[ $EUID -eq 0 && -n "${SETUP_HOME:-}" ]]; then
   USER_CONFIG="${SETUP_HOME}/.config/finitra/finitra.config"
 fi
+
+# Ensure user config exists
+if [[ ! -f "$USER_CONFIG" ]]; then
+  mkdir -p "$(dirname "$USER_CONFIG")"
+  install -m 600 "${SCRIPT_DIR}/finitra-default.config" "$USER_CONFIG"
+  log_info "User config created at: $USER_CONFIG"
+fi
+
 # shellcheck disable=SC1090
-[[ -f "$USER_CONFIG" ]] && source "$USER_CONFIG"
+source "$USER_CONFIG"
 
 [[ -z "${SETUP_USER:-}" ]] && SETUP_USER="$USER"
 [[ -z "${SETUP_HOME:-}" ]] && SETUP_HOME=$(eval echo "~${SETUP_USER}")
