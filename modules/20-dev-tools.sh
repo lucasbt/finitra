@@ -30,7 +30,7 @@ module_20_dev_tools() {
 
 # -----------------------------------------------------------------------------
 _install_typora() {
-    local install_dir="$SETUP_HOMEE/.local/share/typora"
+    local install_dir="$SETUP_HOME/.local/share/typora"
     local bin_link="$SETUP_HOME/.local/bin/typora"
     local desktop_file="$SETUP_HOME/.local/share/applications/typora.desktop"
     local archive="${CACHE_DIR}/typora.tar.gz"
