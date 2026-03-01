@@ -330,27 +330,31 @@ _install_insomnia() {
     step "Installing Insomnia"
     log_info "Querying latest Insomnia release from GitHub..."
 
-    local tag
+    local tag rpm_asset rpm_file installed_version
     tag=$(curl -s https://api.github.com/repos/Kong/insomnia/releases/latest \
         | grep -oP '"tag_name":\s*"\K([^"]+)')
-
     if [[ -z "$tag" ]]; then
         log_error "Unable to identify the latest Insomnia version on GitHub"
         return 1
     fi
     log_info "Latest Insomnia release: $tag"
 
-    local rpm_asset
     rpm_asset=$(curl -s "https://api.github.com/repos/Kong/insomnia/releases/tags/${tag}" \
         | grep -oP 'browser_download_url":\s*"\K([^"]*Insomnia\.Core[^"]*\.rpm)')
-
     if [[ -z "$rpm_asset" ]]; then
         log_error "Could not find .rpm asset for release $tag"
         return 1
     fi
+    rpm_file="${CACHE_DIR}/$(basename "${rpm_asset}")"
 
-    local rpm_file="${CACHE_DIR}/$(basename "${rpm_asset}")"
+    # Checar se já está instalado
+    installed_version=$(rpm -q --queryformat '%{VERSION}\n' insomnia-core 2>/dev/null || echo "")
+    if [[ "$installed_version" == "${tag#v}" ]]; then
+        skip "Insomnia already installed (${installed_version})"
+        return
+    fi
 
+    # Baixar RPM se necessário
     if [[ ! -f "$rpm_file" ]]; then
         log_info "Downloading Insomnia RPM..."
         curl -L "$rpm_asset" -o "$rpm_file"
@@ -358,10 +362,10 @@ _install_insomnia() {
         log_info "Using cached Insomnia RPM: $rpm_file"
     fi
 
-    dnf_install "$rpm_file"
-    ok "Insomnia installed (${tag})"
+    # Instalar via dnf (atualiza se já existir versão diferente)
+    sudo dnf install -y "$rpm_file"
+    ok "Insomnia installed/updated to ${tag#v}"
 }
-
 # -----------------------------------------------------------------------------
 _install_mise() {
   step "Installing mise (runtime version manager)"
