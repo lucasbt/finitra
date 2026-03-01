@@ -344,7 +344,7 @@ _install_insomnia() {
     log_info "Latest Insomnia release: ${github_version}"
 
     # Verificar versão instalada no sistema
-    installed_version=$(rpm -q --qf '%{VERSION}\n' insomnia-core 2>/dev/null || echo "")
+    installed_version=$(rpm -q --qf '%{VERSION}\n' insomnia 2>/dev/null || echo "")
     if [[ "$installed_version" == "$github_version" ]]; then
         skip "Insomnia already installed (${installed_version})"
         return
