@@ -330,7 +330,7 @@ _install_insomnia() {
     step "Installing Insomnia"
     log_info "Querying latest Insomnia release from GitHub..."
 
-    local tag rpm_asset rpm_file installed_version
+    local tag rpm_asset rpm_file installed_version github_version
     tag=$(curl -s https://api.github.com/repos/Kong/insomnia/releases/latest \
         | grep -oP '"tag_name":\s*"\K([^"]+)')
     if [[ -z "$tag" ]]; then
@@ -338,6 +338,9 @@ _install_insomnia() {
         return 1
     fi
     log_info "Latest Insomnia release: $tag"
+
+    # Extrair versão do GitHub (remove core@ prefix)
+    github_version="${tag#core@}"
 
     rpm_asset=$(curl -s "https://api.github.com/repos/Kong/insomnia/releases/tags/${tag}" \
         | grep -oP 'browser_download_url":\s*"\K([^"]*Insomnia\.Core[^"]*\.rpm)')
@@ -347,11 +350,9 @@ _install_insomnia() {
     fi
     rpm_file="${CACHE_DIR}/$(basename "${rpm_asset}")"
 
-    # ============================
-    # Checar se já está instalado
-    # ============================
-    installed_version=$(rpm -q --queryformat '%{VERSION}\n' insomnia-core 2>/dev/null || echo "")
-    if [[ "$installed_version" == "${tag#core@}" ]] || [[ "$installed_version" == "${tag#v}" ]]; then
+    # Checar versão instalada corretamente
+    installed_version=$(rpm -q --qf '%{VERSION}\n' insomnia-core 2>/dev/null || echo "")
+    if [[ "$installed_version" == "$github_version" ]]; then
         skip "Insomnia already installed (${installed_version})"
         return
     fi
@@ -364,9 +365,9 @@ _install_insomnia() {
         log_info "Using cached Insomnia RPM: $rpm_file"
     fi
 
-    # Instalar via dnf
+    # Instalar apenas se versão diferente
     sudo dnf install -y "$rpm_file"
-    ok "Insomnia installed/updated to ${tag#v}"
+    ok "Insomnia installed/updated to ${github_version}"
 }
 
 # -----------------------------------------------------------------------------
