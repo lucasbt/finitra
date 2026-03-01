@@ -347,9 +347,11 @@ _install_insomnia() {
     fi
     rpm_file="${CACHE_DIR}/$(basename "${rpm_asset}")"
 
+    # ============================
     # Checar se já está instalado
+    # ============================
     installed_version=$(rpm -q --queryformat '%{VERSION}\n' insomnia-core 2>/dev/null || echo "")
-    if [[ "$installed_version" == "${tag#v}" ]]; then
+    if [[ "$installed_version" == "${tag#core@}" ]] || [[ "$installed_version" == "${tag#v}" ]]; then
         skip "Insomnia already installed (${installed_version})"
         return
     fi
@@ -362,10 +364,11 @@ _install_insomnia() {
         log_info "Using cached Insomnia RPM: $rpm_file"
     fi
 
-    # Instalar via dnf (atualiza se já existir versão diferente)
+    # Instalar via dnf
     sudo dnf install -y "$rpm_file"
     ok "Insomnia installed/updated to ${tag#v}"
 }
+
 # -----------------------------------------------------------------------------
 _install_mise() {
   step "Installing mise (runtime version manager)"
