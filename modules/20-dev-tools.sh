@@ -44,10 +44,9 @@ _install_typora() {
     local desktop_file="$SETUP_HOME/.local/share/applications/typora.desktop"
     local archive="${CACHE_DIR}/typora.tar.gz"
 
-    if command -v typora &>/dev/null; then
-        local ver
-        ver=$(cat "$install_dir/version" 2>/dev/null || echo "unknown")
-        skip "Typora already installed ($ver)"
+    # Validação robusta
+    if [[ -x "$bin_link" ]] || [[ -x "$install_dir/Typora" ]] || command -v typora &>/dev/null; then
+        skip "Typora already installed"
         return
     fi
 
@@ -86,6 +85,11 @@ EOF
 # -----------------------------------------------------------------------------
 _install_drawio() {
     step "Installing draw.io desktop"
+
+    if rpm -q draw.io &>/dev/null; then
+      skip "draw.io already installed"
+      return
+    fi
     log_info "Querying latest draw.io release from GitHub..."
 
     local tag
@@ -164,59 +168,50 @@ _install_dbeaver() {
     ok "DBeaver Community installed (${tag})"
 }
 
-# -----------------------------------------------------------------------------
 _install_awscli() {
-    # -------------------------------------------------------------------------
-    # AWS CLI v2 não tem pacote RPM oficial — instalação via zip da Amazon
-    # O instalador suporta --update para reuso da função em upgrades
-    # -------------------------------------------------------------------------
     local zip_file="${CACHE_DIR}/awscliv2.zip"
     local extract_dir="${CACHE_DIR}/awscli-extracted"
     local install_dir="/usr/local/aws-cli"
     local bin_dir="/usr/local/bin"
 
-    # Garantir unzip disponível (dependência do instalador)
     if ! command -v unzip &>/dev/null; then
-        log_info "Installing unzip (required by AWS CLI installer)..."
         sudo dnf install -y unzip
     fi
 
-    if ! command -v aws &>/dev/null; then
-        step "Installing AWS CLI v2"
-
-        cached_download \
-            "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" \
-            "$zip_file"
-
-        rm -rf "$extract_dir"
-        unzip -q "$zip_file" -d "$extract_dir"
-
-        sudo "$extract_dir/aws/install" \
-            --install-dir "$install_dir" \
-            --bin-dir "$bin_dir"
-
-        ok "AWS CLI $(aws --version 2>&1 | awk '{print $1}') installed"
-    else
-        step "Updating AWS CLI v2"
-        log_info "Current version: $(aws --version 2>&1)"
-
-        cached_download \
-            "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" \
-            "$zip_file"
-
-        rm -rf "$extract_dir"
-        unzip -q "$zip_file" -d "$extract_dir"
-
-        sudo "$extract_dir/aws/install" \
-            --install-dir "$install_dir" \
-            --bin-dir "$bin_dir" \
-            --update
-
-        ok "AWS CLI updated to $(aws --version 2>&1 | awk '{print $1}')"
+    # Versão instalada
+    local current_version=""
+    if command -v aws &>/dev/null; then
+        current_version=$(aws --version 2>&1 | awk -F/ '{print $2}' | awk '{print $1}')
     fi
 
-    # Limpar arquivos extraídos (zip permanece no cache para reuso)
+    step "Checking AWS CLI"
+
+    cached_download \
+        "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" \
+        "$zip_file"
+
     rm -rf "$extract_dir"
+    unzip -q "$zip_file" -d "$extract_dir"
+
+    local new_version
+    new_version=$("$extract_dir/aws/dist/aws" --version 2>&1 | awk -F/ '{print $2}' | awk '{print $1}')
+
+    if [[ "$current_version" == "$new_version" && -n "$current_version" ]]; then
+        skip "AWS CLI already at latest version ($current_version)"
+        rm -rf "$extract_dir"
+        return
+    fi
+
+    step "Installing/Updating AWS CLI to $new_version"
+
+    sudo "$extract_dir/aws/install" \
+        --install-dir "$install_dir" \
+        --bin-dir "$bin_dir" \
+        ${current_version:+--update}
+
+    rm -rf "$extract_dir"
+
+    ok "AWS CLI now at $new_version"
 }
 
 _install_git() {
@@ -232,19 +227,20 @@ _install_git() {
 _install_ides() {
   step "Installing IntelliJ"
 
-  # IntelliJ
-  if [ ! -d /opt/intellij ]; then
-      local json url tar
-      json=$(curl -s "https://data.services.jetbrains.com/products/releases?code=IIC&latest=true&type=release")
-      url=$(echo "$json" | jq -r '.IIC[0].downloads.linux.link')
-      tar="$CACHE_DIR/intellij.tar.gz"
+  if command -v idea &>/dev/null || [[ -x /opt/intellij/bin/idea.sh ]]; then
+    skip "IntelliJ already installed"
+  else
+    local json url tar
+    json=$(curl -s "https://data.services.jetbrains.com/products/releases?code=IIC&latest=true&type=release")
+    url=$(echo "$json" | jq -r '.IIC[0].downloads.linux.link')
+    tar="$CACHE_DIR/intellij.tar.gz"
 
-      cached_download "$url" "$tar"
+    cached_download "$url" "$tar"
 
-      sudo mkdir -p /opt/intellij
-      sudo tar -xzf "$tar" -C /opt/intellij --strip-components=1
+    sudo mkdir -p /opt/intellij
+    sudo tar -xzf "$tar" -C /opt/intellij --strip-components=1
 
-      sudo tee /usr/share/applications/intellij.desktop >/dev/null <<EOF
+    sudo tee /usr/share/applications/intellij.desktop >/dev/null <<EOF
 [Desktop Entry]
 Name=IntelliJ IDEA Community
 Exec=/opt/intellij/bin/idea.sh
@@ -254,17 +250,20 @@ Categories=Development;IDE;
 StartupWMClass=IntelliJ
 EOF
     ok "IntelliJ Installed"
-  else
-    skip "IntelliJ already installed"
   fi
 
   # Zed
-  if ! command -v zed &>/dev/null; then
-      step "Installing Zed editor"
-      curl -f https://zed.dev/install.sh | sh
-      ok "Zed installed"
-  else
+  local zed_bin="$SETUP_HOME/.local/bin/zed"
+
+  if [[ -x "$zed_bin" ]] || command -v zed &>/dev/null; then
       skip "Zed already installed"
+  else
+      step "Installing Zed editor"
+      curl -fsSL https://zed.dev/install.sh | sh || {
+          log_error "Failed to install Zed"
+          return 1
+      }
+      ok "Zed installed"
   fi
 }
 
