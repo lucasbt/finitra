@@ -143,7 +143,7 @@ _install_dbeaver() {
 
     local rpm_asset
     rpm_asset=$(curl -s "https://api.github.com/repos/dbeaver/dbeaver/releases/tags/${tag}" \
-        | grep -oP 'browser_download_url":\s*"\K([^"]*stable\.x86_64\.rpm)')
+        | grep -oP 'browser_download_url":\s*"\K([^"]*x86_64\.rpm)')
 
     if [[ -z "$rpm_asset" ]]; then
         log_error "Could not find .rpm asset for release $tag"
