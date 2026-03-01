@@ -327,7 +327,6 @@ EOF
 
 # -----------------------------------------------------------------------------
 _install_insomnia() {
-_install_insomnia() {
     step "Installing Insomnia"
     log_info "Querying latest Insomnia release from GitHub..."
 
