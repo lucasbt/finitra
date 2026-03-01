@@ -9,6 +9,15 @@ MODULE_NAME="20-dev-tools"
 module_20_dev_tools() {
   log_section "Module: Development Tools"
 
+  # Build dependencies needed to compile runtimes from source
+  log_info "Installing build dependencies for runtimes..."
+  dnf_install \
+    gcc gcc-c++ make \
+    openssl-devel bzip2-devel libffi-devel zlib-devel \
+    sqlite-devel readline-devel \
+    xz-devel tk-devel \
+    libuuid-devel
+
   _install_git
   _install_ides
   _install_typora
@@ -409,10 +418,10 @@ _configure_mise_global() {
 # ~/.config/mise/config.toml -- Global runtimes managed by mise
 # ============================================================
 [tools]
-java = ["${MISE_JAVA_21:-java@21}", "${MISE_JAVA_25:-java@25}"]
-node = "${MISE_NODE:-node@lts}"
-python = "${MISE_PYTHON:-python@latest}"
-go = "${MISE_GOLANG:-go@latest}"
+java = ["${MISE_JAVA_21:-21}", "${MISE_JAVA_25:-25}"]
+node = "${MISE_NODE:-lts}"
+python = "${MISE_PYTHON:-latest}"
+go = "${MISE_GOLANG:-latest}"
 
 [settings]
 experimental = true
@@ -440,24 +449,10 @@ _mise_install_runtimes() {
     return 1
   fi
 
-  # Build dependencies needed to compile runtimes from source
-  log_info "Installing build dependencies for runtimes..."
-  dnf_install \
-    gcc gcc-c++ make \
-    openssl-devel bzip2-devel libffi-devel zlib-devel \
-    sqlite-devel readline-devel \
-    xz-devel tk-devel \
-    libuuid-devel
-
   log_info "Running: mise install (all versions from config.toml)"
   sudo -u "$user" "$mise" install --yes 2>&1 | tee -a "${LOG_FILE:-/tmp/finitra.log}" || {
     log_warn "mise install returned non-zero. Check the log for details."
   }
-
-  # Set java 21 as the global default (for IDE compatibility)
-  local java21="${MISE_JAVA_21:-java@21}"
-  log_info "Setting $java21 as global default..."
-  sudo -u "$user" "$mise" use --global "$java21" 2>/dev/null || true
 
   _configure_java_home "$user" "${SETUP_HOME:-$HOME}"
 
