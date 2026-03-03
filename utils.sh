@@ -215,7 +215,7 @@ apply_gnome_settings_file() {
     [[ "$line" =~ ^[[:space:]]*# ]] && continue
 
     local expanded
-    expanded=$(envsubst <<< "$line")
+    expanded=$(eval echo "$line")
 
     local schema key value
     schema=$(awk '{print $1}' <<< "$expanded")
