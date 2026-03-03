@@ -275,7 +275,7 @@ ok() {
 }
 
 skip() {
-  echo -e "${CLR_YELLOW}⏭  $* (already configured)${CLR_RESET}"
+  echo -e "${CLR_YELLOW}⏭  $*${CLR_RESET}"
 }
 
 # -----------------------------------------------------------------------------
