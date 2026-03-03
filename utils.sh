@@ -203,11 +203,6 @@ apply_gnome_settings_file() {
     return 1
   }
 
-  command -v envsubst &>/dev/null || {
-    log_warn "envsubst not found. Installing gettext..."
-    run_as_root dnf install -y gettext &>/dev/null || true
-  }
-
   log_info "Applying GNOME settings from: $settings_file"
 
   while IFS= read -r line || [[ -n "$line" ]]; do
@@ -215,7 +210,7 @@ apply_gnome_settings_file() {
     [[ "$line" =~ ^[[:space:]]*# ]] && continue
 
     local expanded
-    expanded=$(eval echo "$line")
+    expanded=$(eval "echo \"$line\"")
 
     local schema key value
     schema=$(awk '{print $1}' <<< "$expanded")
@@ -224,11 +219,7 @@ apply_gnome_settings_file() {
 
     [[ -z "$schema" || -z "$key" || -z "$value" ]] && continue
 
-    if sudo -u "$user" gsettings writable "$schema" "$key" &>/dev/null; then
-      gs_set "$schema" "$key" "$value"
-    else
-      log_warn "Skipping invalid key: $schema $key"
-    fi
+    gs_set "$schema" "$key" "$value"
 
   done < "$settings_file"
 }
