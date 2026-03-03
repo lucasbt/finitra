@@ -304,7 +304,7 @@ ask_yes_no() {
 
     # Timeout de 30s — se não responder, aplica o default
     while true; do
-        echo -en "\n${YELLOW}?${RESET} $question $prompt " >&2
+        echo -en "\n${CLR_YELLOW}?${CLR_RESET} $question $prompt " >&2
         if ! read -r -t 30 answer; then
             echo >&2
             log_warn "No response after 30s — defaulting to: $default"
@@ -320,7 +320,7 @@ ask_yes_no() {
             y|yes) return 0 ;;
             n|no)  return 1 ;;
             *)
-                echo -e "${YELLOW}  Please answer y or n.${RESET}" >&2
+                echo -e "${CLR_YELLOW}  Please answer y or n.${CLR_RESET}" >&2
                 ;;
         esac
     done
