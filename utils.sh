@@ -196,27 +196,39 @@ gs_set() {
 # Values support ${VAR} references from finitra-default.config (expanded via envsubst).
 apply_gnome_settings_file() {
   local settings_file="$1"
-  if [[ ! -f "$settings_file" ]]; then
+
+  [[ ! -f "$settings_file" ]] && {
     log_error "Settings file not found: $settings_file"
     return 1
-  fi
+  }
 
-  if ! command -v envsubst &>/dev/null; then
+  command -v envsubst &>/dev/null || {
     log_warn "envsubst not found. Installing gettext..."
     run_as_root dnf install -y gettext &>/dev/null || true
-  fi
+  }
 
   log_info "Applying GNOME settings from: $settings_file"
+
   while IFS= read -r line || [[ -n "$line" ]]; do
     [[ "$line" =~ ^[[:space:]]*$ ]] && continue
-    [[ "$line" =~ ^[[:space:]]*# ]]  && continue
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
 
     local expanded
     expanded=$(envsubst <<< "$line")
 
-    read -r schema key value <<< "$expanded"
+    local schema key value
+    schema=$(awk '{print $1}' <<< "$expanded")
+    key=$(awk '{print $2}' <<< "$expanded")
+    value="${expanded#"$schema $key "}"
+
     [[ -z "$schema" || -z "$key" || -z "$value" ]] && continue
-    gs_set "$schema" "$key" "$value"
+
+    if gsettings writable "$schema" "$key" &>/dev/null; then
+      gs_set "$schema" "$key" "$value"
+    else
+      log_warn "Skipping invalid key: $schema $key"
+    fi
+
   done < "$settings_file"
 }
 
