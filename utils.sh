@@ -196,6 +196,7 @@ gs_set() {
 # Values support ${VAR} references from finitra-default.config (expanded via envsubst).
 apply_gnome_settings_file() {
   local settings_file="$1"
+  local user="${SETUP_USER:-$USER}"
 
   [[ ! -f "$settings_file" ]] && {
     log_error "Settings file not found: $settings_file"
@@ -223,7 +224,7 @@ apply_gnome_settings_file() {
 
     [[ -z "$schema" || -z "$key" || -z "$value" ]] && continue
 
-    if gsettings writable "$schema" "$key" &>/dev/null; then
+    if sudo -u "$user" gsettings writable "$schema" "$key" &>/dev/null; then
       gs_set "$schema" "$key" "$value"
     else
       log_warn "Skipping invalid key: $schema $key"

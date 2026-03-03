@@ -426,9 +426,15 @@ _install_wallpapers() {
 # Standalone entry point
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
   source "${SCRIPT_DIR}/utils.sh"
+
+  # Exporta automaticamente todas as variáveis carregadas
+  set -a
   source "${SCRIPT_DIR}/finitra-default.config"
   [[ -f "${SETUP_HOME}/.config/finitra/finitra.config" ]] && \
     source "${SETUP_HOME}/.config/finitra/finitra.config"
+  set +a
+
   module_30_desktop
 fi
