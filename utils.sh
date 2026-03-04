@@ -198,6 +198,8 @@ apply_gnome_settings_file() {
   local settings_file="$1"
   local user="${SETUP_USER:-$USER}"
 
+  source "$CONFIG_FILE"
+
   [[ ! -f "$settings_file" ]] && {
     log_error "Settings file not found: $settings_file"
     return 1
