@@ -218,7 +218,7 @@ apply_gnome_settings_file() {
     [[ "$line" =~ ^[[:space:]]*# ]] && continue
 
     # Expande variáveis mas preserva aspas
-    expanded=$(envsubst <<< "$line")
+    expanded=$(eval "echo \"$line\"")
 
     # Divide apenas nos DOIS primeiros campos
     schema="${expanded%% *}"
