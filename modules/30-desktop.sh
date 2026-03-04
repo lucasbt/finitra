@@ -145,14 +145,6 @@ _apply_gnome_settings() {
     return 1
   fi
 
-  # Ensure a D-Bus session is available (needed when running via sudo/TTY)
-  if ! sudo -u "${SETUP_USER:-$USER}" dbus-run-session gsettings list-schemas &>/dev/null; then
-    log_warn "D-Bus session not available. Attempting with dbus-launch..."
-    export DBUS_SESSION_BUS_ADDRESS
-    DBUS_SESSION_BUS_ADDRESS=$(sudo -u "${SETUP_USER:-$USER}" \
-      dbus-launch --exit-with-session bash -c 'echo $DBUS_SESSION_BUS_ADDRESS' 2>/dev/null || true)
-  fi
-
   apply_gnome_settings_file "$settings_file"
 
   ok "GNOME settings applied"

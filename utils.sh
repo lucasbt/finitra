@@ -184,7 +184,15 @@ gs_set() {
   local value="$3"
   local user="${SETUP_USER:-$USER}"
 
-  if sudo -u "$user" gsettings set "$schema" "$key" "$value" 2>/dev/null; then
+  local user_id
+  user_id=$(id -u "$user")
+
+  sudo -u "$user" \
+    XDG_RUNTIME_DIR="/run/user/$user_id" \
+    DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$user_id/bus" \
+    gsettings set "$schema" "$key" "$value" 2>/dev/null
+
+  if [[ $? -eq 0 ]]; then
     log_success "gsettings: [$schema] $key = $value"
   else
     log_warn "gsettings failed: [$schema] $key = $value"
@@ -197,8 +205,6 @@ gs_set() {
 apply_gnome_settings_file() {
   local settings_file="$1"
   local user="${SETUP_USER:-$USER}"
-
-  source "$CONFIG_FILE"
 
   [[ ! -f "$settings_file" ]] && {
     log_error "Settings file not found: $settings_file"
