@@ -209,15 +209,18 @@ apply_gnome_settings_file() {
     [[ "$line" =~ ^[[:space:]]*$ ]] && continue
     [[ "$line" =~ ^[[:space:]]*# ]] && continue
 
-    local expanded
-    expanded=$(eval "echo \"$line\"")
+    # Expande variáveis mas preserva aspas
+    expanded=$(envsubst <<< "$line")
 
-    local schema key value
-    schema=$(awk '{print $1}' <<< "$expanded")
-    key=$(awk '{print $2}' <<< "$expanded")
-    value="${expanded#"$schema $key "}"
+    # Divide apenas nos DOIS primeiros campos
+    schema="${expanded%% *}"
+    rest="${expanded#"$schema "}"
+    key="${rest%% *}"
+    value="${rest#"$key "}"
 
     [[ -z "$schema" || -z "$key" || -z "$value" ]] && continue
+
+    echo "DEBUG -> [$schema] $key = $value"
 
     gs_set "$schema" "$key" "$value"
 

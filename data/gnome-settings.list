@@ -39,16 +39,16 @@ org.gnome.desktop.wm.preferences num-workspaces ${GNOME_NUM_WORKSPACES}
 org.gnome.mutter workspaces-only-on-primary ${GNOME_WORKSPACES_PRIMARY_ONLY}
 
 # --- Atalhos de workspace (Super+1~4) ---
-org.gnome.desktop.wm.keybindings switch-to-workspace-1 "['<Super>1']"
-org.gnome.desktop.wm.keybindings switch-to-workspace-2 "['<Super>2']"
-org.gnome.desktop.wm.keybindings switch-to-workspace-3 "['<Super>3']"
-org.gnome.desktop.wm.keybindings switch-to-workspace-4 "['<Super>4']"
+org.gnome.desktop.wm.keybindings switch-to-workspace-1 '["<Super>1"]'
+org.gnome.desktop.wm.keybindings switch-to-workspace-2 '["<Super>2"]'
+org.gnome.desktop.wm.keybindings switch-to-workspace-3 '["<Super>3"]'
+org.gnome.desktop.wm.keybindings switch-to-workspace-4 '["<Super>4"]'
 
 # --- Mover janela para workspace (Super+Shift+1~4) ---
-org.gnome.desktop.wm.keybindings move-to-workspace-1 "['<Super><Shift>1']"
-org.gnome.desktop.wm.keybindings move-to-workspace-2 "['<Super><Shift>2']"
-org.gnome.desktop.wm.keybindings move-to-workspace-3 "['<Super><Shift>3']"
-org.gnome.desktop.wm.keybindings move-to-workspace-4 "['<Super><Shift>4']"
+org.gnome.desktop.wm.keybindings move-to-workspace-1 '["<Super><Shift>1"]'
+org.gnome.desktop.wm.keybindings move-to-workspace-2 '["<Super><Shift>2"]'
+org.gnome.desktop.wm.keybindings move-to-workspace-3 '["<Super><Shift>3"]'
+org.gnome.desktop.wm.keybindings move-to-workspace-4 '["<Super><Shift>4"]'
 
 # --- Botões da janela ---
 org.gnome.desktop.wm.preferences button-layout '${GNOME_BUTTON_LAYOUT}'
@@ -72,10 +72,6 @@ org.gnome.nautilus.preferences show-delete-permanently true
 
 org.gtk.Settings.FileChooser sort-directories-first true
 org.gtk.Settings.FileChooser show-hidden true
-
-# --- GNOME Terminal ---
-org.gnome.Terminal.Legacy.Settings default-show-menubar ${GNOME_TERMINAL_MENUBAR}
-org.gnome.Terminal.Legacy.Settings theme-variant '${GNOME_TERMINAL_THEME}'
 
 # --- Privacidade ---
 org.gnome.desktop.privacy remember-recent-files ${GNOME_PRIVACY_RECENT_FILES}
