@@ -15,7 +15,6 @@ module_00_system() {
   _install_multimedia
   _system_update
   _install_base_packages
-  _check_zram
   _setup_directories
 
   log_success "Module $MODULE_NAME completed."
@@ -34,7 +33,7 @@ _configure_firmware() {
 
   dnf_install linux-firmware
   sudo fwupdmgr refresh --force || true
-  sudo fwupdmgr update || true
+  sudo fwupdmgr update --force || true
 
   ok "Firmware updated."
 }
@@ -48,18 +47,12 @@ _install_multimedia() {
     step "Installing multimedia support (H.264, H.265, ffmpeg, codecs)"
 
     # -------------------------------------------------------------------------
-    # Mesa freeworld — habilita H.264/H.265 na camada VA-API/VDPAU do Mesa
-    # -------------------------------------------------------------------------
-    run_as_root dnf swap -y mesa-va-drivers mesa-va-drivers-freeworld --allowerasing || true
-    run_as_root dnf swap -y mesa-vdpau-drivers mesa-vdpau-drivers-freeworld --allowerasing || true
-
-    # -------------------------------------------------------------------------
     # VA-API Intel — i7-4510U é Haswell (4ª geração)
     # libva-intel-driver  → Haswell e anteriores (até 4ª gen) ← correto aqui
     # intel-media-driver  → Broadwell em diante (5ª gen+)     ← NÃO instalar
     # Instalar intel-media-driver no Haswell não quebra, mas VA-API não funciona
     # -------------------------------------------------------------------------
-    dnf_install libva-intel-driver libva-utils
+    dnf_install libva-intel-driver libva-utils libva
 
     # -------------------------------------------------------------------------
     # ffmpeg completo (RPM Fusion) — substitui o ffmpeg-free do Fedora
@@ -80,6 +73,8 @@ _install_multimedia() {
         gstreamer1-plugins-ugly
         gstreamer1-plugin-openh264
         gstreamer1-plugin-libav
+        openh264
+        mozilla-openh264
         libdvdread
         libdvdnav
         lame
@@ -90,6 +85,7 @@ _install_multimedia() {
         x264
         x265
         vlc
+        ffmpeg-libs
     )
     dnf_install "${multimedia_pkgs[@]}"
 
@@ -102,6 +98,13 @@ _install_multimedia() {
     else
         log_warn "vainfo not found — instale 'libva-utils' para verificar VA-API manualmente"
     fi
+
+    # Grupo multimedia completo (GStreamer, etc.)
+    run_as_root dnf group install -y multimedia 2>/dev/null || true
+    run_as_root dnf group install -y sound-and-video 2>/dev/null || true
+
+    run_as_root dnf config-manager setopt fedora-cisco-openh264.enabled=1 2>/dev/null || true
+    log_warn "Firefox: Enable the OpenH264 plugin in Preferences → Add-ons → Plugins."
 
     ok "Multimedia packages installed"
 }
@@ -118,10 +121,15 @@ _configure_dnf() {
 
   # Idempotent: remove existing entries then re-add
   for param in \
+    "gpgcheck=False" \
+    "skip_if_unavailable=True" \
+    "best=False" \
+    "installonly_limit=2" \
     "max_parallel_downloads=${max_p}" \
     "fastestmirror=True" \
     "defaultyes=True" \
     "color=always" \
+    "deltarpm=True" \
     "metadata_expire=never" \
     "install_weak_deps=False" \
     "clean_requirements_on_remove=True" \
@@ -220,45 +228,7 @@ _system_update() {
     log_warn "System sync completed with warnings"
   fi
 
-  run_as_root dnf group upgrade core -y || true
-}
-
-# -----------------------------------------------------------------------------
-_check_zram() {
-  step "Checking ZRAM configuration"
-
-  # Fedora 33+ ships zram-generator (systemd-zram-generator) by default
-  if is_rpm_installed "zram-generator" || is_rpm_installed "systemd-zram-generator"; then
-    local zram_active
-    zram_active=$(zramctl 2>/dev/null | grep -c "^/dev/zram" || echo 0)
-    if [[ "$zram_active" -gt 0 ]]; then
-      ok "ZRAM already active: $(zramctl 2>/dev/null)"
-    else
-      log_info "zram-generator installed but inactive -- checking config..."
-      local zram_conf="/etc/systemd/zram-generator.conf"
-      if [[ ! -f "$zram_conf" ]]; then
-        run_as_root tee "$zram_conf" > /dev/null << 'ZRAMEOF'
-[zram0]
-zram-size = ram / 2
-compression-algorithm = zstd
-ZRAMEOF
-        log_info "ZRAM config created. Reboot to activate."
-      fi
-    fi
-  else
-    log_info "zram-generator not found. Installing..."
-    dnf_install zram-generator
-    if [[ ! -f "/etc/systemd/zram-generator.conf" ]]; then
-      run_as_root tee /etc/systemd/zram-generator.conf > /dev/null << 'ZRAMEOF'
-[zram0]
-zram-size = ram / 2
-compression-algorithm = zstd
-ZRAMEOF
-    fi
-    run_as_root systemctl daemon-reload
-    run_as_root systemctl start /dev/zram0 2>/dev/null || true
-    ok "ZRAM installed and configured"
-  fi
+  run_as_root dnf group upgrade -y core 2>/dev/null || true
 }
 
 # -----------------------------------------------------------------------------
