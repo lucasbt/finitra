@@ -142,7 +142,7 @@ enabled=1
 gpgcheck=1
 gpgkey=https://packages.microsoft.com/keys/microsoft.asc
 REPOEOF
-    run_as_root dnf check-update --refresh 2>/dev/null || true
+    run_as_root dnf check-update --refresh --repo=code 2>/dev/null || true
     log_info "VSCode repository added"
   else
     skip "VSCode repository already present"
