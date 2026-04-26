@@ -452,7 +452,7 @@ main() {
       _cmd_config
       exit 0
       ;;
-    --help|-h)
+    help|--help|-h)
       _show_help
       exit 0
       ;;
