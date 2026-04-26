@@ -32,8 +32,12 @@ _configure_firmware() {
   fi
 
   dnf_install linux-firmware
-  sudo fwupdmgr refresh --force || true
-  sudo fwupdmgr update --force || true
+  # Firmware (se fwupdmgr disponível)
+  if has_cmd fwupdmgr; then
+    log_info "Checking firmware updates..."
+    fwupdmgr refresh --force  2>/dev/null || true
+    fwupdmgr update -y        2>/dev/null || true
+  fi
 
   ok "Firmware updated."
 }
@@ -173,7 +177,7 @@ _add_rpmfusion() {
     rpmfusion-free-release-tainted \
     rpmfusion-nonfree-release-tainted \
     rpmfusion-free-appstream-data \
-    rpmfusion-nonfree-appstream-data 2>/dev/null || true
+    rpmfusion-nonfree-appstream-data || true
 
   ok "RPM Fusion configured"
 }
@@ -214,22 +218,25 @@ _remove_unwanted_repos() {
 
 # -----------------------------------------------------------------------------
 _system_update() {
-  step "Synchronizing system packages"
+  step "Updating system packages"
 
-  if run_as_root dnf distro-sync -y --refresh --allowerasing --skip-broken; then
-    ok "System synchronized"
+  # Upgrade all packages (--refresh já atualiza o cache)
+  log_info "Running full system upgrade..."
+  if run_as_root dnf upgrade -y --refresh; then
+    ok "System packages upgraded"
   else
-    log_warn "System sync completed with warnings"
+    log_warn "System upgrade completed with warnings"
   fi
 
-  log_info "Refreshing DNF cache..."
-  if run_as_root dnf makecache --refresh -q; then
-    log_info "DNF metadata refreshed"
-  else
-    log_warn "DNF makecache failed (continuing)"
-  fi
-
+  # Upgrade do grupo core (falha silenciosa é aceitável aqui)
+  log_info "Upgrading core group..."
   run_as_root dnf group upgrade -y core 2>/dev/null || true
+
+  # Remover pacotes órfãos
+  log_info "Removing orphaned packages..."
+  run_as_root dnf autoremove -y || true
+
+  _configure_firmware
 }
 
 # -----------------------------------------------------------------------------
