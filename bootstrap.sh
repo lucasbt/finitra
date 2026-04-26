@@ -51,7 +51,7 @@ _print_banner() {
 # 1. Install required dependencies with user approval
 # =============================================================================
 _install_deps() {
-  local deps=(git curl whiptail)
+  local deps=(git curl gum)
   local missing=()
 
   for dep in "${deps[@]}"; do
