@@ -216,7 +216,7 @@ _remove_unwanted_repos() {
 _system_update() {
   step "Synchronizing system packages"
 
-  if run_as_root dnf distro-sync -y --refresh --allowerasing; then
+  if run_as_root dnf distro-sync -y --refresh --allowerasing --skip-broken; then
     ok "System synchronized"
   else
     log_warn "System sync completed with warnings"
