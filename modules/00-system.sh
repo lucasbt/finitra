@@ -209,12 +209,6 @@ _remove_unwanted_repos() {
     log_warn "DNF clean failed (continuing)"
   fi
 
-  if run_as_root dnf makecache --refresh -q; then
-    ok "DNF metadata refreshed"
-  else
-    log_warn "DNF makecache failed (continuing)"
-  fi
-
   ok "Unwanted repositories cleaned up"
 }
 
@@ -226,6 +220,13 @@ _system_update() {
     ok "System synchronized"
   else
     log_warn "System sync completed with warnings"
+  fi
+
+  log_info "Refreshing DNF cache..."
+  if run_as_root dnf makecache --refresh -q; then
+    log_info "DNF metadata refreshed"
+  else
+    log_warn "DNF makecache failed (continuing)"
   fi
 
   run_as_root dnf group upgrade -y core 2>/dev/null || true
