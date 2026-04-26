@@ -13,7 +13,6 @@ module_40_optimizations() {
   _configure_io_scheduler
   _configure_trim
   _configure_journald
-  _configure_dnf_makecache_timer
   _configure_boot_behavior
 
   log_success "Module $MODULE_NAME completed."
@@ -43,9 +42,24 @@ vm.swappiness = ${VM_SWAPPINESS:-10}
 # Prefer keeping inode/dentry cache (benefits SSD + dev workloads)
 vm.vfs_cache_pressure = 50
 
+# ── I/O 
+# Reduz latência de escrita em SSD
+vm.dirty_ratio = 10
+vm.dirty_background_ratio = 3
+
 # --- Network (useful for container workloads) ---
 net.core.somaxconn = 4096
 net.ipv4.tcp_fastopen = 3
+net.ipv4.tcp_max_syn_backlog = 4096
+net.core.netdev_max_backlog = 4096
+
+# ── Inotify: essencial para IDE monitorar projetos grandes ───────────────────
+# IntelliJ/VS Code precisam de muitos watches
+fs.inotify.max_user_watches = 524288
+fs.inotify.max_user_instances = 512
+
+# ── File descriptors ─────────────────────────────────────────────────────────
+fs.file-max = 2097152
 SYSCTLEOF
 
   run_as_root sysctl --system &>/dev/null || run_as_root sysctl -p "$conf_file"
@@ -127,29 +141,6 @@ JOURNALEOF
     ok "journald limited to $max_size, $max_files files"
   else
     skip "journald already configured"
-  fi
-}
-
-# -----------------------------------------------------------------------------
-_configure_dnf_makecache_timer() {
-  step "Reducing dnf-makecache frequency (weekly instead of hourly)"
-
-  local override_dir="/etc/systemd/system/dnf-makecache.timer.d"
-  local override_file="${override_dir}/override.conf"
-
-  run_as_root mkdir -p "$override_dir"
-
-  if [[ ! -f "$override_file" ]]; then
-    run_as_root tee "$override_file" > /dev/null << 'TIMEREOF'
-[Timer]
-OnCalendar=
-OnCalendar=weekly
-RandomizedDelaySec=1h
-TIMEREOF
-    run_as_root systemctl daemon-reload
-    ok "dnf-makecache scheduled weekly"
-  else
-    skip "dnf-makecache override already exists"
   fi
 }
 

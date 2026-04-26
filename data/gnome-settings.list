@@ -37,6 +37,18 @@ org.gnome.settings-daemon.plugins.color night-light-schedule-to ${GNOME_NIGHT_LI
 org.gnome.mutter dynamic-workspaces ${GNOME_DYNAMIC_WORKSPACES}
 org.gnome.desktop.wm.preferences num-workspaces ${GNOME_NUM_WORKSPACES}
 org.gnome.mutter workspaces-only-on-primary ${GNOME_WORKSPACES_PRIMARY_ONLY}
+org.gnome.desktop.wm.preferences audible-bell false
+org.gnome.desktop.notifications show-in-lock-screen false
+
+org.gnome.shell.keybindings switch-to-application-1 "[]"
+org.gnome.shell.keybindings switch-to-application-2 "[]"
+org.gnome.shell.keybindings switch-to-application-3 "[]"
+org.gnome.shell.keybindings switch-to-application-4 "[]"
+org.gnome.shell.keybindings switch-to-application-5 "[]"
+org.gnome.shell.keybindings switch-to-application-6 "[]"
+org.gnome.shell.keybindings switch-to-application-7 "[]"
+org.gnome.shell.keybindings switch-to-application-8 "[]"
+org.gnome.shell.keybindings switch-to-application-9 "[]"
 
 org.gnome.desktop.wm.keybindings switch-to-workspace-1 ['<Super>1']
 org.gnome.desktop.wm.keybindings switch-to-workspace-2 ['<Super>2']
@@ -47,6 +59,8 @@ org.gnome.desktop.wm.keybindings move-to-workspace-1 ['<Super><Shift>1']
 org.gnome.desktop.wm.keybindings move-to-workspace-2 ['<Super><Shift>2']
 org.gnome.desktop.wm.keybindings move-to-workspace-3 ['<Super><Shift>3']
 org.gnome.desktop.wm.keybindings move-to-workspace-4 ['<Super><Shift>4']
+
+org.gnome.desktop.wm.keybindings show-desktop "['<Super>d']"
 
 # --- Botões da janela ---
 org.gnome.desktop.wm.preferences button-layout "${GNOME_BUTTON_LAYOUT}"
@@ -61,6 +75,7 @@ org.gnome.settings-daemon.plugins.power ambient-enabled ${GNOME_AMBIENT_BRIGHTNE
 org.gnome.desktop.peripherals.touchpad tap-to-click ${GNOME_TOUCHPAD_TAP_CLICK}
 org.gnome.desktop.peripherals.touchpad two-finger-scrolling-enabled ${GNOME_TOUCHPAD_TWO_FINGER_SCROLL}
 org.gnome.desktop.peripherals.touchpad natural-scroll ${GNOME_TOUCHPAD_NATURAL_SCROLL}
+org.gnome.desktop.peripherals.mouse accel-profile 'adaptive'
 
 # --- Nautilus ---
 org.gnome.nautilus.preferences default-folder-viewer "${GNOME_NAUTILUS_VIEW}"
@@ -76,9 +91,6 @@ org.gnome.desktop.privacy remember-recent-files ${GNOME_PRIVACY_RECENT_FILES}
 org.gnome.desktop.privacy recent-files-max-age ${GNOME_PRIVACY_RECENT_FILES_AGE}
 org.gnome.desktop.privacy remove-old-temp-files ${GNOME_PRIVACY_REMOVE_TEMP}
 org.gnome.desktop.privacy old-files-age ${GNOME_PRIVACY_OLD_FILES_AGE}
-
-org.gnome.desktop.search-providers disable-external true
-
 
 # Desabilitar verificação automática de updates no GNOME Software via gsettings
 # Impede que o app em si dispare checagens mesmo sem os serviços acima
@@ -98,3 +110,14 @@ org.gnome.Ptyxis tab-bar-policy "${PTYXIS_TAB_BAR_POLICY}"
 org.gnome.Ptyxis restore-session ${PTYXIS_RESTORE_SESSION}
 org.gnome.Ptyxis audible-bell ${PTYXIS_AUDIBLE_BELL}
 org.gnome.Ptyxis new-tab-position "${PTYXIS_NEW_TAB_POSITION}"
+
+org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/','/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/']"
+# ck0 — Terminal (Ptyxis)
+gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/ name    'Terminal'
+gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/ command 'ptyxis'
+gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/ binding '<Super>t'
+
+# ck1 — Screenshot com annotation via Gradia
+gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ name 'Gradia Screenshot'
+gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ command 'flatpak run be.alexandervanhee.gradia --screenshot=INTERACTIVE'
+gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ binding '<Super>Print'

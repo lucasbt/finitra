@@ -7,6 +7,17 @@
 
 MODULE_NAME="30-desktop"
 
+# Font list
+FONTS=(
+  "FiraCode"
+  "JetBrainsMono"
+  "Hack"
+  "Meslo"
+  "SourceCodePro"
+  "UbuntuMono"
+  "CascadiaCode"
+)
+
 WALLS_FOLDERS=(
 	"tile"
 	"retro"
@@ -30,6 +41,8 @@ module_30_desktop() {
   _configure_localsearch
   _configure_gnome_extensions_deps
   _install_wallpapers
+  _install_fonts
+  _install_microsoft_fonts
 
   log_success "Module $MODULE_NAME completed."
 }
@@ -38,6 +51,8 @@ module_30_desktop() {
 _disable_unnecessary_services() {
     step "Disable unnecessary services"
     local user="${SETUP_USER:-$USER}"
+    local user_home
+    user_home=$(getent passwd "$user" | cut -d: -f6)
 
     # -------------------------------------------------------------------------
     # Helper: disable system service only if it exists and is enabled
@@ -89,10 +104,66 @@ _disable_unnecessary_services() {
     _mask_system_unit "dnf5-makecache.service"
 
     # -------------------------------------------------------------------------
-    # GNOME initial setup — oneshot, já rodou após primeiro login
-    # Desabilitar é seguro, apenas evita reexecução em edge cases
+    # ABRT — relatórios automáticos de crash
+    # Existe no Fedora 43, seguro desabilitar em ambiente de dev
     # -------------------------------------------------------------------------
-    _disable_system_svc "gnome-initial-setup-copy-worker.service"
+    local abrt_services=(
+        "abrtd.service"
+        "abrt-ccpp.service"
+        "abrt-oops.service"
+        "abrt-vmcore.service"
+        "abrt-xorg.service"
+        "abrt-journal-core.service"
+    )
+    for svc in "${abrt_services[@]}"; do
+        _disable_system_svc "$svc"
+    done
+
+    # -------------------------------------------------------------------------
+    # ModemManager — gerenciador de banda larga móvel
+    # Seguro desabilitar em máquinas sem modem/SIM
+    # -------------------------------------------------------------------------
+    _disable_system_svc "ModemManager.service"
+
+    # -------------------------------------------------------------------------
+    # NetworkManager-wait-online — atrasa boot em 15-20s aguardando rede
+    # Mascarar evita que seja reativado por dependência de outros serviços
+    # -------------------------------------------------------------------------
+    _mask_system_unit "NetworkManager-wait-online.service"
+
+    # -------------------------------------------------------------------------
+    # GNOME Remote Desktop — não usado em ambiente de dev local
+    # -------------------------------------------------------------------------
+    _disable_system_svc "gnome-remote-desktop.service"
+
+    # -------------------------------------------------------------------------
+    # Tracker legado (v1/v2) — indexação pesada de arquivos
+    # Presente em sistemas que fizeram upgrade de versões anteriores
+    # O LocalSearch/Tracker3 é tratado separadamente em _configure_localsearch
+    # -------------------------------------------------------------------------
+    local tracker_legacy_services=(
+        "tracker-store.service"
+        "tracker-miner-fs.service"
+    )
+    for svc in "${tracker_legacy_services[@]}"; do
+        _disable_system_svc "$svc"
+    done
+
+    # Encerrar daemon do tracker3 se estiver rodando
+    if command -v tracker3 &>/dev/null; then
+        sudo -u "$user" tracker3 daemon -t 2>/dev/null || true
+        log_info "Tracker3 daemon stopped"
+    fi
+
+    # Impedir autostart do tracker via arquivo XDG
+    local tracker_autostart="${user_home}/.config/autostart/tracker-disable.desktop"
+    sudo -u "$user" mkdir -p "${user_home}/.config/autostart"
+    sudo -u "$user" bash -c "cat > '${tracker_autostart}'" << 'EOF'
+[Desktop Entry]
+Hidden=true
+X-GNOME-Autostart-enabled=false
+EOF
+    log_info "Tracker autostart suppressed: $tracker_autostart"
 
     # -------------------------------------------------------------------------
     # Evolution Data Server — calendário/contatos, não usado em setup de dev
@@ -103,33 +174,46 @@ _disable_unnecessary_services() {
     _disable_user_svc "evolution-calendar-factory.service"
 
     # -------------------------------------------------------------------------
-    # GNOME Software autostart — no Fedora 43 não há mais gnome-software-service.service
-    # O controle correto é via arquivo de autostart XDG
+    # Autostart XDG — entradas desnecessárias que aumentam tempo de login
+    # e consumo de RAM sem benefício em ambiente de desenvolvimento
     # -------------------------------------------------------------------------
+    local autostart_remove=(
+        # Instalador live — irrelevante pós-instalação
+        "/etc/xdg/autostart/liveinst-setup.desktop"
+        # Orca (leitor de tela) — desabilitar se não usar acessibilidade
+        "/etc/xdg/autostart/orca-autostart.desktop"
+        # Applet de relatórios de problema (ABRT/GNOME)
+        "/etc/xdg/autostart/org.freedesktop.problems.applet.desktop"
+        # Evolution — alarmes de calendário
+        "/etc/xdg/autostart/org.gnome.Evolution-alarm-notify.desktop"
+        # Notificações de disco (DiskUtility)
+        "/etc/xdg/autostart/org.gnome.SettingsDaemon.DiskUtilityNotify.desktop"
+        # SPICE VD Agent — apenas necessário em VMs SPICE
+        "/etc/xdg/autostart/spice-vdagent.desktop"
+        # LocalSearch (Tracker3) — indexação gerenciada em _configure_localsearch
+        "/etc/xdg/autostart/localsearch-3.desktop"
+    )
+
+    # GNOME Software autostarta no boot e pode consumir até ~900 MB de RAM
     local gnome_sw_autostart="/etc/xdg/autostart/org.gnome.Software.desktop"
     if [[ -f "$gnome_sw_autostart" ]]; then
-        sudo rm -f "$gnome_sw_autostart" && \
-            log_info "Removed GNOME Software autostart: $gnome_sw_autostart"
-    else
-        log_info "Skipped (not found): org.gnome.Software.desktop autostart"
+        autostart_remove+=("$gnome_sw_autostart")
     fi
-    # Fallback: caso ainda exista como serviço de usuário em alguma variante
+
+    for entry in "${autostart_remove[@]}"; do
+        if [[ -f "$entry" ]]; then
+            sudo rm -f "$entry" && \
+                log_info "Removed autostart: $(basename "$entry")" || \
+                log_warn "Could not remove: $entry"
+        else
+            log_info "Skipped (not found): $(basename "$entry")"
+        fi
+    done
+
+    # Fallback: caso gnome-software-service ainda exista como serviço de usuário
     _disable_user_svc "gnome-software-service.service"
 
-    # -------------------------------------------------------------------------
-    # ABRT — relatórios automáticos de crash
-    # Existe no Fedora 43, seguro desabilitar em ambiente de dev
-    # -------------------------------------------------------------------------
-    local abrt_services=(
-        "abrtd.service"
-        "abrt-ccpp.service"
-        "abrt-oops.service"
-        "abrt-xorg.service"
-        "abrt-journal-core.service"
-    )
-    for svc in "${abrt_services[@]}"; do
-        _disable_system_svc "$svc"
-    done
+    unset -f _disable_system_svc _disable_user_svc _mask_system_unit
 
     log_success "Unnecessary services disabled"
     log_warn "Background auto-updates disabled. Update manually with: sudo dnf upgrade"
@@ -349,7 +433,12 @@ _configure_gnome_extensions_deps() {
   dnf_install \
     gnome-extensions-app \
     gnome-shell-extension-appindicator \
-    gnome-tweaks
+    gnome-tweaks \
+    gnome-shell-extension-caffeine \
+    gnome-shell-extension-auto-move-windows \
+    gnome-shell-extension-just-perfection \
+    gnome-shell-extension-no-overview \
+    gnome-shell-extension-user-theme
 
   ok "GNOME extension tools installed"
 }
@@ -414,6 +503,74 @@ _install_wallpapers() {
 
     ok "Wallpapers installed to $collection_dir"
 }
+
+# -----------------------------------------------------------------------------
+_install_fonts() {
+    local fonts_nerd_url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download"
+
+    local fonts_dir="$HOME/.local/share/fonts/nerd-fonts"
+    mkdir -p "$fonts_dir"
+
+    # Considera instalado se o diretório existir e não estiver vazio
+    if [[ -d "$fonts_dir" && -n "$(ls -A "$fonts_dir" 2>/dev/null)" ]]; then
+        skip "Nerd Fonts collection already exists"
+        return
+    fi
+
+    step "Installing Nerd Fonts collection"
+    mkdir -p "$fonts_dir"
+
+    log_info "Download Nerd Fonts..."
+    for font in "${FONTS[@]}"; do
+        zip_file="${font}.zip"
+        url="${fonts_nerd_url}/${zip_file}"
+        log "Download $font..."
+        curl -fLo "/tmp/${zip_file}" "$url"
+        log "Extract $font..."
+        unzip -o "/tmp/${zip_file}" -d "$fonts_dir" >/dev/null
+        rm "/tmp/${zip_file}"
+    done
+
+    log_info "Updating fonts cache..."
+    fc-cache -fv >/dev/null
+
+    ok "Nerd Fonts installed to $fonts_dir"
+}
+
+# -----------------------------------------------------------------------------
+_install_microsoft_fonts() {
+    if [[ "${INSTALL_MICROSOFT_FONTS:-true}" != "true" ]]; then
+        skip "Microsoft fonts install disabled in config"
+        return
+    fi
+ 
+    step "Installing Microsoft core fonts"
+    local sentinel="/usr/share/fonts/msttcore/arial.ttf"
+    if [[ -f "$sentinel" ]]; then
+        skip "Microsoft fonts already installed"
+        return
+    fi
+ 
+    local installer_url="https://downloads.sourceforge.net/project/mscorefonts2/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm"
+    local installer_rpm="${CACHE_DIR}/msttcore-fonts-installer.rpm"
+ 
+    dnf_install cabextract
+ 
+    log_info "Downloading msttcore-fonts-installer..."
+    if curl -fsSL --retry 3 --retry-delay 5 --max-time 60 \
+            -o "$installer_rpm" "$installer_url"; then
+        sudo dnf install -y "$installer_rpm" && \
+            sudo fc-cache -f /usr/share/fonts/msttcore 2>/dev/null || true
+        rm -f "$installer_rpm"
+        ok "Microsoft fonts installed"
+    else
+        rm -f "$installer_rpm" 2>/dev/null || true
+        log_warn "Could not download Microsoft fonts after 3 attempts"
+        log_warn "To install manually later:"
+        log_warn "  sudo dnf install '$installer_url'"
+    fi
+}
+
 
 # Standalone entry point
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

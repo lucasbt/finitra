@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # modules/20-dev-tools.sh -- Development Tools
-# mise, Java 21/25, Node LTS, Python latest, Go latest, Starship, Podman
+# Java 21/25, Maven, Gradle, Starship, Podman
 # =============================================================================
 
 MODULE_NAME="20-dev-tools"
@@ -9,7 +9,7 @@ MODULE_NAME="20-dev-tools"
 module_20_dev_tools() {
   log_section "Module: Development Tools"
 
-  # Build dependencies needed to compile runtimes from source
+  # ── 1. Build dependencies (compilação de runtimes a partir do fonte)
   log_info "Installing build dependencies for runtimes..."
   dnf_install \
     gcc gcc-c++ make \
@@ -18,201 +18,48 @@ module_20_dev_tools() {
     xz-devel tk-devel \
     libuuid-devel
 
+  # ── 2. Controle de versão (outros passos podem clonar repositórios)
   _install_git
+
+  # ── 3. Gerenciadores de runtime (devem existir antes de instalar qualquer runtime)
+  _install_sdkman
+
+  # ── 4. Runtimes
+  _install_sdkman_runtimes   # Java 21 LTS + Java 25, Maven, Gradle
+  _install_nvm               # Node.js LTS + pacotes npm globais
+
+  # ── 5. Infraestrutura de containers (IDEs podem se conectar ao socket Docker)
+  _configure_podman
+
+  # ── 6. IDEs (IntelliJ requer Java 21 já instalado)
   _install_ides
-  _install_typora
+
+  # ── 7. Ferramentas CLI de infraestrutura
   _install_kubectl
   _install_awscli
-  _install_mise
-  _configure_mise_global
-  _mise_install_runtimes
+
+  # ── 8. Clientes de API REST (mesmo propósito, agrupados)
   _install_insomnia
   _install_postman
-  _install_drawio
-  _install_dbeaver
-  _configure_podman
+
+  # ── 9. Utilitários GUI (sem interdependências entre si)
+  _install_dbeaver  # banco de dados
+  _install_drawio   # diagramas
+  _install_typora   # editor Markdown
+
+  # ── 10. Shell prompt (cosmético; não bloqueia nenhum outro passo)
   _install_starship
+
+  # ── 11. AI CLI Tools
+  _install_ai_cli_tools      # Gemini CLI + OpenCode
 
   log_success "Module $MODULE_NAME completed."
 }
 
 
-# -----------------------------------------------------------------------------
-_install_typora() {
-    local install_dir="$SETUP_HOME/.local/share/typora"
-    local bin_link="$SETUP_HOME/.local/bin/typora"
-    local desktop_file="$SETUP_HOME/.local/share/applications/typora.desktop"
-    local archive="${CACHE_DIR}/typora.tar.gz"
-
-    # Validação robusta
-    if [[ -x "$bin_link" ]] || [[ -x "$install_dir/Typora" ]] || command -v typora &>/dev/null; then
-        skip "Typora already installed"
-        return
-    fi
-
-    step "Installing Typora (portable tarball)"
-    mkdir -p "$install_dir" "$SETUP_HOME/.local/bin"
-
-    cached_download \
-        "https://typora.io/linux/Typora-linux-x64.tar.gz" \
-        "$archive"
-
-    if ! tar -xzf "$archive" -C "$install_dir" --strip-components=2; then
-        log_error "Failed to extract Typora archive"
-        return 1
-    fi
-
-    ln -sf "$install_dir/Typora" "$bin_link"
-    log_info "Created symlink: $bin_link → $install_dir/Typora"
-
-    mkdir -p "$(dirname "$desktop_file")"
-    cat > "$desktop_file" <<EOF
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=Typora
-Exec=$bin_link %f
-Icon=$install_dir/resources/assets/icon/icon_256x256@2x.png
-Terminal=false
-Categories=Utility;TextEditor;Markdown;
-StartupNotify=true
-EOF
-    chmod +x "$desktop_file"
-
-    ok "Typora installed"
-}
-
-# -----------------------------------------------------------------------------
-_install_drawio() {
-    step "Installing draw.io desktop"
-
-    if rpm -q draw.io &>/dev/null; then
-      skip "draw.io already installed"
-      return
-    fi
-    log_info "Querying latest draw.io release from GitHub..."
-
-    local tag
-    tag=$(curl -s https://api.github.com/repos/jgraph/drawio-desktop/releases/latest \
-        | grep -oP '"tag_name":\s*"\K([^"]+)')
-
-    if [[ -z "$tag" ]]; then
-        log_error "Unable to identify the latest draw.io version on GitHub"
-        return 1
-    fi
-    log_info "Latest draw.io release: $tag"
-
-    local rpm_asset
-    rpm_asset=$(curl -s "https://api.github.com/repos/jgraph/drawio-desktop/releases/tags/${tag}" \
-        | grep -oP 'browser_download_url":\s*"\K([^"]*x86_64[^"]*\.rpm)')
-
-    if [[ -z "$rpm_asset" ]]; then
-        log_error "Could not find .rpm asset for release $tag"
-        return 1
-    fi
-    log_info "RPM asset found: $rpm_asset"
-
-    local rpm_file="${CACHE_DIR}/$(basename "${rpm_asset}")"
-
-    if [[ ! -f "$rpm_file" ]]; then
-        log_info "Downloading draw.io RPM..."
-        curl -L "$rpm_asset" -o "$rpm_file"
-    else
-        log_info "Using cached draw.io RPM: $rpm_file"
-    fi
-
-    sudo dnf install -y "$rpm_file"
-    ok "draw.io installed (${tag})"
-}
-
-# -----------------------------------------------------------------------------
-_install_dbeaver() {
-    if command -v dbeaver &>/dev/null; then
-        skip "DBeaver already installed"
-        return
-    fi
-
-    step "Installing DBeaver Community"
-    log_info "Querying latest DBeaver release from GitHub..."
-
-    local tag
-    tag=$(curl -s https://api.github.com/repos/dbeaver/dbeaver/releases/latest \
-        | grep -oP '"tag_name":\s*"\K([^"]+)')
-
-    if [[ -z "$tag" ]]; then
-        log_error "Unable to identify the latest DBeaver version on GitHub"
-        return 1
-    fi
-    log_info "Latest DBeaver release: $tag"
-
-    local rpm_asset
-    rpm_asset=$(curl -s "https://api.github.com/repos/dbeaver/dbeaver/releases/tags/${tag}" \
-        | grep -oP 'browser_download_url":\s*"\K([^"]*x86_64\.rpm)')
-
-    if [[ -z "$rpm_asset" ]]; then
-        log_error "Could not find .rpm asset for release $tag"
-        return 1
-    fi
-    log_info "RPM asset found: $rpm_asset"
-
-    local rpm_file="${CACHE_DIR}/$(basename "${rpm_asset}")"
-
-    if [[ ! -f "$rpm_file" ]]; then
-        log_info "Downloading DBeaver RPM..."
-        curl -L "$rpm_asset" -o "$rpm_file"
-    else
-        log_info "Using cached DBeaver RPM: $rpm_file"
-    fi
-
-    sudo dnf install -y "$rpm_file"
-    ok "DBeaver Community installed (${tag})"
-}
-
-_install_awscli() {
-    local zip_file="${CACHE_DIR}/awscliv2.zip"
-    local extract_dir="${CACHE_DIR}/awscli-extracted"
-    local install_dir="/usr/local/aws-cli"
-    local bin_dir="/usr/local/bin"
-
-    if ! command -v unzip &>/dev/null; then
-        sudo dnf install -y unzip
-    fi
-
-    # Versão instalada
-    local current_version=""
-    if command -v aws &>/dev/null; then
-        current_version=$(aws --version 2>&1 | awk -F/ '{print $2}' | awk '{print $1}')
-    fi
-
-    step "Checking AWS CLI"
-
-    cached_download \
-        "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" \
-        "$zip_file"
-
-    rm -rf "$extract_dir"
-    unzip -q "$zip_file" -d "$extract_dir"
-
-    local new_version
-    new_version=$("$extract_dir/aws/dist/aws" --version 2>&1 | awk -F/ '{print $2}' | awk '{print $1}')
-
-    if [[ "$current_version" == "$new_version" && -n "$current_version" ]]; then
-        skip "AWS CLI already at latest version ($current_version)"
-        rm -rf "$extract_dir"
-        return
-    fi
-
-    step "Installing/Updating AWS CLI to $new_version"
-
-    sudo "$extract_dir/aws/install" \
-        --install-dir "$install_dir" \
-        --bin-dir "$bin_dir" \
-        ${current_version:+--update}
-
-    rm -rf "$extract_dir"
-
-    ok "AWS CLI now at $new_version"
-}
+# =============================================================================
+# 2. Controle de versão
+# =============================================================================
 
 _install_git() {
     step "Installing Git"
@@ -221,12 +68,368 @@ _install_git() {
     ok "Git installed and configured"
 }
 
-# ------------------------------------------------------------
-# IDEs
-# ------------------------------------------------------------
+
+# =============================================================================
+# 3. Gerenciadores de runtime
+# =============================================================================
+
+_install_sdkman() {
+  step "Installing SDKMAN (SDK version manager)"
+
+  local user="${SETUP_USER:-$USER}"
+  local user_home="${SETUP_HOME:-$HOME}"
+  local sdkman_dir="${user_home}/.sdkman"
+  local sdkman_init="${sdkman_dir}/bin/sdkman-init.sh"
+
+  if [[ -d "$sdkman_dir" ]]; then
+    skip "SDKMAN already installed at $sdkman_dir"
+  else
+    log_info "Downloading and installing SDKMAN..."
+    sudo -u "$user" bash -c 'curl -s "https://get.sdkman.io" | bash' || {
+      log_error "Failed to install SDKMAN via curl"
+      return 1
+    }
+    ok "SDKMAN installed"
+  fi
+
+  _ensure_sdkman_bashrc "$user" "$user_home"
+}
+
+_ensure_sdkman_bashrc() {
+  local user="$1"
+  local user_home="$2"
+  local bashrc="${user_home}/.bashrc"
+  local sdkman_init="${user_home}/.sdkman/bin/sdkman-init.sh"
+
+  if ! grep -qF 'sdkman-init.sh' "$bashrc" 2>/dev/null; then
+    sudo -u "$user" bash -c "cat >> \"$bashrc\"" << EOF
+
+# SDKMAN -- SDK version manager
+export SDKMAN_DIR="${user_home}/.sdkman"
+[[ -s "${sdkman_init}" ]] && source "${sdkman_init}"
+EOF
+    log_info "SDKMAN activation added to .bashrc"
+  else
+    skip "SDKMAN already present in .bashrc"
+  fi
+}
+
+
+# =============================================================================
+# 4. Runtimes
+# =============================================================================
+
+# ── Helpers internos do SDKMAN ────────────────────────────────────────────────
+
+_sdk_latest_java() {
+  local major="$1"
+  local dist="$2"
+  local user="${SETUP_USER:-$USER}"
+  local user_home="${SETUP_HOME:-$HOME}"
+  local sdkman_init="${user_home}/.sdkman/bin/sdkman-init.sh"
+
+  sudo -u "$user" bash -c "
+    source \"${sdkman_init}\" 2>/dev/null
+    sdk list java 2>/dev/null \
+      | grep -E \"\|\s+${dist}\s+\|\" \
+      | grep -E \"\|\s+${major}\.\" \
+      | grep -Ev \"local\s*\||installed\s*\|\" \
+      | awk -F'|' '{gsub(/[[:space:]]/, \"\", \$NF); print \$NF}' \
+      | grep -v \"^\$\" \
+      | sort -t. -k1,1n -k2,2n -k3,3n \
+      | tail -1
+  "
+}
+
+_sdk_install_java() {
+  local user="$1"
+  local user_home="$2"
+  local java_id="$3"
+  local major="$4"
+  local sdkman_init="${user_home}/.sdkman/bin/sdkman-init.sh"
+
+  if sudo -u "$user" bash -c "ls \"${user_home}/.sdkman/candidates/java/\" 2>/dev/null" \
+      | grep -qx "$java_id"; then
+    skip "Java ${major} already installed: $java_id"
+  else
+    log_info "Installing Java ${major}: $java_id"
+    sudo -u "$user" bash -c "
+      source \"${sdkman_init}\" 2>/dev/null
+      sdk install java \"${java_id}\"
+    " || {
+      log_error "Failed to install Java ${major}: $java_id"
+      return 1
+    }
+    ok "Java ${major} installed: $java_id"
+  fi
+}
+
+# ── Instalação dos runtimes via SDKMAN ────────────────────────────────────────
+
+_install_sdkman_runtimes() {
+  step "Installing runtimes via SDKMAN (may take a while on first run)"
+
+  local user="${SETUP_USER:-$USER}"
+  local user_home="${SETUP_HOME:-$HOME}"
+  local sdkman_init="${user_home}/.sdkman/bin/sdkman-init.sh"
+
+  if [[ ! -s "$sdkman_init" ]]; then
+    log_error "SDKMAN not found at $sdkman_init. Skipping runtime installation."
+    return 1
+  fi
+
+  # ── Java 21 LTS
+  log_info "Detecting latest Java 21 Temurin..."
+  local java21_id
+  java21_id=$(_sdk_latest_java "21" "tem")
+
+  if [[ -n "$java21_id" ]]; then
+    _sdk_install_java "$user" "$user_home" "$java21_id" "21"
+    sudo -u "$user" bash -c "
+      source \"${sdkman_init}\" 2>/dev/null
+      sdk default java \"${java21_id}\"
+    "
+    log_info "Java 21 set as default: $java21_id"
+  else
+    log_warn "Java 21 Temurin not detected automatically."
+    log_warn "Check manually: sdk list java | grep '21.*tem'"
+    java21_id="21-tem"
+  fi
+
+  # ── Java 25
+  log_info "Detecting latest Java 25 Temurin..."
+  local java25_id
+  java25_id=$(_sdk_latest_java "25" "tem")
+
+  if [[ -n "$java25_id" ]]; then
+    _sdk_install_java "$user" "$user_home" "$java25_id" "25"
+  else
+    log_warn "Java 25 Temurin not detected automatically."
+    log_warn "Check manually: sdk list java | grep '25.*tem'"
+    java25_id="25-tem"
+  fi
+
+  # ── Maven e Gradle
+  log_info "Installing Maven and Gradle via SDKMAN..."
+  sudo -u "$user" bash -c "
+    source \"${sdkman_init}\" 2>/dev/null
+    sdk install maven  2>/dev/null || true
+    sdk install gradle 2>/dev/null || true
+  "
+  ok "SDKMAN runtimes installed — Java 21: ${java21_id} | Java 25: ${java25_id}"
+}
+
+
+# ── NVM + Node.js LTS ─────────────────────────────────────────────────────────
+
+_install_nvm() {
+  local user="${SETUP_USER:-$USER}"
+  local user_home="${SETUP_HOME:-$HOME}"
+  local nvm_dir="${user_home}/.nvm"
+  local bashrc="${user_home}/.bashrc"
+
+  step "Installing NVM (latest)"
+
+  log_info "Querying latest NVM release from GitHub..."
+  local nvm_ver
+  nvm_ver=$(curl -fsSL https://api.github.com/repos/nvm-sh/nvm/releases/latest \
+    | grep -oP '"tag_name":\s*"\K([^"]+)')
+
+  if [[ -z "$nvm_ver" ]]; then
+    log_error "Unable to identify the latest NVM version on GitHub"
+    return 1
+  fi
+  log_info "Latest NVM release: ${nvm_ver}"
+
+  if [[ ! -d "$nvm_dir" ]]; then
+    log_info "Downloading and installing NVM ${nvm_ver}..."
+    sudo -u "$user" bash -c \
+      "curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_ver}/install.sh | bash" || {
+        log_error "Failed to install NVM"
+        return 1
+      }
+    ok "NVM ${nvm_ver} installed"
+  else
+    skip "NVM already installed at ${nvm_dir}"
+  fi
+
+  # Garante que o bloco de inicialização esteja no .bashrc
+  if ! grep -qF 'NVM_DIR' "$bashrc" 2>/dev/null; then
+    sudo -u "$user" bash -c "cat >> \"$bashrc\"" << EOF
+
+# NVM -- Node Version Manager
+export NVM_DIR="${nvm_dir}"
+[[ -s "\$NVM_DIR/nvm.sh" ]] && source "\$NVM_DIR/nvm.sh"
+[[ -s "\$NVM_DIR/bash_completion" ]] && source "\$NVM_DIR/bash_completion"
+EOF
+    log_info "NVM activation added to .bashrc"
+  else
+    skip "NVM already present in .bashrc"
+  fi
+
+  # Instala/usa Node.js LTS e pacotes globais dentro do contexto do usuário
+  log_info "Installing Node.js LTS via NVM..."
+  sudo -u "$user" bash -c "
+    export NVM_DIR=\"${nvm_dir}\"
+    [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
+    nvm install --lts 2>/dev/null || true
+    nvm use     --lts 2>/dev/null || true
+    nvm alias default 'lts/*'    2>/dev/null || true
+  " || {
+    log_error "Failed to install Node.js LTS"
+    return 1
+  }
+
+  log_info "Installing global npm packages..."
+  sudo -u "$user" bash -c "
+    export NVM_DIR=\"${nvm_dir}\"
+    [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
+    npm install -g npm@latest typescript ts-node prettier eslint 2>/dev/null
+  " || log_warn "Some npm packages failed to install — continuing."
+
+  ok "Node.js LTS and NVM installed"
+}
+
+# =============================================================================
+# AI CLI Tools (Gemini CLI + OpenCode)
+# =============================================================================
+ 
+# Agregador — ponto único de entrada para os dois instaladores
+_install_ai_cli_tools() {
+  _install_gemini_cli
+  _install_opencode
+}
+ 
+# ── Gemini CLI (via npm — requer Node.js/NVM) ─────────────────────────────────
+ 
+_install_gemini_cli() {
+  local user="${SETUP_USER:-$USER}"
+  local user_home="${SETUP_HOME:-$HOME}"
+  local nvm_dir="${user_home}/.nvm"
+ 
+  step "Installing Gemini CLI"
+ 
+  if sudo -u "$user" bash -c "
+      export NVM_DIR=\"${nvm_dir}\"
+      [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
+      command -v gemini &>/dev/null
+    "; then
+    skip "Gemini CLI already installed"
+    return
+  fi
+ 
+  log_info "Installing @google/gemini-cli via npm..."
+  sudo -u "$user" bash -c "
+    export NVM_DIR=\"${nvm_dir}\"
+    [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
+    npm install -g @google/gemini-cli 2>/dev/null
+  " || {
+    log_error "Failed to install Gemini CLI"
+    return 1
+  }
+ 
+  ok "Gemini CLI installed"
+}
+ 
+# ── OpenCode (binário Go via script oficial) ──────────────────────────────────
+ 
+_install_opencode() {
+  local user="${SETUP_USER:-$USER}"
+  local user_home="${SETUP_HOME:-$HOME}"
+  local bin_dir="${user_home}/.local/bin"
+ 
+  step "Installing OpenCode"
+ 
+  if sudo -u "$user" bash -c "command -v opencode &>/dev/null"; then
+    skip "OpenCode already installed: $(sudo -u "$user" opencode --version 2>/dev/null)"
+    return
+  fi
+ 
+  log_info "Downloading and installing OpenCode via install script..."
+  sudo -u "$user" bash -c "
+    mkdir -p \"${bin_dir}\"
+    OPENCODE_INSTALL_DIR=\"${bin_dir}\" \
+      curl -fsSL https://opencode.ai/install | bash
+  " || {
+    log_error "Failed to install OpenCode"
+    return 1
+  }
+ 
+  ok "OpenCode installed"
+}
+
+# =============================================================================
+# 5. Infraestrutura de containers
+# =============================================================================
+
+_configure_podman() {
+  step "Configuring Podman"
+
+  local user="${SETUP_USER:-$USER}"
+  local user_home="${SETUP_HOME:-$HOME}"
+
+  dnf_install podman podman-compose podman-docker buildah skopeo containers-common
+
+  # Add docker=podman alias for developer convenience
+  if [[ "${PODMAN_DOCKER_ALIAS:-true}" == "true" ]]; then
+    local bashrc="${user_home}/.bashrc"
+    if ! grep -qF 'alias docker=podman' "$bashrc" 2>/dev/null; then
+      cat >> "$bashrc" << 'PODMANEOF'
+
+# Podman as a Docker drop-in replacement
+alias docker=podman
+alias docker-compose='podman compose'
+PODMANEOF
+      ok "docker=podman alias added to .bashrc"
+    else
+      skip "docker=podman alias already present"
+    fi
+  fi
+
+  # Enable Podman socket for IDEs that expect /var/run/docker.sock
+  if ! sudo -u "$user" systemctl --user is-enabled podman.socket &>/dev/null; then
+    loginctl enable-linger "$USER" 2>/dev/null || true
+    sudo -u "$user" systemctl --user enable --now podman.socket 2>/dev/null || true
+    log_info "Podman socket enabled for user $user"
+  fi
+
+  sudo mkdir -p /etc/containers
+  sudo tee /etc/containers/registries.conf.d/99-dev.conf > /dev/null << 'EOF'
+[[registry]]
+prefix   = "docker.io"
+location = "docker.io"
+
+[[registry]]
+prefix   = "ghcr.io"
+location = "ghcr.io"
+
+[[registry]]
+prefix   = "quay.io"
+location = "quay.io"
+EOF
+
+  dnf_install fuse-overlayfs 2>/dev/null || true
+  mkdir -p ~/.config/containers
+  cat > ~/.config/containers/storage.conf << 'EOF'
+[storage]
+driver = "overlay"
+
+[storage.options.overlay]
+mount_program = "/usr/bin/fuse-overlayfs"
+EOF
+
+
+  ok "Podman installed and configured"
+}
+
+# =============================================================================
+# 6. IDEs
+# =============================================================================
+
 _install_ides() {
   step "Installing IntelliJ"
 
+  # IntelliJ
   if command -v idea &>/dev/null || [[ -x /opt/intellij/bin/idea.sh ]]; then
     skip "IntelliJ already installed"
   else
@@ -265,7 +468,229 @@ EOF
       }
       ok "Zed installed"
   fi
+
+  _configure_vscode
+  
 }
+
+_configure_vscode() {
+  local user="${SETUP_USER:-$USER}"
+  local user_home="${SETUP_HOME:-$HOME}"
+  local settings_dir="${user_home}/.config/Code/User"
+  local sdkman_candidates="${user_home}/.sdkman/candidates/java"
+ 
+  step "Configuring VS Code (extensions + settings)"
+ 
+  # ── Dependência: VS Code precisa estar instalável via 'code'
+  if ! command -v code &>/dev/null; then
+    log_warn "VS Code ('code') not found in PATH — skipping configuration"
+    return
+  fi
+ 
+  # ── Detectar IDs das instalações Java gerenciadas pelo SDKMAN
+  local java21_id java25_id java21_path java25_path
+  java21_id=$(ls "$sdkman_candidates" 2>/dev/null | grep '^21\.' | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
+  java25_id=$(ls "$sdkman_candidates" 2>/dev/null | grep '^25\.' | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
+ 
+  if [[ -z "$java21_id" ]]; then
+    log_warn "Java 21 not found in SDKMAN candidates — java.configuration.runtimes may be incomplete"
+    java21_id="21-tem"  # fallback para evitar JSON inválido
+  fi
+  if [[ -z "$java25_id" ]]; then
+    log_warn "Java 25 not found in SDKMAN candidates — java.configuration.runtimes may be incomplete"
+    java25_id="25-tem"
+  fi
+ 
+  java21_path="${sdkman_candidates}/${java21_id}"
+  java25_path="${sdkman_candidates}/${java25_id}"
+  log_info "Java 21 path: ${java21_path}"
+  log_info "Java 25 path: ${java25_path}"
+ 
+  # ── Extensões
+  log_info "Installing VS Code extensions..."
+  local extensions=(
+    "redhat.java"
+    "vscjava.vscode-java-pack"
+    "vscjava.vscode-maven"
+    "vscjava.vscode-gradle"
+    "vscjava.vscode-spring-initializr"
+    "ms-vscode-remote.remote-containers"
+    "anthropic.claude-code"
+    "eamodio.gitlens"
+    "mhutchie.git-graph"
+    "streetsidesoftware.code-spell-checker"
+    "streetsidesoftware.code-spell-checker-portuguese-brazilian"
+    "usernamehw.errorlens"
+    "gruntfuggly.todo-tree"
+    "mechatroner.rainbow-csv"
+    "zhuangtongfa.material-theme"
+    "PKief.material-icon-theme"
+    "esbenp.prettier-vscode"
+    "dbaeumer.vscode-eslint"
+    "sonarsource.sonarlint-vscode"
+    "humao.rest-client"
+    "redhat.vscode-yaml"
+    "tamasfe.even-better-toml"
+  )
+ 
+  for ext in "${extensions[@]}"; do
+    sudo -u "$user" code --install-extension "$ext" --force 2>/dev/null || \
+      log_warn "Failed to install extension: ${ext}"
+  done
+ 
+  # ── settings.json (variáveis de Java expandidas aqui, por isso sem aspas no delimitador)
+  sudo -u "$user" mkdir -p "$settings_dir"
+  sudo -u "$user" tee "${settings_dir}/settings.json" > /dev/null << VSCODE_SETTINGS
+{
+  "workbench.colorTheme": "Material Theme Darker High Contrast",
+  "workbench.iconTheme": "material-icon-theme",
+  "workbench.startupEditor": "none",
+  "workbench.editor.enablePreview": false,
+  "workbench.list.smoothScrolling": false,
+  "workbench.tree.indent": 16,
+  "workbench.activityBar.location": "top",
+ 
+  "editor.fontFamily": "'JetBrains Mono', 'Fira Code', monospace",
+  "editor.fontSize": 14,
+  "editor.lineHeight": 1.6,
+  "editor.fontLigatures": true,
+  "editor.letterSpacing": 0.3,
+  "editor.cursorStyle": "line",
+  "editor.cursorBlinking": "smooth",
+  "editor.cursorSmoothCaretAnimation": "off",
+  "editor.smoothScrolling": false,
+ 
+  "editor.minimap.enabled": false,
+  "editor.renderWhitespace": "boundary",
+  "editor.renderControlCharacters": false,
+  "editor.occurrencesHighlight": "off",
+  "editor.selectionHighlight": false,
+  "editor.codeLens": false,
+  "editor.hover.delay": 800,
+  "editor.suggest.localityBonus": true,
+  "editor.suggest.preview": false,
+  "editor.quickSuggestionsDelay": 300,
+  "editor.inlayHints.enabled": "offUnlessPressed",
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  "diffEditor.ignoreTrimWhitespace": true,
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/target": true,
+    "**/build": true,
+    "**/.gradle": true,
+    "**/.git": true
+  },
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/target/**": true,
+    "**/build/**": true
+  },
+ 
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": false,
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "editor.trimAutoWhitespace": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "editor.wordWrap": "off",
+  "editor.rulers": [100, 120],
+  "editor.linkedEditing": true,
+ 
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.fontFamily": "'JetBrains Mono'",
+  "terminal.integrated.fontSize": 13,
+  "terminal.integrated.lineHeight": 1.2,
+  "terminal.integrated.cursorStyle": "line",
+  "terminal.integrated.scrollback": 10000,
+  "terminal.integrated.gpuAcceleration": "on",
+  "terminal.integrated.enableBell": false,
+ 
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  "git.autofetch": true,
+  "git.autofetchPeriod": 180,
+  "gitlens.codeLens.enabled": false,
+  "gitlens.hovers.currentLine.over": "line",
+ 
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-21",
+      "path": "${java21_path}",
+      "default": true
+    },
+    {
+      "name": "JavaSE-25",
+      "path": "${java25_path}"
+    }
+  ],
+  "java.jdt.ls.java.home": "${java21_path}",
+  "java.compile.nullAnalysis.mode": "automatic",
+  "java.saveActions.organizeImports": true,
+  "java.cleanup.actionsOnSave": [
+    "qualifyMembers",
+    "qualifyStaticMembers",
+    "addOverride",
+    "addDeprecated",
+    "stringConcatToTextBlock",
+    "invertEquals",
+    "addFinalModifier",
+    "instanceofPatternMatch",
+    "lambdaExpression",
+    "switchExpression"
+  ],
+  "java.test.defaultConfig": "junit5",
+  "spring-boot.ls.problem.application-properties.UNKNOWN_PROPERTY_KEY": "WARNING",
+ 
+  "docker.environment": {
+    "DOCKER_HOST": "unix:///run/user/1000/podman/podman.sock"
+  },
+  "docker.showStartPage": false,
+ 
+  "errorLens.enabledDiagnosticLevels": ["error", "warning"],
+  "errorLens.delay": 1000,
+  "errorLens.followCursor": "closestProblem",
+ 
+  "files.autoSave": "onFocusChange",
+  "files.autoSaveDelay": 1000,
+ 
+  "telemetry.telemetryLevel": "off",
+  "redhat.telemetry.enabled": false,
+ 
+  "accessibility.signals.sounds.volume": 0,
+  "editor.accessibilitySupport": "off",
+ 
+  "claude.autoApproveTools": false,
+  "claude.preferredModel": "claude-sonnet-4-6"
+}
+VSCODE_SETTINGS
+ 
+  # ── keybindings.json (aspas simples no delimitador = sem expansão de variáveis)
+  sudo -u "$user" tee "${settings_dir}/keybindings.json" > /dev/null << 'KEYBINDINGS'
+[
+  { "key": "ctrl+`",         "command": "workbench.action.terminal.toggleTerminal" },
+  { "key": "ctrl+shift+`",   "command": "workbench.action.terminal.new" },
+  { "key": "ctrl+w",         "command": "workbench.action.closeActiveEditor" },
+  { "key": "alt+left",       "command": "workbench.action.previousEditor" },
+  { "key": "alt+right",      "command": "workbench.action.nextEditor" },
+  { "key": "alt+up",         "command": "editor.action.moveLinesUpAction" },
+  { "key": "alt+down",       "command": "editor.action.moveLinesDownAction" },
+  { "key": "shift+alt+down", "command": "editor.action.copyLinesDownAction" },
+  { "key": "ctrl+shift+o",   "command": "java.action.organizeImports" },
+  { "key": "ctrl+shift+f",   "command": "editor.action.formatDocument" },
+  { "key": "ctrl+b",         "command": "workbench.action.toggleSidebarVisibility" }
+]
+KEYBINDINGS
+ 
+  ok "VS Code configured — Java 21: ${java21_id} · Java 25: ${java25_id}"
+}
+
+# =============================================================================
+# 7. Ferramentas CLI de infraestrutura
+# =============================================================================
 
 _install_kubectl() {
   step "Installing kubectl"
@@ -281,6 +706,97 @@ _install_kubectl() {
   else
       skip "kubectl already installed"
   fi
+}
+
+_install_awscli() {
+    local zip_file="${CACHE_DIR}/awscliv2.zip"
+    local extract_dir="${CACHE_DIR}/awscli-extracted"
+    local install_dir="/usr/local/aws-cli"
+    local bin_dir="/usr/local/bin"
+
+    # Versão instalada
+    local current_version=""
+    if command -v aws &>/dev/null; then
+        current_version=$(aws --version 2>&1 | awk -F/ '{print $2}' | awk '{print $1}')
+    fi
+
+    step "Checking AWS CLI"
+
+    cached_download \
+        "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" \
+        "$zip_file"
+
+    rm -rf "$extract_dir"
+    unzip -q "$zip_file" -d "$extract_dir"
+
+    local new_version
+    new_version=$("$extract_dir/aws/dist/aws" --version 2>&1 | awk -F/ '{print $2}' | awk '{print $1}')
+
+    if [[ "$current_version" == "$new_version" && -n "$current_version" ]]; then
+        skip "AWS CLI already at latest version ($current_version)"
+        rm -rf "$extract_dir"
+        return
+    fi
+
+    step "Installing/Updating AWS CLI to $new_version"
+
+    sudo "$extract_dir/aws/install" \
+        --install-dir "$install_dir" \
+        --bin-dir "$bin_dir" \
+        ${current_version:+--update}
+
+    rm -rf "$extract_dir"
+
+    ok "AWS CLI now at $new_version"
+}
+
+
+# =============================================================================
+# 8. Clientes de API REST
+# =============================================================================
+
+_install_insomnia() {
+    step "Installing Insomnia"
+    log_info "Querying latest Insomnia release from GitHub..."
+
+    local tag github_version installed_version
+    # Pegar a última release do GitHub
+    tag=$(curl -s https://api.github.com/repos/Kong/insomnia/releases/latest \
+        | grep -oP '"tag_name":\s*"\K([^"]+)')
+    if [[ -z "$tag" ]]; then
+        log_error "Unable to identify the latest Insomnia version on GitHub"
+        return 1
+    fi
+
+    # Normalizar versão: remove prefixo 'core@' se existir
+    github_version="${tag#core@}"
+    log_info "Latest Insomnia release: ${github_version}"
+
+    # Verificar versão instalada no sistema
+    installed_version=$(rpm -q --qf '%{VERSION}\n' insomnia 2>/dev/null || echo "")
+    if [[ "$installed_version" == "$github_version" ]]; then
+        skip "Insomnia already installed (${installed_version})"
+        return
+    fi
+
+    # Se chegou aqui, precisa instalar/atualizar
+    step "Installing/Updating Insomnia"
+    local rpm_asset rpm_file
+    rpm_asset=$(curl -s "https://api.github.com/repos/Kong/insomnia/releases/tags/${tag}" \
+        | grep -oP 'browser_download_url":\s*"\K([^"]*Insomnia\.Core[^"]*\.rpm)')
+    rpm_file="${CACHE_DIR}/$(basename "$rpm_asset")"
+
+    # Baixar RPM só se necessário
+    if [[ ! -f "$rpm_file" ]]; then
+        log_info "Downloading Insomnia RPM..."
+        curl -L "$rpm_asset" -o "$rpm_file"
+    else
+        log_info "Using cached Insomnia RPM: $rpm_file"
+    fi
+
+    # Instalar via DNF
+    dnf_install "$rpm_file"
+    ok "Insomnia installed/updated to ${github_version}"
 }
 
 _install_postman() {
@@ -325,206 +841,143 @@ EOF
   fi
 }
 
-# -----------------------------------------------------------------------------
-_install_insomnia() {
-    step "Installing Insomnia"
-    log_info "Querying latest Insomnia release from GitHub..."
 
-    local tag github_version installed_version
-    # Pegar a última release do GitHub
-    tag=$(curl -s https://api.github.com/repos/Kong/insomnia/releases/latest \
-        | grep -oP '"tag_name":\s*"\K([^"]+)')
-    if [[ -z "$tag" ]]; then
-        log_error "Unable to identify the latest Insomnia version on GitHub"
-        return 1
-    fi
+# =============================================================================
+# 9. Utilitários GUI
+# =============================================================================
 
-    # Normalizar versão: remove prefixo 'core@' se existir
-    github_version="${tag#core@}"
-    log_info "Latest Insomnia release: ${github_version}"
-
-    # Verificar versão instalada no sistema
-    installed_version=$(rpm -q --qf '%{VERSION}\n' insomnia 2>/dev/null || echo "")
-    if [[ "$installed_version" == "$github_version" ]]; then
-        skip "Insomnia already installed (${installed_version})"
+_install_dbeaver() {
+    if command -v dbeaver &>/dev/null; then
+        skip "DBeaver already installed"
         return
     fi
 
-    # Se chegou aqui, precisa instalar/atualizar
-    step "Installing/Updating Insomnia"
-    local rpm_asset rpm_file
-    rpm_asset=$(curl -s "https://api.github.com/repos/Kong/insomnia/releases/tags/${tag}" \
-        | grep -oP 'browser_download_url":\s*"\K([^"]*Insomnia\.Core[^"]*\.rpm)')
-    rpm_file="${CACHE_DIR}/$(basename "$rpm_asset")"
+    step "Installing DBeaver Community"
+    log_info "Querying latest DBeaver release from GitHub..."
 
-    # Baixar RPM só se necessário
+    local tag
+    tag=$(curl -s https://api.github.com/repos/dbeaver/dbeaver/releases/latest \
+        | grep -oP '"tag_name":\s*"\K([^"]+)')
+
+    if [[ -z "$tag" ]]; then
+        log_error "Unable to identify the latest DBeaver version on GitHub"
+        return 1
+    fi
+    log_info "Latest DBeaver release: $tag"
+
+    local rpm_asset
+    rpm_asset=$(curl -s "https://api.github.com/repos/dbeaver/dbeaver/releases/tags/${tag}" \
+        | grep -oP 'browser_download_url":\s*"\K([^"]*x86_64\.rpm)')
+
+    if [[ -z "$rpm_asset" ]]; then
+        log_error "Could not find .rpm asset for release $tag"
+        return 1
+    fi
+    log_info "RPM asset found: $rpm_asset"
+
+    local rpm_file="${CACHE_DIR}/$(basename "${rpm_asset}")"
+
     if [[ ! -f "$rpm_file" ]]; then
-        log_info "Downloading Insomnia RPM..."
+        log_info "Downloading DBeaver RPM..."
         curl -L "$rpm_asset" -o "$rpm_file"
     else
-        log_info "Using cached Insomnia RPM: $rpm_file"
+        log_info "Using cached DBeaver RPM: $rpm_file"
     fi
 
-    # Instalar via DNF
-    sudo dnf install -y "$rpm_file"
-    ok "Insomnia installed/updated to ${github_version}"
+    dnf_install "$rpm_file"
+    ok "DBeaver Community installed (${tag})"
 }
 
-# -----------------------------------------------------------------------------
-_install_mise() {
-  step "Installing mise (runtime version manager)"
+_install_drawio() {
+    step "Installing draw.io desktop"
 
-  local user="${SETUP_USER:-$USER}"
-  local user_home="${SETUP_HOME:-$HOME}"
-  local mise_bin="${user_home}/.local/bin/mise"
+    if rpm -q draw.io &>/dev/null; then
+      skip "draw.io already installed"
+      return
+    fi
+    log_info "Querying latest draw.io release from GitHub..."
 
-  if [[ -x "$mise_bin" ]]; then
-    local current_ver
-    current_ver=$(sudo -u "$user" "$mise_bin" --version 2>/dev/null | head -1)
-    skip "mise already installed: $current_ver"
-  else
-    log_info "Downloading and installing mise..."
-    sudo -u "$user" bash -c 'curl https://mise.run | sh' || {
-      log_error "Failed to install mise via curl"
-      return 1
-    }
-    ok "mise installed"
-  fi
+    local tag
+    tag=$(curl -s https://api.github.com/repos/jgraph/drawio-desktop/releases/latest \
+        | grep -oP '"tag_name":\s*"\K([^"]+)')
 
-  _ensure_mise_bashrc "$user" "$user_home"
-}
+    if [[ -z "$tag" ]]; then
+        log_error "Unable to identify the latest draw.io version on GitHub"
+        return 1
+    fi
+    log_info "Latest draw.io release: $tag"
 
-_ensure_mise_bashrc() {
-  local user="$1"
-  local user_home="$2"
-  local bashrc="${user_home}/.bashrc"
+    local rpm_asset
+    rpm_asset=$(curl -s "https://api.github.com/repos/jgraph/drawio-desktop/releases/tags/${tag}" \
+        | grep -oP 'browser_download_url":\s*"\K([^"]*x86_64[^"]*\.rpm)')
 
-  local mise_activate='eval "$(~/.local/bin/mise activate bash)"'
-  if ! grep -qF 'mise activate bash' "$bashrc" 2>/dev/null; then
-    sudo -u "$user" bash -c "echo '' >> \"$bashrc\""
-    sudo -u "$user" bash -c "echo '# mise -- runtime version manager' >> \"$bashrc\""
-    sudo -u "$user" bash -c "echo '$mise_activate' >> \"$bashrc\""
-    log_info "mise activation added to .bashrc"
-  else
-    skip "mise already present in .bashrc"
-  fi
-}
+    if [[ -z "$rpm_asset" ]]; then
+        log_error "Could not find .rpm asset for release $tag"
+        return 1
+    fi
+    log_info "RPM asset found: $rpm_asset"
 
-# -----------------------------------------------------------------------------
-_configure_mise_global() {
-  step "Writing ~/.config/mise/config.toml (global runtimes)"
+    local rpm_file="${CACHE_DIR}/$(basename "${rpm_asset}")"
 
-  local user="${SETUP_USER:-$USER}"
-  local config_file="${SETUP_HOME:-$HOME}/.config/mise/config.toml"
-
-  sudo -u "$user" mkdir -p "$(dirname "$config_file")"
-
-  local desired_content
-  desired_content=$(cat << TOMLEOF
-# ============================================================
-# ~/.config/mise/config.toml -- Global runtimes managed by mise
-# ============================================================
-[tools]
-java = ["${MISE_JAVA_21:-21}", "${MISE_JAVA_25:-25}"]
-node = "${MISE_NODE:-lts}"
-python = "${MISE_PYTHON:-latest}"
-go = "${MISE_GOLANG:-latest}"
-
-[settings]
-experimental = true
-TOMLEOF
-)
-
-  if [[ -f "$config_file" ]] && diff <(echo "$desired_content") "$config_file" &>/dev/null; then
-    skip "mise config.toml is already up to date"
-  else
-    echo "$desired_content" | sudo -u "$user" tee "$config_file" > /dev/null
-    ok "mise config.toml updated"
-  fi
-}
-
-# -----------------------------------------------------------------------------
-_mise_install_runtimes() {
-  step "Installing runtimes via mise (may take a while on first run)"
-
-  local user="${SETUP_USER:-$USER}"
-  local user_home="${SETUP_HOME:-$HOME}"
-  local mise="${user_home}/.local/bin/mise"
-
-  if [[ ! -x "$mise" ]]; then
-    log_error "mise not found at $mise. Skipping runtime installation."
-    return 1
-  fi
-
-  log_info "Running: mise install (all versions from config.toml)"
-  sudo -u "$user" "$mise" install --yes 2>&1 | tee -a "${LOG_FILE:-/tmp/finitra.log}" || {
-    log_warn "mise install returned non-zero. Check the log for details."
-  }
-
-  _configure_java_home "$user" "${SETUP_HOME:-$HOME}"
-
-  ok "mise runtimes installed"
-}
-
-_configure_java_home() {
-  local user="$1"
-  local user_home="$2"
-  local bashrc="${user_home}/.bashrc"
-
-  if ! grep -qF 'JAVA_HOME' "$bashrc" 2>/dev/null; then
-    sudo -u "$user" bash -c "cat >> \"$bashrc\"" << 'JAVAEOF'
-
-# Dynamic JAVA_HOME via mise (IDE compatibility)
-if command -v mise &>/dev/null; then
-  export JAVA_HOME="$(mise where java 2>/dev/null)"
-fi
-JAVAEOF
-    log_info "JAVA_HOME configured in .bashrc"
-  else
-    skip "JAVA_HOME already present in .bashrc"
-  fi
-}
-
-# -----------------------------------------------------------------------------
-_configure_podman() {
-  step "Configuring Podman"
-
-  local user="${SETUP_USER:-$USER}"
-  local user_home="${SETUP_HOME:-$HOME}"
-
-  if ! has_cmd podman && ! is_rpm_installed podman; then
-    log_info "Podman not found. Installing..."
-    dnf_install podman podman-compose podman-docker
-  else
-    skip "Podman already installed: $(podman --version 2>/dev/null)"
-  fi
-
-  # Add docker=podman alias for developer convenience
-  if [[ "${PODMAN_DOCKER_ALIAS:-true}" == "true" ]]; then
-    local bashrc="${user_home}/.bashrc"
-    if ! grep -qF 'alias docker=podman' "$bashrc" 2>/dev/null; then
-      cat >> "$bashrc" << 'PODMANEOF'
-
-# Podman as a Docker drop-in replacement
-alias docker=podman
-alias docker-compose='podman compose'
-PODMANEOF
-      ok "docker=podman alias added to .bashrc"
+    if [[ ! -f "$rpm_file" ]]; then
+        log_info "Downloading draw.io RPM..."
+        curl -L "$rpm_asset" -o "$rpm_file"
     else
-      skip "docker=podman alias already present"
+        log_info "Using cached draw.io RPM: $rpm_file"
     fi
-  fi
 
-  # Enable Podman socket for IDEs that expect /var/run/docker.sock
-  if ! sudo -u "$user" systemctl --user is-enabled podman.socket &>/dev/null; then
-    sudo -u "$user" systemctl --user enable --now podman.socket 2>/dev/null || true
-    log_info "Podman socket enabled for user $user"
-  fi
-
-  ok "Podman configured"
+    dnf_install "$rpm_file"
+    ok "draw.io installed (${tag})"
 }
 
-# -----------------------------------------------------------------------------
+_install_typora() {
+    local install_dir="$SETUP_HOME/.local/share/typora"
+    local bin_link="$SETUP_HOME/.local/bin/typora"
+    local desktop_file="$SETUP_HOME/.local/share/applications/typora.desktop"
+    local archive="${CACHE_DIR}/typora.tar.gz"
+
+    if [[ -x "$bin_link" ]] || [[ -x "$install_dir/Typora" ]] || command -v typora &>/dev/null; then
+        skip "Typora already installed"
+        return
+    fi
+
+    step "Installing Typora (portable tarball)"
+    mkdir -p "$install_dir" "$SETUP_HOME/.local/bin"
+
+    cached_download \
+        "https://typora.io/linux/Typora-linux-x64.tar.gz" \
+        "$archive"
+
+    if ! tar -xzf "$archive" -C "$install_dir" --strip-components=2; then
+        log_error "Failed to extract Typora archive"
+        return 1
+    fi
+
+    ln -sf "$install_dir/Typora" "$bin_link"
+    log_info "Created symlink: $bin_link → $install_dir/Typora"
+
+    mkdir -p "$(dirname "$desktop_file")"
+    cat > "$desktop_file" <<EOF
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Typora
+Exec=$bin_link %f
+Icon=$install_dir/resources/assets/icon/icon_256x256@2x.png
+Terminal=false
+Categories=Utility;TextEditor;Markdown;
+StartupNotify=true
+EOF
+    chmod +x "$desktop_file"
+
+    ok "Typora installed"
+}
+
+
+# =============================================================================
+# 10. Shell prompt
+# =============================================================================
+
 _install_starship() {
   if [[ "${INSTALL_STARSHIP:-true}" != "true" ]]; then
     skip "Starship disabled in config"
@@ -565,8 +1018,6 @@ STAREOF
     sudo -u "$user" tee "$starship_cfg" > /dev/null << 'TOMLEOF'
 # starship.toml -- finitra default (dev-focused, low visual noise)
 format = """
-$username\
-$hostname\
 $directory\
 $git_branch\
 $git_status\
@@ -574,52 +1025,85 @@ $java\
 $nodejs\
 $python\
 $golang\
+$aws\
 $docker_context\
 $cmd_duration\
 $line_break\
 $character"""
 
+add_newline = true
+
 [character]
-success_symbol = "[❯](bold green)"
-error_symbol   = "[❯](bold red)"
+success_symbol = '[❯](bold green)'
+error_symbol   = '[❯](bold red)'
 
 [directory]
-truncation_length = 4
+style             = 'bold fg:201'
+truncation_length = 3
 truncate_to_repo  = true
+format            = '[$path]($style)[$read_only]($read_only_style) '
 
 [git_branch]
-symbol = " "
-format = "[$symbol$branch]($style) "
-style  = "bold purple"
+symbol = 'git '
+style  = 'bold fg:117'
+format = 'on [$symbol$branch]($style) '
 
 [git_status]
-format = '([\[$all_status$ahead_behind\]]($style) )'
-style  = "bold yellow"
+format     = '([$all_status$ahead_behind]($style) )'
+style      = 'bold fg:11'
+conflicted = '⚠'
+ahead      = '⇡${count}'
+behind     = '⇣${count}'
+diverged   = '⇕⇡${ahead_count}⇣${behind_count}'
+untracked  = '?${count}'
+modified   = '!${count}'
+staged     = '+${count}'
+deleted    = '✘${count}'
+
+[git_commit]
+tag_symbol = " tag "
 
 [java]
-symbol = " "
-format = "[$symbol$version]($style) "
-style  = "bold red"
+symbol = 'java '
+style  = 'bold fg:33'
+format = 'via [$symbol($version)]($style) '
 
 [nodejs]
-symbol = " "
-format = "[$symbol$version]($style) "
-style  = "bold green"
+symbol = 'nodejs '
+style  = 'bold green'
+format = 'via [$symbol($version)]($style) '
 
 [python]
-symbol = " "
-format = "[$symbol$version]($style) "
-style  = "bold yellow"
+symbol = "python "
+format = "via [$symbol$version]($style) "
+style  = "bold fg:6"
 
 [golang]
-symbol = " "
-format = "[$symbol$version]($style) "
-style  = "bold cyan"
+symbol = "golang "
+format = "via [$symbol$version]($style) "
+style  = "bold fg:3"
+
+[aws]
+symbol = "aws "
+format = 'on [$symbol($profile )(\($region\) )]($style)'
+style = 'bold fg:202'
+
+[docker_context]
+symbol          = 'docker '
+style           = 'bold blue'
+format          = 'via [$symbol$context]($style) '
+only_with_files = true
 
 [cmd_duration]
-min_time = 2_000
-format   = "[$duration]($style) "
-style    = "bold yellow"
+min_time          = 2000
+format            = 'took [$duration](bold yellow) '
+show_milliseconds = false
+
+[time]
+disabled = true
+
+[battery]
+disabled = true
 TOMLEOF
     ok "Starship initial config created"
   else
@@ -627,7 +1111,11 @@ TOMLEOF
   fi
 }
 
+
+# =============================================================================
 # Standalone entry point
+# =============================================================================
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
   source "${SCRIPT_DIR}/utils.sh"
