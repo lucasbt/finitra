@@ -207,7 +207,7 @@ _remove_unwanted_repos() {
   # Atualiza cache do DNF para refletir mudanças
   log_info "Refreshing DNF metadata..."
 
-  if run_as_root dnf clean all -q; then
+  if run_as_root dnf clean all 2>/dev/null; then
     log_info "DNF cache cleaned"
   else
     log_warn "DNF clean failed (continuing)"
