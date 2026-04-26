@@ -112,7 +112,7 @@ dnf_install() {
     if ! is_rpm_installed "$pkg"; then
       to_install+=("$pkg")
     else
-      log_info "RPM already installed: $pkg"
+      log_info "Package already installed: $pkg"
     fi
   done
   if [[ ${#to_install[@]} -gt 0 ]]; then
@@ -130,7 +130,7 @@ dnf_remove() {
     fi
   done
   if [[ ${#to_remove[@]} -gt 0 ]]; then
-    log_info "Removing RPMs: ${to_remove[*]}"
+    log_info "Removing packages: ${to_remove[*]}"
     run_as_root dnf remove -y "${to_remove[@]}"
   fi
 }

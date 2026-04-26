@@ -12,8 +12,8 @@ module_00_system() {
   _configure_dnf
   _remove_unwanted_repos
   _add_rpmfusion
-  _install_multimedia
   _system_update
+  _install_multimedia  
   _install_base_packages
   _setup_directories
 
