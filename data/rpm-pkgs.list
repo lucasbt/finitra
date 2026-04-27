@@ -6,14 +6,14 @@
 
 # --- Editor / IDE ---
 code                      # VSCode (repositório Microsoft)
-vim-enhanced
+vim-enhanced-2
 neovim
 
 # --- Dev Tools ---
 git
 git-lfs
 curl
-wget
+wget2
 vim
 tmux
 jq
@@ -77,7 +77,7 @@ clang
 
 # --- Sistema / Utils ---
 bash-completion
-util-linux
+util-linux-2
 strace
 lsof
 ncdu                      # analisador de disco TUI
@@ -141,7 +141,6 @@ google-noto-sans-fonts
 liberation-fonts
 google-carlito-fonts
 google-go-fonts
-google-caladea-fonts
 redhat-text-fonts
 redhat-mono-fonts
 redhat-display-fonts
