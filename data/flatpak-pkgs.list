@@ -4,8 +4,6 @@
 # Um pacote por linha. Linhas com # são comentários.
 # REGRA: Flatpak APENAS se não houver pacote RPM disponível.
 # =============================================================================
-
-flathub md.obsidian.Obsidian
 flathub org.localsend.localsend_app
 flathub be.alexandervanhee.gradia
 flathub io.bassi.Amberol
