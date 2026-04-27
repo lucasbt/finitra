@@ -445,7 +445,7 @@ _configure_gnome_extensions_deps() {
 
 # -----------------------------------------------------------------------------
 _install_wallpapers() {
-    if [[ "${INSTALL_WALLPAPERS:-true}" != "true" ]]; then
+    if [[ "${INSTALL_WALLPAPERS:-false}" != "true" ]]; then
         skip "Wallpaper install disabled in config"
         return
     fi
@@ -466,12 +466,6 @@ _install_wallpapers() {
     if ! ask_yes_no "The wallpaper download may be very large. Proceed?" "n"; then
         skip "Wallpaper download skipped"
         return
-    fi
-
-    # Garantir git disponível
-    if ! command -v git &>/dev/null; then
-        log_info "Installing git (required for wallpaper download)..."
-        sudo dnf install -y git
     fi
 
     log_info "Cloning wallpapers repository (sparse, no blobs)..."

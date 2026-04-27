@@ -33,11 +33,6 @@ _install_chrome() {
 
 # -----------------------------------------------------------------------------
 _install_obsidian() {
-    if [[ "${INSTALL_OBSIDIAN:-true}" != "true" ]]; then
-        skip "Obsidian install disabled in config"
-        return
-    fi
- 
     step "Installing Obsidian"
  
     local install_dir="${OBSIDIAN_INSTALL_DIR:-/opt/obsidian}"

@@ -26,7 +26,7 @@ module_00_system() {
 #
 _configure_firmware() {
   step "Updating firmware"
-  if [ "${FEDORALAUNCH_INSTALL_PROPRIETARY_FIRMWARE}" != true ]; then
+  if [ "${INSTALL_PROPRIETARY_FIRMWARE}" != true ]; then
       skip "Skipping firmware updates."
       return
   fi
