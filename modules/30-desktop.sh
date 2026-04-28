@@ -263,6 +263,10 @@ _configure_localsearch() {
         gs_set "org.freedesktop.Tracker3.Miner.Files" "index-single-directories"    "''" 2>/dev/null || true
         gs_set "org.freedesktop.Tracker3.Miner.Files" "index-recursive-directories" "''" 2>/dev/null || true
         gs_set "org.freedesktop.Tracker3.Miner.Files" "crawling-interval"           "-2" 2>/dev/null || true
+        gs_set "org.freedesktop.tracker.miner.files" "index-single-directories"    "''" 2>/dev/null || true
+        gs_set "org.freedesktop.tracker.miner.files" "index-recursive-directories" "''" 2>/dev/null || true
+        gs_set "org.freedesktop.tracker.miner.files" "crawling-interval"           "-2" 2>/dev/null || true
+
         log_info "File indexing limited via gsettings"
     fi
 
