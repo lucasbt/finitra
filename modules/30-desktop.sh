@@ -412,7 +412,6 @@ _configure_ptyxis_profile() {
   }
 
   _ptyxis_set "palette"          "'${PTYXIS_PALETTE:-One Half Black}'"
-  _ptyxis_set "use-system-font"  "${PTYXIS_USE_SYSTEM_FONT:-false}"
   _ptyxis_set "scrollback-lines" "${PTYXIS_SCROLLBACK_LINES:-10000}"
   _ptyxis_set "opacity"          "${PTYXIS_OPACITY:-1.0}"
   _ptyxis_set "bold-is-bright"   "${PTYXIS_BOLD_IS_BRIGHT:-true}"

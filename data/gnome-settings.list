@@ -60,7 +60,7 @@ org.gnome.desktop.wm.keybindings move-to-workspace-2 ['<Super><Shift>2']
 org.gnome.desktop.wm.keybindings move-to-workspace-3 ['<Super><Shift>3']
 org.gnome.desktop.wm.keybindings move-to-workspace-4 ['<Super><Shift>4']
 
-org.gnome.desktop.wm.keybindings show-desktop "['<Super>d']"
+org.gnome.desktop.wm.keybindings show-desktop ['<Super>d']
 
 # --- Botões da janela ---
 org.gnome.desktop.wm.preferences button-layout "${GNOME_BUTTON_LAYOUT}"
@@ -106,18 +106,19 @@ org.gnome.software allow-updates false
 # são aplicadas em runtime pelo módulo 30-desktop via _configure_ptyxis_profile().
 # =============================================================================
 org.gnome.Ptyxis interface-style "${PTYXIS_INTERFACE_STYLE}"
-org.gnome.Ptyxis tab-bar-policy "${PTYXIS_TAB_BAR_POLICY}"
 org.gnome.Ptyxis restore-session ${PTYXIS_RESTORE_SESSION}
 org.gnome.Ptyxis audible-bell ${PTYXIS_AUDIBLE_BELL}
 org.gnome.Ptyxis new-tab-position "${PTYXIS_NEW_TAB_POSITION}"
+org.gnome.Ptyxis cursor-shape 'underline'
+org.gnome.Ptyxis use-system-font "${PTYXIS_USE_SYSTEM_FONT}"
 
 org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/','/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/']"
 # ck0 — Terminal (Ptyxis)
-gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/ name    'Terminal'
-gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/ command 'ptyxis'
-gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/ binding '<Super>t'
+org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/ name    'Terminal'
+org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/ command 'ptyxis'
+org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/ binding '<Super>t'
 
 # ck1 — Screenshot com annotation via Gradia
-gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ name 'Gradia Screenshot'
-gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ command 'flatpak run be.alexandervanhee.gradia --screenshot=INTERACTIVE'
-gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ binding '<Super>Print'
+org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ name 'Gradia Screenshot'
+org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ command 'flatpak run be.alexandervanhee.gradia --screenshot=INTERACTIVE'
+org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ binding '<Super>Print'
