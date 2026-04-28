@@ -196,3 +196,7 @@ gnome-shell-extension-auto-move-windows
 gnome-shell-extension-caffeine
 gnome-shell-extension-just-perfection
 gnome-shell-extension-user-theme
+
+# Misc
+xorg-x11-font-utils
+cabextract

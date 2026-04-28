@@ -577,7 +577,7 @@ _install_microsoft_fonts() {
         rm -f "$installer_rpm" 2>/dev/null || true
         log_warn "Could not download Microsoft fonts after 3 attempts"
         log_warn "To install manually later:"
-        log_warn "  sudo dnf install cabextract"
+        log_warn "  sudo dnf install cabextract xorg-x11-font-utils"
         log_warn "  sudo rpm -i --nosignature --nodigest '$installer_url'"
     fi
 }
