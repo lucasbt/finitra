@@ -552,7 +552,7 @@ _install_microsoft_fonts() {
     log_info "Downloading msttcore-fonts-installer..."
     if curl -fsSL --retry 3 --retry-delay 5 --max-time 60 \
             -o "$installer_rpm" "$installer_url"; then
-        sudo dnf install -y "$installer_rpm" && \
+        sudo dnf install -y --no-gpgchecks "$installer_rpm" && \
             sudo fc-cache -f /usr/share/fonts/msttcore 2>/dev/null || true
         rm -f "$installer_rpm"
         ok "Microsoft fonts installed"
