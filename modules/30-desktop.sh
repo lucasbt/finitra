@@ -231,7 +231,24 @@ _apply_gnome_settings() {
 
   apply_gnome_settings_file "$settings_file"
 
+  _configure_custom_keybinding
+
+
   ok "GNOME settings applied"
+}
+
+_configure_custom_keybinding(){
+    log_info "Apply custom keybindings..."
+    gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/','/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/']"
+    # ck0 — Terminal (Ptyxis)
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/ name    'Terminal'
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/ command 'ptyxis'
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/ binding '<Super>t'
+
+    # ck1 — Screenshot com annotation via Gradia
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ name 'Gradia Screenshot'
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ command 'flatpak run be.alexandervanhee.gradia --screenshot=INTERACTIVE'
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ binding '<Super>Print'
 }
 
 # -----------------------------------------------------------------------------
