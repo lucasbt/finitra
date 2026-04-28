@@ -230,8 +230,6 @@ apply_gnome_settings_file() {
 
     [[ -z "$schema" || -z "$key" || -z "$value" ]] && continue
 
-    echo "DEBUG -> [$schema] $key = $value"
-
     gs_set "$schema" "$key" "$value"
 
   done < "$settings_file"
