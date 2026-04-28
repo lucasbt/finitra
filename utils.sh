@@ -24,6 +24,8 @@ CLR_GREEN='\033[0;32m'
 CLR_YELLOW='\033[1;33m'
 CLR_BLUE='\033[0;34m'
 CLR_CYAN='\033[0;36m'
+CLR_MAGENTA='\033[0;35m'
+CLR_ORANGE='\033[38;5;208m'
 CLR_BOLD='\033[1m'
 
 _UTILS_LOADED=true
@@ -34,7 +36,7 @@ _UTILS_LOADED=true
 
 log_info()    { echo -e "${CLR_BLUE}[INFO] $*${CLR_RESET}" | tee -a "${LOG_FILE:-/tmp/finitra.log}"; }
 log_success() { echo -e "${CLR_GREEN}[OK]    $*${CLR_RESET}" | tee -a "${LOG_FILE:-/tmp/finitra.log}"; }
-log_warn()    { echo -e "${CLR_YELLOW}[WARN]  $*${CLR_RESET}" | tee -a "${LOG_FILE:-/tmp/finitra.log}"; }
+log_warn()    { echo -e "${CLR_ORANGE}[WARN]  $*${CLR_RESET}" | tee -a "${LOG_FILE:-/tmp/finitra.log}"; }
 log_error()   { echo -e "${CLR_RED}[ERROR] $*${CLR_RESET}" | tee -a "${LOG_FILE:-/tmp/finitra.log}"; }
 log_section() {
   echo "" | tee -a "${LOG_FILE:-/tmp/finitra.log}"
@@ -282,7 +284,7 @@ cached_download() {
 # =============================================================================
 
 step() {
-  echo -e "\n${CLR_BOLD}${CLR_BLUE}▶ $*${CLR_RESET}"
+  echo -e "\n${CLR_BOLD}${CLR_MAGENTA}▶ $*${CLR_RESET}"
 }
 
 ok() {
