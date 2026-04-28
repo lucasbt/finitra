@@ -554,6 +554,7 @@ _install_microsoft_fonts() {
     fi
  
     step "Installing Microsoft core fonts"
+ 
     local sentinel="/usr/share/fonts/msttcore/arial.ttf"
     if [[ -f "$sentinel" ]]; then
         skip "Microsoft fonts already installed"
@@ -568,7 +569,7 @@ _install_microsoft_fonts() {
     log_info "Downloading msttcore-fonts-installer..."
     if curl -fsSL --retry 3 --retry-delay 5 --max-time 60 \
             -o "$installer_rpm" "$installer_url"; then
-        sudo dnf install -y --nogpgcheck "$installer_rpm" && \
+        sudo rpm -i --nosignature --nodigest "$installer_rpm" && \
             sudo fc-cache -f /usr/share/fonts/msttcore 2>/dev/null || true
         rm -f "$installer_rpm"
         ok "Microsoft fonts installed"
@@ -576,10 +577,10 @@ _install_microsoft_fonts() {
         rm -f "$installer_rpm" 2>/dev/null || true
         log_warn "Could not download Microsoft fonts after 3 attempts"
         log_warn "To install manually later:"
-        log_warn "  sudo dnf install '$installer_url'"
+        log_warn "  sudo dnf install cabextract"
+        log_warn "  sudo rpm -i --nosignature --nodigest '$installer_url'"
     fi
 }
-
 
 # Standalone entry point
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
