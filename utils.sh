@@ -37,8 +37,8 @@ _term_line() {
   local label="$1"; shift
   local msg="$*"
 
-  printf "%b%s %-*s%b %s\n" \
-    "$color" "$icon" "$_LABEL_WIDTH" "$label" "$CLR_RESET" "$msg"
+  printf "%b%s %-*s %s%b\n" \
+    "$color" "$icon" "$_LABEL_WIDTH" "$label" "$msg" "$CLR_RESET"
 }
 
 _log_file() {
@@ -72,6 +72,24 @@ log_error() {
   _term_line "$CLR_RED" "✖" "ERROR" "$*"
 }
 
+log_section() {
+  local msg="$*"
+
+  # terminal
+  echo ""
+  echo -e "${CLR_BOLD}${CLR_BLUE}══════════════════════════════════════════${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_BLUE}  ${msg}${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_BLUE}══════════════════════════════════════════${CLR_RESET}"
+
+  # arquivo
+  {
+    echo ""
+    printf "[%s] ==========================================\n" "$(_timestamp)"
+    printf "[%s]   %s\n" "$(_timestamp)" "$msg"
+    printf "[%s] ==========================================\n" "$(_timestamp)"
+  } >> "$LOG_FILE"
+}
+
 # =============================================================================
 # Progress
 # =============================================================================
@@ -89,7 +107,7 @@ ok() {
 
 skip() {
   _log_file "SKIP" "$*"
-  _term_line "$CLR_BOLD$CLR_YELLOW" "⏭" "SKIP" "$*"
+  _term_line "$CLR_BOLD$CLR_CYAN" "⏭" "SKIP" "$*"
 }
 
 # =============================================================================
