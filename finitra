@@ -547,6 +547,7 @@ main() {
 
   echo ""
   log_success "finitra done. Log saved to: ${LOG_FILE}"
+  echo ""
 }
 
 main "$@"
