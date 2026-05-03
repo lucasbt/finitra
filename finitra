@@ -92,6 +92,11 @@ mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || true
 
 export SETUP_USER SETUP_HOME LOG_FILE
 
+_safe_clear() {
+  [[ "${FINITRA_ALL_RUN:-0}" == "1" ]] && return 0
+  clear
+}
+
 # =============================================================================
 # Module discovery
 # =============================================================================
@@ -171,6 +176,7 @@ _run_module() {
 }
 
 _run_all_modules() {
+  export FINITRA_ALL_RUN=1
   local sorted_keys
   mapfile -t sorted_keys < <(printf '%s\n' "${!MODULE_FILES[@]}" | sort)
 
@@ -178,6 +184,7 @@ _run_all_modules() {
   for num in "${sorted_keys[@]}"; do
     _run_module "$num"
   done
+  unset FINITRA_ALL_RUN
   log_success "All modules completed successfully!"
 }
 
@@ -377,7 +384,7 @@ _preflight_check() {
 # =============================================================================
 
 _print_banner() {
-  clear
+  _safe_clear
   echo ""
   echo -e "${CLR_BOLD}${CLR_CYAN}  ███████╗██╗███╗   ██╗██╗████████╗██████╗  █████╗ ${CLR_RESET}"
   echo -e "${CLR_BOLD}${CLR_CYAN}  ██╔════╝██║████╗  ██║██║╚══██╔══╝██╔══██╗██╔══██╗${CLR_RESET}"
