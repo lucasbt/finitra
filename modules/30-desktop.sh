@@ -393,72 +393,57 @@ _configure_localsearch() {
 }
 
 # -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 _configure_ptyxis_profile() {
-  step "Configuring Ptyxis terminal profile (Finitra)"
+  step "Configuring Ptyxis terminal profile (simplified)"
 
   local user="${SETUP_USER:-$USER}"
-  local profile_id="finitra"
-  local profile_label="Finitra"
 
   # ------------------------------------------------------------------
-  # Paths (GNOME/dconf is source of truth)
+  # Detect default profile (read only)
   # ------------------------------------------------------------------
-  local base="/org/gnome/Ptyxis"
-  local profile_path="${base}/Profiles/${profile_id}/"
-  local schema="org.gnome.Ptyxis.Profile:${profile_path}"
+  local profile_uuid
+  profile_uuid=$(sudo -u "$user" dconf read /org/gnome/Ptyxis/default-profile-uuid 2>/dev/null | tr -d "'")
 
-  # ------------------------------------------------------------------
-  # Ensure UUID list exists
-  # ------------------------------------------------------------------
-  local uuids
-  uuids=$(sudo -u "$user" dconf read ${base}/profile-uuids 2>/dev/null)
-
-  if [[ -z "$uuids" || "$uuids" == "@as []" ]]; then
-    uuids="['${profile_id}']"
-  else
-    if ! echo "$uuids" | grep -q "$profile_id"; then
-      uuids="${uuids%]*}, '${profile_id}']"
-    fi
+  if [[ -z "$profile_uuid" || "$profile_uuid" == "''" ]]; then
+    log_warn "No default Ptyxis profile found. Skipping profile config."
+    return 0
   fi
 
-  sudo -u "$user" dconf write ${base}/profile-uuids "$uuids"
-  sudo -u "$user" dconf write ${base}/default-profile-uuid "'${profile_id}'"
+  log_info "Using existing Ptyxis profile: $profile_uuid"
 
-  # ------------------------------------------------------------------
-  # Try gsettings first, fallback to dconf
-  # ------------------------------------------------------------------
-  _set_value() {
+  local profile_path="/org/gnome/Ptyxis/Profiles/${profile_uuid}/"
+  local schema="org.gnome.Ptyxis.Profile:${profile_path}"
+
+  _ptyxis_set() {
     local key="$1"
     local value="$2"
 
-    # Try gsettings if schema exists
+    # Try gsettings only if available (non-fatal)
     if gsettings list-schemas 2>/dev/null | grep -q "org.gnome.Ptyxis.Profile"; then
-      if gsettings list-keys "$schema" 2>/dev/null | grep -q "^$key$"; then
-        sudo -u "$user" gsettings set "$schema" "$key" "$value" 2>/dev/null && return 0
-      fi
+      gsettings set "$schema" "$key" "$value" 2>/dev/null && return 0
     fi
 
-    # Fallback to dconf (guaranteed path)
-    sudo -u "$user" dconf write "${profile_path}${key}" "$value" 2>/dev/null
+    # fallback direto
+    dconf write "${profile_path}${key}" "$value" 2>/dev/null
   }
 
   # ------------------------------------------------------------------
-  # Apply profile
+  # Only safe cosmetic settings
   # ------------------------------------------------------------------
-  _set_value "label" "'${profile_label}'"
-  _set_value "palette" "'${PTYXIS_PALETTE:-One Half Black}'"
-  _set_value "scrollback-lines" "${PTYXIS_SCROLLBACK_LINES:-10000}"
-  _set_value "opacity" "${PTYXIS_OPACITY:-1.0}"
-  _set_value "bold-is-bright" "${PTYXIS_BOLD_IS_BRIGHT:-true}"
-  _set_value "login-shell" "${PTYXIS_LOGIN_SHELL:-true}"
+  _ptyxis_set "palette"          "'${PTYXIS_PALETTE:-One Half Black}'"
+  _ptyxis_set "scrollback-lines" "${PTYXIS_SCROLLBACK_LINES:-10000}"
+  _ptyxis_set "opacity"          "${PTYXIS_OPACITY:-1.0}"
+  _ptyxis_set "bold-is-bright"   "${PTYXIS_BOLD_IS_BRIGHT:-true}"
+  _ptyxis_set "login-shell"      "${PTYXIS_LOGIN_SHELL:-true}"
 
   if [[ "${PTYXIS_USE_SYSTEM_FONT:-false}" == "false" ]]; then
-    _set_value "font-name" "'${PTYXIS_FONT_NAME:-JetBrains Mono 12}'"
+    _ptyxis_set "font-name" "'${PTYXIS_FONT_NAME:-JetBrains Mono 12}'"
   fi
 
-  unset -f _set_value
+  unset -f _ptyxis_set
 
-  ok "Ptyxis profile 'Finitra' ensured (gsettings + dconf fallback)"
+  ok "Ptyxis profile updated (no creation, no DBus dependency)"
 }
 
 # -----------------------------------------------------------------------------
