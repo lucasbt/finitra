@@ -58,8 +58,8 @@ log_info() {
 }
 
 log_success() {
-  _log_file "OK" "$*"
-  _term_line "$CLR_GREEN" "✔" "OK" "$*"
+  _log_file "DONE" "$*"
+  _term_line "$CLR_GREEN" "✔" "DONE" "$*"
 }
 
 log_warn() {
