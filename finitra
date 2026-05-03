@@ -151,14 +151,14 @@ _run_module() {
     return 1
   fi
 
-  local file="${MODULE_FILES[$resolved]}"
-  log_info "Loading module: $(basename "$file")"
-
   # Garantir privilégio UMA vez (sem quebrar o fluxo do script)
   if [[ $EUID -ne 0 ]]; then
     sudo -E FINITRA_CHILD=1 "$BIN_PATH" install -m "$resolved"
     return $?   # importante: não continua neste processo
   fi
+
+  local file="${MODULE_FILES[$resolved]}"
+  log_info "Loading module: $(basename "$file")"
 
   # Executa módulo no mesmo processo (quando já root)
   # shellcheck disable=SC1090
