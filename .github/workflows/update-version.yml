@@ -1,0 +1,31 @@
+name: Update version file on release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set version from release tag
+        run: |
+          echo "${GITHUB_REF_NAME#v}" > version
+
+      - name: Commit and push version file
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add version
+          git commit -m "chore: update version to ${GITHUB_REF_NAME}"
+          git push
