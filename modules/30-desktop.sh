@@ -394,89 +394,71 @@ _configure_localsearch() {
 
 # -----------------------------------------------------------------------------
 _configure_ptyxis_profile() {
-  step "Configuring Ptyxis terminal profile (Finitra - gsettings validated)"
+  step "Configuring Ptyxis terminal profile (Finitra)"
 
   local user="${SETUP_USER:-$USER}"
+  local profile_id="finitra"
   local profile_label="Finitra"
 
-  # ---- Validate schema exists ----------------------------------------------
-  local base_schema="org.gnome.Ptyxis"
-  local profile_schema_base="org.gnome.Ptyxis.Profile"
+  # ------------------------------------------------------------------
+  # Paths (GNOME/dconf is source of truth)
+  # ------------------------------------------------------------------
+  local base="/org/gnome/Ptyxis"
+  local profile_path="${base}/Profiles/${profile_id}/"
+  local schema="org.gnome.Ptyxis.Profile:${profile_path}"
 
-  if ! gsettings list-schemas | grep -q "^${base_schema}$"; then
-    log_error "Ptyxis schema not found: ${base_schema}"
-    return 1
-  fi
+  # ------------------------------------------------------------------
+  # Ensure UUID list exists
+  # ------------------------------------------------------------------
+  local uuids
+  uuids=$(sudo -u "$user" dconf read ${base}/profile-uuids 2>/dev/null)
 
-  log_info "Ptyxis schema detected: ${base_schema}"
-
-  # ---- Generate UUID --------------------------------------------------------
-  local profile_uuid
-  if command -v uuidgen >/dev/null 2>&1; then
-    profile_uuid="$(uuidgen)"
+  if [[ -z "$uuids" || "$uuids" == "@as []" ]]; then
+    uuids="['${profile_id}']"
   else
-    log_warn "uuidgen not available, using fallback UUID"
-    profile_uuid="finitra-profile-0000-0000-0000-000000000001"
-  fi
-
-  local profile_path="/org/gnome/Ptyxis/Profiles/${profile_uuid}/"
-  local schema="${profile_schema_base}:${profile_path}"
-
-  # ---- Ensure profile list exists ------------------------------------------
-  local existing_uuids
-  existing_uuids=$(sudo -u "$user" gsettings get org.gnome.Ptyxis profile-uuids 2>/dev/null)
-
-  if [[ -z "$existing_uuids" || "$existing_uuids" == "@as []" ]]; then
-    existing_uuids="['${profile_uuid}']"
-  else
-    if ! echo "$existing_uuids" | grep -q "$profile_uuid"; then
-      existing_uuids="${existing_uuids%]*}, '${profile_uuid}']"
+    if ! echo "$uuids" | grep -q "$profile_id"; then
+      uuids="${uuids%]*}, '${profile_id}']"
     fi
   fi
 
-  sudo -u "$user" gsettings set org.gnome.Ptyxis profile-uuids "$existing_uuids"
+  sudo -u "$user" dconf write ${base}/profile-uuids "$uuids"
+  sudo -u "$user" dconf write ${base}/default-profile-uuid "'${profile_id}'"
 
-  # ---- Set default profile --------------------------------------------------
-  sudo -u "$user" gsettings set org.gnome.Ptyxis default-profile-uuid "'${profile_uuid}'"
-
-  # ---- Create label ---------------------------------------------------------
-  sudo -u "$user" gsettings set \
-    "${schema}" label "'${profile_label}'" 2>/dev/null || {
-      log_warn "Profile schema not ready yet, label not applied immediately"
-    }
-
-  # ---- Helper with schema validation ---------------------------------------
-  _ptyxis_set() {
+  # ------------------------------------------------------------------
+  # Try gsettings first, fallback to dconf
+  # ------------------------------------------------------------------
+  _set_value() {
     local key="$1"
     local value="$2"
 
-    # validate key exists in schema
-    if ! gsettings list-keys "$schema" | grep -q "^${key}$"; then
-      log_warn "Skipping unknown key in schema: $key"
-      return 0
+    # Try gsettings if schema exists
+    if gsettings list-schemas 2>/dev/null | grep -q "org.gnome.Ptyxis.Profile"; then
+      if gsettings list-keys "$schema" 2>/dev/null | grep -q "^$key$"; then
+        sudo -u "$user" gsettings set "$schema" "$key" "$value" 2>/dev/null && return 0
+      fi
     fi
 
-    if sudo -u "$user" gsettings set "$schema" "$key" "$value" 2>/dev/null; then
-      log_success "Ptyxis: $key = $value"
-    else
-      log_warn "Ptyxis: failed to set $key"
-    fi
+    # Fallback to dconf (guaranteed path)
+    sudo -u "$user" dconf write "${profile_path}${key}" "$value" 2>/dev/null
   }
 
-  # ---- Apply configuration --------------------------------------------------
-  _ptyxis_set "palette"          "'${PTYXIS_PALETTE:-One Half Black}'"
-  _ptyxis_set "scrollback-lines" "${PTYXIS_SCROLLBACK_LINES:-10000}"
-  _ptyxis_set "opacity"          "${PTYXIS_OPACITY:-1.0}"
-  _ptyxis_set "bold-is-bright"   "${PTYXIS_BOLD_IS_BRIGHT:-true}"
-  _ptyxis_set "login-shell"      "${PTYXIS_LOGIN_SHELL:-true}"
+  # ------------------------------------------------------------------
+  # Apply profile
+  # ------------------------------------------------------------------
+  _set_value "label" "'${profile_label}'"
+  _set_value "palette" "'${PTYXIS_PALETTE:-One Half Black}'"
+  _set_value "scrollback-lines" "${PTYXIS_SCROLLBACK_LINES:-10000}"
+  _set_value "opacity" "${PTYXIS_OPACITY:-1.0}"
+  _set_value "bold-is-bright" "${PTYXIS_BOLD_IS_BRIGHT:-true}"
+  _set_value "login-shell" "${PTYXIS_LOGIN_SHELL:-true}"
 
   if [[ "${PTYXIS_USE_SYSTEM_FONT:-false}" == "false" ]]; then
-    _ptyxis_set "font-name" "'${PTYXIS_FONT_NAME:-JetBrains Mono 12}'"
+    _set_value "font-name" "'${PTYXIS_FONT_NAME:-JetBrains Mono 12}'"
   fi
 
-  unset -f _ptyxis_set
+  unset -f _set_value
 
-  ok "Ptyxis profile '${profile_label}' configured via gsettings"
+  ok "Ptyxis profile 'Finitra' ensured (gsettings + dconf fallback)"
 }
 
 # -----------------------------------------------------------------------------
