@@ -477,7 +477,7 @@ main() {
     _print_banner
     _preflight_check
   fi
-  
+
   _discover_modules
 
   local cmd="${1:-}"
@@ -521,6 +521,7 @@ main() {
 
     --all)
       _run_all_modules
+      return 0
       ;;
     --module)
       local input="${2:-}"
