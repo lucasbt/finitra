@@ -359,19 +359,19 @@ _install_gemini_cli() {
 }
  
 # ── OpenCode (binário Go via script oficial) ──────────────────────────────────
- 
 _install_opencode() {
   local user="${SETUP_USER:-$USER}"
   local user_home="${SETUP_HOME:-$HOME}"
   local install_dir="${user_home}/.opencode/bin"
+  local binary="${install_dir}/opencode"
   local symlink="${BIN_DIR}/opencode"
 
   step "Installing OpenCode"
 
-  if command -v opencode &>/dev/null; then
-    skip "OpenCode already installed: $(sudo -u "$user" opencode --version 2>/dev/null)"
+  if sudo -u "$user" bash -c "[[ -x \"$binary\" ]]"; then
+    skip "OpenCode already installed: $($binary --version 2>/dev/null)"
     log_info "Upgrading OpenCode..."
-    opencode upgrade
+    sudo -u "$user" "$binary" upgrade 2>/dev/null || true
     return
   fi
 
@@ -382,12 +382,8 @@ _install_opencode() {
     return 1
   }
 
-  # Detecta binário real
-  local binary
-  binary=$(command -v opencode)
-
-  if [[ -z "$binary" || ! -f "$binary" ]]; then
-    log_error "OpenCode binary not found after installation"
+  if [[ ! -x "$binary" ]]; then
+    log_error "OpenCode binary not found at expected path: $binary"
     return 1
   fi
 
