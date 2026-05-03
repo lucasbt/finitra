@@ -5,18 +5,6 @@
 # Usage: source utils.sh
 # =============================================================================
 
-export NEWT_COLORS='
-root=black,black
-window=black,black
-border=yellow,black
-title=yellow,black
-textbox=yellow,black
-button=black,yellow
-actbutton=black,yellow
-checkbox=yellow,black
-actcheckbox=black,yellow
-'
-
 # --- Colors ---
 CLR_RESET='\033[0m'
 CLR_RED='\033[0;31m'
@@ -27,22 +15,74 @@ CLR_CYAN='\033[0;36m'
 CLR_MAGENTA='\033[0;35m'
 CLR_ORANGE='\033[38;5;208m'
 CLR_BOLD='\033[1m'
+CLR_DIM="\e[2m"
 
 _UTILS_LOADED=true
 
 # =============================================================================
-# Logging
+# Log (técnico)
+# =============================================================================
+_LABEL_WIDTH=5
+
+_term_line() {
+  local color="$1"; shift
+  local icon="$1"; shift
+  local label="$1"; shift
+  local msg="$*"
+
+  printf "%b%s %-*s%b %s\n" \
+    "$color" "$icon" "$_LABEL_WIDTH" "$label" "$CLR_RESET" "$msg"
+}
+
+_log_file() {
+  local level="$1"; shift
+  local msg="$*"
+
+  printf "[%s] [%-5s] %s\n" "$(_timestamp)" "$level" "$msg" >> "$LOG_FILE"
+}
+
+# =============================================================================
+# Log (técnico)
 # =============================================================================
 
-log_info()    { echo -e "${CLR_BLUE}[INFO] $*${CLR_RESET}" | tee -a "${LOG_FILE:-/tmp/finitra.log}"; }
-log_success() { echo -e "${CLR_GREEN}[OK]    $*${CLR_RESET}" | tee -a "${LOG_FILE:-/tmp/finitra.log}"; }
-log_warn()    { echo -e "${CLR_ORANGE}[WARN]  $*${CLR_RESET}" | tee -a "${LOG_FILE:-/tmp/finitra.log}"; }
-log_error()   { echo -e "${CLR_RED}[ERROR] $*${CLR_RESET}" | tee -a "${LOG_FILE:-/tmp/finitra.log}"; }
-log_section() {
-  echo "" | tee -a "${LOG_FILE:-/tmp/finitra.log}"
-  echo -e "${CLR_BOLD}${CLR_CYAN}══════════════════════════════════════════${CLR_RESET}" | tee -a "${LOG_FILE:-/tmp/finitra.log}"
-  echo -e "${CLR_BOLD}${CLR_CYAN}  $*${CLR_RESET}" | tee -a "${LOG_FILE:-/tmp/finitra.log}"
-  echo -e "${CLR_BOLD}${CLR_CYAN}══════════════════════════════════════════${CLR_RESET}" | tee -a "${LOG_FILE:-/tmp/finitra.log}"
+log_info() {
+  _log_file "INFO" "$*"
+  _term_line "$CLR_DIM" "●" "INFO" "$*"
+}
+
+log_success() {
+  _log_file "OK" "$*"
+  _term_line "$CLR_GREEN" "✔" "OK" "$*"
+}
+
+log_warn() {
+  _log_file "WARN" "$*"
+  _term_line "$CLR_ORANGE" "▲" "WARN" "$*"
+}
+
+log_error() {
+  _log_file "ERROR" "$*"
+  _term_line "$CLR_RED" "✖" "ERROR" "$*"
+}
+
+# =============================================================================
+# Progress
+# =============================================================================
+
+step() {
+  echo ""
+  _log_file "STEP" "$*"
+  _term_line "$CLR_BOLD$CLR_MAGENTA" "▶" "STEP" "$*"
+}
+
+ok() {
+  _log_file "OK" "$*"
+  _term_line "$CLR_BOLD$CLR_GREEN" "✔" "OK" "$*"
+}
+
+skip() {
+  _log_file "SKIP" "$*"
+  _term_line "$CLR_BOLD$CLR_YELLOW" "⏭" "SKIP" "$*"
 }
 
 # =============================================================================
@@ -276,21 +316,6 @@ cached_download() {
     else
         log_info "Using cached $(basename "$output")"
     fi
-}
-# =============================================================================
-# Progress output
-# =============================================================================
-
-step() {
-  echo -e "\n${CLR_BOLD}${CLR_MAGENTA}▶ $*${CLR_RESET}"
-}
-
-ok() {
-  echo -e "${CLR_GREEN}✔ $*${CLR_RESET}"
-}
-
-skip() {
-  echo -e "${CLR_YELLOW}⏭  $*${CLR_RESET}"
 }
 
 # -----------------------------------------------------------------------------
