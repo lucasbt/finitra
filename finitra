@@ -475,8 +475,9 @@ main() {
 
   if [[ -z "${FINITRA_CHILD:-}" ]]; then
     _print_banner
+    _preflight_check
   fi
-  _preflight_check
+  
   _discover_modules
 
   local cmd="${1:-}"
