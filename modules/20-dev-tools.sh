@@ -131,13 +131,12 @@ _sdk_latest_java() {
 
   sudo -u "$user" bash -c "
     source \"${sdkman_init}\" 2>/dev/null
+
     sdk list java 2>/dev/null \
-      | grep -E \"\|\s+${dist}\s+\|\" \
-      | grep -E \"\|\s+${major}\.\" \
-      | grep -Ev \"local\s*\||installed\s*\|\" \
       | awk -F'|' '{gsub(/[[:space:]]/, \"\", \$NF); print \$NF}' \
-      | grep -v \"^\$\" \
-      | sort -t. -k1,1n -k2,2n -k3,3n \
+      | grep -E '^${major}\..*-${dist}$' \
+      | grep -v '^$' \
+      | sort -V \
       | tail -1
   "
 }
@@ -166,6 +165,21 @@ _sdk_install_java() {
 }
 
 # ── Instalação dos runtimes via SDKMAN ────────────────────────────────────────
+_get_java_version() {
+  local candidate="$1"
+  local user="${SETUP_USER:-$USER}"
+  local user_home="${SETUP_HOME:-$HOME}"
+
+  sudo -u "$user" bash -c "
+    java_bin=\"${user_home}/.sdkman/candidates/java/${candidate}/bin/java\"
+
+    if [[ -x \"\$java_bin\" ]]; then
+      \"\$java_bin\" -version 2>&1 | head -n1
+    else
+      echo \"not installed\"
+    fi
+  "
+}
 
 _install_sdkman_runtimes() {
   step "Installing runtimes via SDKMAN (may take a while on first run)"
@@ -223,7 +237,11 @@ _install_sdkman_runtimes() {
     sdk install maven  2>/dev/null || true
     sdk install gradle 2>/dev/null || true
   "
-  ok "SDKMAN runtimes installed — Java 21: ${java21_id} | Java 25: ${java25_id}"
+
+  java21_status=$(_get_java_version "$java21_id")
+  java25_status=$(_get_java_version "$java25_id")
+
+  ok "SDKMAN runtimes installed — Java 21: ${java21_status} | Java 25: ${java25_status}"
 }
 
 
@@ -318,29 +336,26 @@ _install_gemini_cli() {
   local user="${SETUP_USER:-$USER}"
   local user_home="${SETUP_HOME:-$HOME}"
   local nvm_dir="${user_home}/.nvm"
- 
-  step "Installing Gemini CLI"
- 
-  if sudo -u "$user" bash -c "
-      export NVM_DIR=\"${nvm_dir}\"
-      [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
-      command -v gemini &>/dev/null
-    "; then
-    skip "Gemini CLI already installed"
-    return
-  fi
- 
-  log_info "Installing @google/gemini-cli via npm..."
+
+  step "Installing/Updating Gemini CLI"
+
+  log_info "Ensuring latest @google/gemini-cli via npm..."
+
   sudo -u "$user" bash -c "
     export NVM_DIR=\"${nvm_dir}\"
     [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
-    npm install -g @google/gemini-cli 2>/dev/null
+
+    echo \"Current version: \$(gemini --version 2>/dev/null || echo 'not installed')\"
+
+    npm install -g @google/gemini-cli@latest --loglevel=error
+
+    echo \"Updated version: \$(gemini --version 2>/dev/null || echo 'unknown')\"
   " || {
-    log_error "Failed to install Gemini CLI"
+    log_error "Failed to install/update Gemini CLI"
     return 1
   }
- 
-  ok "Gemini CLI installed"
+
+  ok "Gemini CLI ready"
 }
  
 # ── OpenCode (binário Go via script oficial) ──────────────────────────────────
@@ -355,6 +370,8 @@ _install_opencode() {
 
   if sudo -u "$user" command -v opencode &>/dev/null; then
     skip "OpenCode already installed: $(sudo -u "$user" opencode --version 2>/dev/null)"
+    log_info "Upgrading OpenCode..."
+    opencode upgrade
     return
   fi
 
