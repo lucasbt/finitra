@@ -156,7 +156,7 @@ _run_module() {
 
   # Garantir privilégio UMA vez (sem quebrar o fluxo do script)
   if [[ $EUID -ne 0 ]]; then
-    sudo -E "$BIN_PATH" install -m "$resolved"
+    sudo -E FINITRA_CHILD=1 "$BIN_PATH" install -m "$resolved"
     return $?   # importante: não continua neste processo
   fi
 
@@ -473,7 +473,9 @@ main() {
       ;;
   esac
 
-  _print_banner
+  if [[ -z "${FINITRA_CHILD:-}" ]]; then
+    _print_banner
+  fi
   _preflight_check
   _discover_modules
 
