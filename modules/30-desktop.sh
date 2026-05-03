@@ -1,10 +1,29 @@
 #!/usr/bin/env bash
 # =============================================================================
 # modules/30-desktop.sh -- GNOME Desktop and Accessibility
+# Night Light, fixed workspaces, dark theme, text scale,
+# Ptyxis terminal profile, LocalSearch tuning
 # =============================================================================
 
 MODULE_NAME="30-desktop"
 
+# -----------------------------------------------------------------------------
+# Helper: run command as user with proper GNOME DBus session
+# -----------------------------------------------------------------------------
+_run_as_user() {
+    local user="$1"
+    shift
+
+    local uid
+    uid=$(id -u "$user")
+
+    sudo -u "$user" \
+        XDG_RUNTIME_DIR="/run/user/$uid" \
+        DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
+        "$@"
+}
+
+# Font list
 FONTS=(
   "FiraCode"
   "JetBrainsMono"
@@ -16,17 +35,19 @@ FONTS=(
 )
 
 WALLS_FOLDERS=(
-  "tile" "retro" "radium" "nord" "mountain"
-  "monochrome" "digital" "lightbulb"
-  "solarized" "spam" "unsorted"
+	"tile"
+	"retro"
+	"radium"
+	"nord"
+	"mountain"
+	"monochrome"
+	"digital"
+	"lightbulb"
+	"solarized"
+	"spam"
+	"unsorted"
 )
 
-# -----------------------------------------------------------------------------
-# FIX CRÍTICO: garante DBUS para gsettings/dconf
-# -----------------------------------------------------------------------------
-export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u ${SETUP_USER:-$USER})/bus"
-
-# -----------------------------------------------------------------------------
 module_30_desktop() {
   log_section "Module: GNOME Desktop and Accessibility"
 
@@ -43,63 +64,14 @@ module_30_desktop() {
 }
 
 # -----------------------------------------------------------------------------
-_disable_unnecessary_services() {
-    step "Disable unnecessary services"
-
-    local user="${SETUP_USER:-$USER}"
-    local user_home
-    user_home=$(getent passwd "$user" | cut -d: -f6)
-
-    _disable_system_svc() {
-        systemctl disable --now "$1" 2>/dev/null || true
-    }
-
-    _disable_user_svc() {
-        sudo -u "$user" systemctl --user disable --now "$1" 2>/dev/null || true
-    }
-
-    _mask_system_unit() {
-        systemctl disable --now "$1" 2>/dev/null || true
-        systemctl mask "$1" 2>/dev/null || true
-    }
-
-    _mask_system_unit "dnf5-makecache.timer"
-    _mask_system_unit "dnf5-makecache.service"
-    _mask_system_unit "NetworkManager-wait-online.service"
-
-    for svc in abrtd.service abrt-oops.service abrt-vmcore.service abrt-xorg.service abrt-journal-core.service; do
-        _disable_system_svc "$svc"
-    done
-
-    _disable_system_svc "ModemManager.service"
-    _disable_system_svc "gnome-remote-desktop.service"
-
-    # tracker3 stop seguro
-    if command -v tracker3 &>/dev/null; then
-        sudo -u "$user" tracker3 daemon -t 2>/dev/null || true
-    fi
-
-    mkdir -p "$user_home/.config/autostart"
-
-    cat > "$user_home/.config/autostart/tracker-disable.desktop" << 'EOF'
-[Desktop Entry]
-Hidden=true
-X-GNOME-Autostart-enabled=false
-EOF
-
-    _disable_user_svc "evolution-source-registry.service"
-    _disable_user_svc "evolution-addressbook-factory.service"
-    _disable_user_svc "evolution-calendar-factory.service"
-
-    log_success "Unnecessary services disabled"
-}
-
-# -----------------------------------------------------------------------------
 _apply_gnome_settings() {
   step "Applying GNOME settings"
 
   local settings_file="${SCRIPT_DIR}/data/gnome-settings.list"
-  [[ -f "$settings_file" ]] || { log_error "missing gnome settings"; return 1; }
+  if [[ ! -f "$settings_file" ]]; then
+    log_error "gnome-settings.list not found: $settings_file"
+    return 1
+  fi
 
   apply_gnome_settings_file "$settings_file"
 
@@ -112,66 +84,134 @@ _apply_gnome_settings() {
 _configure_custom_keybinding(){
     log_info "Apply custom keybindings..."
 
-    local user="${SETUP_USER:-$USER}"
+    _run_as_user "$SETUP_USER" gsettings set \
+      org.gnome.settings-daemon.plugins.media-keys \
+      custom-keybindings \
+      "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/','/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/']" || true
 
-    run_gsettings() {
-        sudo -u "$user" \
-          DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
-          gsettings "$@"
+    # ck0 — Terminal (Ptyxis)
+    _run_as_user "$SETUP_USER" gsettings set \
+      org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/ \
+      name "Terminal" || true
+
+    _run_as_user "$SETUP_USER" gsettings set \
+      org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/ \
+      command "ptyxis" || true
+
+    _run_as_user "$SETUP_USER" gsettings set \
+      org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/ \
+      binding "<Super>t" || true
+
+    # ck1 — Screenshot com annotation via Gradia
+    _run_as_user "$SETUP_USER" gsettings set \
+      org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ \
+      name "Gradia Screenshot" || true
+
+    _run_as_user "$SETUP_USER" gsettings set \
+      org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ \
+      command "flatpak run be.alexandervanhee.gradia --screenshot=INTERACTIVE" || true
+
+    _run_as_user "$SETUP_USER" gsettings set \
+      org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ \
+      binding "<Super>Print" || true
+}
+
+# -----------------------------------------------------------------------------
+_disable_unnecessary_services() {
+    step "Disable unnecessary services"
+    local user="${SETUP_USER:-$USER}"
+    local user_home
+    user_home=$(getent passwd "$user" | cut -d: -f6)
+
+    _disable_system_svc() {
+        local svc="$1"
+        if systemctl list-unit-files --no-legend "$svc" 2>/dev/null | grep -q "$svc"; then
+            sudo systemctl disable --now "$svc" 2>/dev/null || true
+        fi
     }
 
-    run_gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings \
-      "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/','/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/']"
+    _disable_user_svc() {
+        local svc="$1"
+        _run_as_user "$user" systemctl --user disable --now "$svc" 2>/dev/null || true
+    }
 
-    run_gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/ name "Terminal"
-    run_gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/ command "ptyxis"
-    run_gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck0/ binding "<Super>t"
+    _mask_system_unit() {
+        local unit="$1"
+        systemctl list-unit-files --no-legend "$unit" 2>/dev/null | grep -q "$unit" && \
+            sudo systemctl mask "$unit" 2>/dev/null || true
+    }
 
-    run_gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ name "Gradia Screenshot"
-    run_gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ command "flatpak run be.alexandervanhee.gradia --screenshot=INTERACTIVE"
-    run_gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ binding "<Super>Print"
+    _mask_system_unit "dnf5-makecache.timer"
+    _mask_system_unit "dnf5-makecache.service"
+    _mask_system_unit "NetworkManager-wait-online.service"
+
+    for svc in "abrtd.service" "abrt-ccpp.service" "abrt-oops.service"; do
+        _disable_system_svc "$svc"
+    done
+
+    _disable_system_svc "ModemManager.service"
+    _disable_system_svc "gnome-remote-desktop.service"
+
+    unset -f _disable_system_svc _disable_user_svc _mask_system_unit
+}
+
+# -----------------------------------------------------------------------------
+_configure_ptyxis_profile() {
+  step "Configuring Ptyxis terminal profile (simplified)"
+
+  local user="${SETUP_USER:-$USER}"
+
+  local profile_uuid
+  profile_uuid=$(_run_as_user "$user" dconf read /org/gnome/Ptyxis/default-profile-uuid 2>/dev/null | tr -d "'")
+
+  if [[ -z "$profile_uuid" || "$profile_uuid" == "''" ]]; then
+    log_warn "No default Ptyxis profile found. Skipping."
+    return 0
+  fi
+
+  local profile_path="/org/gnome/Ptyxis/Profiles/${profile_uuid}/"
+  local schema="org.gnome.Ptyxis.Profile:${profile_path}"
+
+  _ptyxis_set() {
+    local key="$1"
+    local value="$2"
+
+    gsettings set "$schema" "$key" "$value" 2>/dev/null || \
+    _run_as_user "$user" dconf write "${profile_path}${key}" "$value" 2>/dev/null || true
+  }
+
+  _ptyxis_set "palette" "'${PTYXIS_PALETTE:-One Half Black}'"
+  _ptyxis_set "scrollback-lines" "${PTYXIS_SCROLLBACK_LINES:-10000}"
+  _ptyxis_set "opacity" "${PTYXIS_OPACITY:-1.0}"
+  _ptyxis_set "bold-is-bright" "${PTYXIS_BOLD_IS_BRIGHT:-true}"
+  _ptyxis_set "login-shell" "${PTYXIS_LOGIN_SHELL:-true}"
+
+  if [[ "${PTYXIS_USE_SYSTEM_FONT:-false}" == "false" ]]; then
+    _ptyxis_set "font-name" "'${PTYXIS_FONT_NAME:-JetBrains Mono 12}'"
+  fi
+
+  unset -f _ptyxis_set
 }
 
 # -----------------------------------------------------------------------------
 _configure_localsearch() {
-    step "Configuring LocalSearch"
-
+    step "Configuring LocalSearch (lightweight indexing)"
     local user="${SETUP_USER:-$USER}"
 
-    sudo -u "$user" gsettings set org.freedesktop.Tracker3.Miner.Files index-single-directories "[]"
-    sudo -u "$user" gsettings set org.freedesktop.Tracker3.Miner.Files index-recursive-directories "[]"
+    gs_set() {
+        _run_as_user "$user" gsettings set "$1" "$2" "$3" 2>/dev/null || true
+    }
 
-    sudo -u "$user" systemctl --user disable --now localsearch-miner@rss.service 2>/dev/null || true
-    sudo -u "$user" systemctl --user disable --now tracker-miner-rss-3.service 2>/dev/null || true
+    gs_set "org.freedesktop.Tracker3.Miner.Files" "index-single-directories" "[]"
+    gs_set "org.freedesktop.Tracker3.Miner.Files" "index-recursive-directories" "[]"
+    gs_set "org.freedesktop.Tracker3.Miner.Files" "crawling-interval" "-2"
 
     ok "LocalSearch configured"
 }
 
 # -----------------------------------------------------------------------------
-_configure_ptyxis_profile() {
-  step "Configuring Ptyxis"
-
-  local user="${SETUP_USER:-$USER}"
-
-  local uuid
-  uuid=$(sudo -u "$user" dconf read /org/gnome/Ptyxis/default-profile-uuid 2>/dev/null | tr -d "'")
-
-  [[ -z "$uuid" ]] && { log_warn "No Ptyxis profile"; return; }
-
-  local path="/org/gnome/Ptyxis/Profiles/${uuid}/"
-
-  sudo -u "$user" DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
-    gsettings set org.gnome.Ptyxis.Profile:${path} palette "'One Half Black'" 2>/dev/null || true
-
-  sudo -u "$user" DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
-    gsettings set org.gnome.Ptyxis.Profile:${path} scrollback-lines 10000 2>/dev/null || true
-
-  ok "Ptyxis configured"
-}
-
-# -----------------------------------------------------------------------------
 _configure_gnome_extensions_deps() {
-  step "GNOME extensions"
+  step "Installing GNOME extensions dependencies"
 
   dnf_install \
     gnome-extensions-app \
@@ -183,99 +223,141 @@ _configure_gnome_extensions_deps() {
     gnome-shell-extension-no-overview \
     gnome-shell-extension-user-theme
 
-  ok "Extensions installed"
+  ok "GNOME extension tools installed"
 }
 
 # -----------------------------------------------------------------------------
 _install_wallpapers() {
     if [[ "${INSTALL_WALLPAPERS:-false}" != "true" ]]; then
-        skip "Wallpaper install disabled"
+        skip "Wallpaper install disabled in config"
         return
     fi
 
     local collection_dir="${WALLPAPERS_DIR}/collection"
-    local repo="https://github.com/lucasbt/walls"
-    local tmp="${CACHE_DIR}/walls-repo"
+    local walls_repo="https://github.com/lucasbt/walls"
+    local temp_dir="${CACHE_DIR}/walls-repo"
 
-    [[ -d "$collection_dir" && -n "$(ls -A "$collection_dir" 2>/dev/null)" ]] && {
-        skip "Wallpapers already exist"
-        return
-    }
-
-    step "Installing wallpapers"
-
-    if ! ask_yes_no "The wallpaper download may be very large. Proceed?" "n"; then
-        skip "Wallpaper skipped"
+    # Considera instalado se o diretório existir e não estiver vazio
+    if [[ -d "$collection_dir" && -n "$(ls -A "$collection_dir" 2>/dev/null)" ]]; then
+        skip "Wallpapers collection already exists"
         return
     fi
 
-    rm -rf "$tmp"
-    git clone --filter=blob:none --no-checkout "$repo" "$tmp"
+    step "Installing wallpapers collection"
+    mkdir -p "$collection_dir"
 
-    git -C "$tmp" sparse-checkout init --cone
+    if ! ask_yes_no "The wallpaper download may be very large. Proceed?" "n"; then
+        skip "Wallpaper download skipped"
+        return
+    fi
+
+    log_info "Cloning wallpapers repository (sparse, no blobs)..."
+    rm -rf "$temp_dir"
+    git clone --filter=blob:none --no-checkout "$walls_repo" "$temp_dir"
+
+    pushd "$temp_dir" > /dev/null || return 1
+
+    git sparse-checkout init --cone
 
     local failed=()
-
-    for f in "${WALLS_FOLDERS[@]}"; do
-        if git -C "$tmp" sparse-checkout set "$f" \
-           && git -C "$tmp" checkout HEAD -- "$f"; then
-
-            mv "$tmp/$f" "$collection_dir/" 2>/dev/null || failed+=("$f")
+    for folder in "${WALLS_FOLDERS[@]}"; do
+        log_info "Downloading folder: $folder"
+        if git sparse-checkout set "$folder" && git checkout HEAD; then
+            mv "$folder" "$collection_dir/"
+            log_info "Installed: $folder → $collection_dir"
         else
-            failed+=("$f")
+            log_warn "Failed to download folder: $folder"
+            failed+=("$folder")
         fi
     done
 
-    rm -rf "$tmp"
+    popd > /dev/null
+    rm -rf "$temp_dir"
 
-    [[ ${#failed[@]} -gt 0 ]] && log_warn "Failed: ${failed[*]}"
+    if [[ ${#failed[@]} -gt 0 ]]; then
+        log_warn "Some folders failed to download: ${failed[*]}"
+    fi
 
-    ok "Wallpapers installed"
+    ok "Wallpapers installed to $collection_dir"
 }
 
 # -----------------------------------------------------------------------------
 _install_fonts() {
-    step "Nerd Fonts"
+    local fonts_nerd_url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download"
 
-    local dir="$HOME/.local/share/fonts/nerd"
-    mkdir -p "$dir"
+    local fonts_dir="$HOME/.local/share/fonts/nerd-fonts"
+    mkdir -p "$fonts_dir"
 
-    local url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download"
+    # Considera instalado se o diretório existir e não estiver vazio
+    if [[ -d "$fonts_dir" && -n "$(ls -A "$fonts_dir" 2>/dev/null)" ]]; then
+        skip "Nerd Fonts collection already exists"
+        return
+    fi
 
-    for f in "${FONTS[@]}"; do
-        curl -fLo "/tmp/$f.zip" "$url/$f.zip" || continue
-        unzip -o "/tmp/$f.zip" -d "$dir" >/dev/null
-        rm "/tmp/$f.zip"
+    step "Installing Nerd Fonts collection"
+    mkdir -p "$fonts_dir"
+
+    log_info "Download Nerd Fonts..."
+    for font in "${FONTS[@]}"; do
+        zip_file="${font}.zip"
+        url="${fonts_nerd_url}/${zip_file}"
+        log_info "Download $font..."
+        curl -fLo "/tmp/${zip_file}" "$url"
+        log_info "Extract $font..."
+        unzip -o "/tmp/${zip_file}" -d "$fonts_dir" >/dev/null
+        rm "/tmp/${zip_file}"
     done
 
+    log_info "Updating fonts cache..."
     fc-cache -fv >/dev/null
 
-    ok "Fonts installed"
+    ok "Nerd Fonts installed to $fonts_dir"
 }
 
 # -----------------------------------------------------------------------------
 _install_microsoft_fonts() {
-    [[ "${INSTALL_MICROSOFT_FONTS:-true}" != "true" ]] && return
-
-    step "Microsoft fonts"
-
+    if [[ "${INSTALL_MICROSOFT_FONTS:-true}" != "true" ]]; then
+        skip "Microsoft fonts install disabled in config"
+        return
+    fi
+ 
+    step "Installing Microsoft core fonts"
+ 
+    local sentinel="/usr/share/fonts/msttcore/arial.ttf"
+    if [[ -f "$sentinel" ]]; then
+        skip "Microsoft fonts already installed"
+        return
+    fi
+ 
+    local installer_url="https://downloads.sourceforge.net/project/mscorefonts2/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm"
+    local installer_rpm="${CACHE_DIR}/msttcore-fonts-installer.rpm"
+ 
     dnf_install cabextract
-
-    local url="https://downloads.sourceforge.net/project/mscorefonts2/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm"
-    local rpm="/tmp/mscorefonts.rpm"
-
-    curl -fLo "$rpm" "$url"
-    sudo rpm -i --nosignature --nodigest "$rpm" || true
-
-    ok "Microsoft fonts installed"
+ 
+    log_info "Downloading msttcore-fonts-installer..."
+    if curl -fsSL --retry 3 --retry-delay 5 --max-time 60 \
+            -o "$installer_rpm" "$installer_url"; then
+        sudo rpm -i --nosignature --nodigest "$installer_rpm" && \
+            sudo fc-cache -f /usr/share/fonts/msttcore 2>/dev/null || true
+        rm -f "$installer_rpm"
+        ok "Microsoft fonts installed"
+    else
+        rm -f "$installer_rpm" 2>/dev/null || true
+        log_warn "Could not download Microsoft fonts after 3 attempts"
+        log_warn "To install manually later:"
+        log_warn "  sudo dnf install cabextract xorg-x11-font-utils"
+        log_warn "  sudo rpm -i --nosignature --nodigest '$installer_url'"
+    fi
 }
 
 # -----------------------------------------------------------------------------
+# Standalone entry point
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
   source "${SCRIPT_DIR}/utils.sh"
 
+  # Exporta automaticamente todas as variáveis carregadas
   set -a
   source "${SCRIPT_DIR}/finitra-default.config"
   [[ -f "${SETUP_HOME}/.config/finitra/finitra.config" ]] && \
