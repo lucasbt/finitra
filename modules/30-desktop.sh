@@ -82,7 +82,7 @@ _apply_gnome_settings() {
 
 # -----------------------------------------------------------------------------
 _configure_custom_keybinding(){
-    log_info "Apply custom keybindings..."
+    step "Apply custom keybindings..."
 
     _run_as_user "$SETUP_USER" gsettings set \
       org.gnome.settings-daemon.plugins.media-keys \
@@ -114,6 +114,8 @@ _configure_custom_keybinding(){
     _run_as_user "$SETUP_USER" gsettings set \
       org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ck1/ \
       binding "<Super>Print" || true
+
+    ok "Custom keybindings applied"
 }
 
 # -----------------------------------------------------------------------------
@@ -153,11 +155,12 @@ _disable_unnecessary_services() {
     _disable_system_svc "gnome-remote-desktop.service"
 
     unset -f _disable_system_svc _disable_user_svc _mask_system_unit
+    ok "Unnecessary services disabled"
 }
 
 # -----------------------------------------------------------------------------
 _configure_ptyxis_profile() {
-  step "Configuring Ptyxis terminal profile (simplified)"
+  step "Configuring Ptyxis terminal profile"
 
   local user="${SETUP_USER:-$USER}"
 
@@ -191,6 +194,7 @@ _configure_ptyxis_profile() {
   fi
 
   unset -f _ptyxis_set
+  ok "Ptyxis terminal profile configured"
 }
 
 # -----------------------------------------------------------------------------
@@ -228,6 +232,7 @@ _configure_gnome_extensions_deps() {
 
 # -----------------------------------------------------------------------------
 _install_wallpapers() {
+    step "Installing wallpapers collection"
     if [[ "${INSTALL_WALLPAPERS:-false}" != "true" ]]; then
         skip "Wallpaper install disabled in config"
         return
@@ -242,8 +247,7 @@ _install_wallpapers() {
         skip "Wallpapers collection already exists"
         return
     fi
-
-    step "Installing wallpapers collection"
+    
     mkdir -p "$collection_dir"
 
     if ! ask_yes_no "The wallpaper download may be very large. Proceed?" "n"; then
@@ -283,6 +287,7 @@ _install_wallpapers() {
 
 # -----------------------------------------------------------------------------
 _install_fonts() {
+    step "Installing Nerd Fonts collection"
     local fonts_nerd_url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download"
 
     local fonts_dir="$HOME/.local/share/fonts/nerd-fonts"
@@ -293,8 +298,7 @@ _install_fonts() {
         skip "Nerd Fonts collection already exists"
         return
     fi
-
-    step "Installing Nerd Fonts collection"
+    
     mkdir -p "$fonts_dir"
 
     log_info "Download Nerd Fonts..."
@@ -316,12 +320,11 @@ _install_fonts() {
 
 # -----------------------------------------------------------------------------
 _install_microsoft_fonts() {
+    step "Installing Microsoft core fonts"
     if [[ "${INSTALL_MICROSOFT_FONTS:-true}" != "true" ]]; then
         skip "Microsoft fonts install disabled in config"
         return
-    fi
- 
-    step "Installing Microsoft core fonts"
+    fi    
  
     local sentinel="/usr/share/fonts/msttcore/arial.ttf"
     if [[ -f "$sentinel" ]]; then

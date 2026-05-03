@@ -77,9 +77,9 @@ log_section() {
 
   # terminal
   echo ""
-  echo -e "${CLR_BOLD}${CLR_BLUE}══════════════════════════════════════════${CLR_RESET}"
-  echo -e "${CLR_BOLD}${CLR_BLUE}  ${msg}${CLR_RESET}"
-  echo -e "${CLR_BOLD}${CLR_BLUE}══════════════════════════════════════════${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_BLUE}═════════════════════════════════════════════${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_BLUE}  ● ${msg}${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_BLUE}═════════════════════════════════════════════${CLR_RESET}"
 
   # arquivo
   {
