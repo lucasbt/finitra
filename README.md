@@ -1,4 +1,4 @@
-# FINITRA
+# FINITRA 🚀
 
 **Fedora Workstation Bootstrap for Developers**
 
