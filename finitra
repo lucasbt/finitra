@@ -546,8 +546,10 @@ main() {
   esac
 
   echo ""
-  log_success "finitra done. Log saved to: ${LOG_FILE}"
-  echo ""
+  if [[ "${FINITRA_CHILD:-}" != "1" ]]; then
+    log_success "finitra done. Log saved to: ${LOG_FILE}"
+    echo ""
+  fi  
 }
 
 main "$@"
