@@ -368,7 +368,7 @@ _install_opencode() {
 
   step "Installing OpenCode"
 
-  if sudo -u "$user" command -v opencode &>/dev/null; then
+  if command -v opencode &>/dev/null; then
     skip "OpenCode already installed: $(sudo -u "$user" opencode --version 2>/dev/null)"
     log_info "Upgrading OpenCode..."
     opencode upgrade
@@ -384,7 +384,7 @@ _install_opencode() {
 
   # Detecta binário real
   local binary
-  binary=$(sudo -u "$user" command -v opencode)
+  binary=$(command -v opencode)
 
   if [[ -z "$binary" || ! -f "$binary" ]]; then
     log_error "OpenCode binary not found after installation"
