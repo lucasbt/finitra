@@ -146,17 +146,16 @@ _run_module() {
     return 1
   fi
 
-  if [[ $EUID -ne 0 ]]; then
-    exec sudo \
-      SETUP_USER="$SETUP_USER" \
-      SETUP_HOME="$SETUP_HOME" \
-      LOG_FILE="$LOG_FILE" \
-      "$BIN_PATH" install -m "$resolved"
-  fi
-
   local file="${MODULE_FILES[$resolved]}"
   log_info "Loading module: $(basename "$file")"
 
+  # Garantir privilégio UMA vez (sem quebrar o fluxo do script)
+  if [[ $EUID -ne 0 ]]; then
+    sudo -E "$BIN_PATH" install -m "$resolved"
+    return $?   # importante: não continua neste processo
+  fi
+
+  # Executa módulo no mesmo processo (quando já root)
   # shellcheck disable=SC1090
   source "$file"
 
@@ -164,10 +163,7 @@ _run_module() {
   funcname="module_$(basename "$file" .sh | tr '-' '_')"
 
   if declare -f "$funcname" > /dev/null; then
-    if ! "$funcname"; then
-      log_error "Module '$resolved' failed."
-      return 1
-    fi
+    "$funcname"
   else
     log_error "Function '$funcname' not found in $file"
     return 1
