@@ -20,9 +20,16 @@ CLR_DIM="\e[2m"
 _UTILS_LOADED=true
 
 # =============================================================================
-# Log (técnico)
+# Logging
 # =============================================================================
 _LABEL_WIDTH=5
+
+LOG_FILE="${HOME}/.cache/finitra/finitra.log"
+mkdir -p "$(dirname "$LOG_FILE")"
+
+_timestamp() {
+  date '+%Y-%m-%d %H:%M:%S'
+}
 
 _term_line() {
   local color="$1"; shift
