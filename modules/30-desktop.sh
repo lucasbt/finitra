@@ -64,7 +64,7 @@ _disable_unnecessary_services() {
                 log_info "Disabled system service: $svc" || \
                 log_warn "Could not disable: $svc (may already be inactive)"
         else
-            log_info "Skipped (not found): $svc"
+            log_warn "Skipped (not found): $svc"
         fi
     }
 
@@ -394,39 +394,76 @@ _configure_localsearch() {
 
 # -----------------------------------------------------------------------------
 _configure_ptyxis_profile() {
-  step "Configuring Ptyxis terminal profile (font, palette, scrollback, opacity)"
+  step "Configuring Ptyxis terminal profile (Finitra - gsettings validated)"
 
   local user="${SETUP_USER:-$USER}"
+  local profile_label="Finitra"
 
-  # Read the existing default profile UUID, or create a new profile
+  # ---- Validate schema exists ----------------------------------------------
+  local base_schema="org.gnome.Ptyxis"
+  local profile_schema_base="org.gnome.Ptyxis.Profile"
+
+  if ! gsettings list-schemas | grep -q "^${base_schema}$"; then
+    log_error "Ptyxis schema not found: ${base_schema}"
+    return 1
+  fi
+
+  log_info "Ptyxis schema detected: ${base_schema}"
+
+  # ---- Generate UUID --------------------------------------------------------
   local profile_uuid
-  profile_uuid=$(sudo -u "$user" dconf read /org/gnome/Ptyxis/default-profile-uuid 2>/dev/null \
-    | tr -d "'")
-
-  if [[ -z "$profile_uuid" ]]; then
-    log_info "No Ptyxis profile found. Creating default profile..."
-    profile_uuid="finitra-default"
-
-    sudo -u "$user" dconf write /org/gnome/Ptyxis/profile-uuids "['${profile_uuid}']"
-    sudo -u "$user" dconf write /org/gnome/Ptyxis/default-profile-uuid "'${profile_uuid}'"
-    sudo -u "$user" dconf write "/org/gnome/Ptyxis/Profiles/${profile_uuid}/label" "'Default'"
-    log_info "Profile created with UUID: $profile_uuid"
+  if command -v uuidgen >/dev/null 2>&1; then
+    profile_uuid="$(uuidgen)"
   else
-    log_info "Existing Ptyxis profile detected: $profile_uuid"
+    log_warn "uuidgen not available, using fallback UUID"
+    profile_uuid="finitra-profile-0000-0000-0000-000000000001"
   fi
 
   local profile_path="/org/gnome/Ptyxis/Profiles/${profile_uuid}/"
-  local schema="org.gnome.Ptyxis.Profile:${profile_path}"
+  local schema="${profile_schema_base}:${profile_path}"
 
+  # ---- Ensure profile list exists ------------------------------------------
+  local existing_uuids
+  existing_uuids=$(sudo -u "$user" gsettings get org.gnome.Ptyxis profile-uuids 2>/dev/null)
+
+  if [[ -z "$existing_uuids" || "$existing_uuids" == "@as []" ]]; then
+    existing_uuids="['${profile_uuid}']"
+  else
+    if ! echo "$existing_uuids" | grep -q "$profile_uuid"; then
+      existing_uuids="${existing_uuids%]*}, '${profile_uuid}']"
+    fi
+  fi
+
+  sudo -u "$user" gsettings set org.gnome.Ptyxis profile-uuids "$existing_uuids"
+
+  # ---- Set default profile --------------------------------------------------
+  sudo -u "$user" gsettings set org.gnome.Ptyxis default-profile-uuid "'${profile_uuid}'"
+
+  # ---- Create label ---------------------------------------------------------
+  sudo -u "$user" gsettings set \
+    "${schema}" label "'${profile_label}'" 2>/dev/null || {
+      log_warn "Profile schema not ready yet, label not applied immediately"
+    }
+
+  # ---- Helper with schema validation ---------------------------------------
   _ptyxis_set() {
-    local key="$1" value="$2"
+    local key="$1"
+    local value="$2"
+
+    # validate key exists in schema
+    if ! gsettings list-keys "$schema" | grep -q "^${key}$"; then
+      log_warn "Skipping unknown key in schema: $key"
+      return 0
+    fi
+
     if sudo -u "$user" gsettings set "$schema" "$key" "$value" 2>/dev/null; then
-      log_success "Ptyxis profile: $key = $value"
+      log_success "Ptyxis: $key = $value"
     else
-      log_warn "Ptyxis profile: failed to set $key = $value"
+      log_warn "Ptyxis: failed to set $key"
     fi
   }
 
+  # ---- Apply configuration --------------------------------------------------
   _ptyxis_set "palette"          "'${PTYXIS_PALETTE:-One Half Black}'"
   _ptyxis_set "scrollback-lines" "${PTYXIS_SCROLLBACK_LINES:-10000}"
   _ptyxis_set "opacity"          "${PTYXIS_OPACITY:-1.0}"
@@ -438,7 +475,8 @@ _configure_ptyxis_profile() {
   fi
 
   unset -f _ptyxis_set
-  ok "Ptyxis profile configured"
+
+  ok "Ptyxis profile '${profile_label}' configured via gsettings"
 }
 
 # -----------------------------------------------------------------------------
@@ -533,9 +571,9 @@ _install_fonts() {
     for font in "${FONTS[@]}"; do
         zip_file="${font}.zip"
         url="${fonts_nerd_url}/${zip_file}"
-        log "Download $font..."
+        log_info "Download $font..."
         curl -fLo "/tmp/${zip_file}" "$url"
-        log "Extract $font..."
+        log_info "Extract $font..."
         unzip -o "/tmp/${zip_file}" -d "$fonts_dir" >/dev/null
         rm "/tmp/${zip_file}"
     done
