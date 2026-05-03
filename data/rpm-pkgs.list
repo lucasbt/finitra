@@ -6,7 +6,6 @@
 
 # --- Editor / IDE ---
 code                      # VSCode (repositório Microsoft)
-vim-enhanced-2
 neovim
 
 # --- Dev Tools ---
@@ -77,7 +76,7 @@ clang
 
 # --- Sistema / Utils ---
 bash-completion
-util-linux-2
+util-linux
 strace
 lsof
 ncdu                      # analisador de disco TUI
@@ -187,7 +186,18 @@ hplip-common
 hplip-libs
 util-linux-user
 fragments
-geary
+geany
+geany-plugins-addons
+geany-plugins-geanymacro
+geany-plugins-git-changebar
+geany-plugins-lineoperations
+geany-plugins-lsp
+geany-plugins-markdown
+geany-plugins-pairtaghighlighter
+geany-plugins-pretty-printer
+geany-plugins-shiftcolumn
+geany-plugins-workbench
+geany-themes
 epiphany
 
 # Extensions
@@ -200,3 +210,4 @@ gnome-shell-extension-user-theme
 # Misc
 xorg-x11-font-utils
 cabextract
+adw-gtk3-theme

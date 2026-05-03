@@ -204,6 +204,12 @@ _install_sdkman_runtimes() {
 
   if [[ -n "$java25_id" ]]; then
     _sdk_install_java "$user" "$user_home" "$java25_id" "25"
+    sudo -u "$user" bash -c "
+      source \"${sdkman_init}\" 2>/dev/null
+      sdk default java \"${java25_id}\"
+    "
+    log_info "Java 25 set as default: $java25_id"
+
   else
     log_warn "Java 25 Temurin not detected automatically."
     log_warn "Check manually: sdk list java | grep '25.*tem'"
@@ -282,10 +288,15 @@ EOF
   }
 
   log_info "Installing global npm packages..."
+
   sudo -u "$user" bash -c "
     export NVM_DIR=\"${nvm_dir}\"
     [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
-    npm install -g npm@latest typescript ts-node prettier eslint 2>/dev/null
+
+    echo \"Node version: \$(node -v 2>/dev/null || echo 'not found')\"
+    echo \"npm version: \$(npm -v 2>/dev/null || echo 'not found')\"
+
+    npm install -g npm@latest typescript ts-node prettier eslint --loglevel=info
   " || log_warn "Some npm packages failed to install — continuing."
 
   ok "Node.js LTS and NVM installed"
@@ -337,25 +348,36 @@ _install_gemini_cli() {
 _install_opencode() {
   local user="${SETUP_USER:-$USER}"
   local user_home="${SETUP_HOME:-$HOME}"
-  local bin_dir="${user_home}/.local/bin"
- 
+  local install_dir="${user_home}/.opencode/bin"
+  local symlink="${BIN_DIR}/opencode"
+
   step "Installing OpenCode"
- 
-  if sudo -u "$user" bash -c "command -v opencode &>/dev/null"; then
+
+  if sudo -u "$user" command -v opencode &>/dev/null; then
     skip "OpenCode already installed: $(sudo -u "$user" opencode --version 2>/dev/null)"
     return
   fi
- 
+
   log_info "Downloading and installing OpenCode via install script..."
-  sudo -u "$user" bash -c "
-    mkdir -p \"${bin_dir}\"
-    OPENCODE_INSTALL_DIR=\"${bin_dir}\" \
-      curl -fsSL https://opencode.ai/install | bash
-  " || {
+
+  sudo -u "$user" bash -c "curl -fsSL https://opencode.ai/install | bash" || {
     log_error "Failed to install OpenCode"
     return 1
   }
- 
+
+  # Detecta binário real
+  local binary
+  binary=$(sudo -u "$user" command -v opencode)
+
+  if [[ -z "$binary" || ! -f "$binary" ]]; then
+    log_error "OpenCode binary not found after installation"
+    return 1
+  fi
+
+  mkdir -p "$BIN_DIR"
+  ln -sf "$binary" "$symlink"
+
+  log_info "Symlink created: $symlink → $binary"
   ok "OpenCode installed"
 }
 
@@ -914,7 +936,7 @@ _install_insomnia() {
     fi
 
     # Se chegou aqui, precisa instalar/atualizar
-    step "Installing/Updating Insomnia"
+    log_info "Installing/Updating Insomnia"
     local rpm_asset rpm_file
     rpm_asset=$(curl -s "https://api.github.com/repos/Kong/insomnia/releases/tags/${tag}" \
         | grep -oP 'browser_download_url":\s*"\K([^"]*Insomnia\.Core[^"]*\.rpm)')
@@ -935,7 +957,7 @@ _install_insomnia() {
 
 _install_postman() {
   step "Installing Postman"
-  local install_dir="/opt/postman"
+  local install_dir="/opt/Postman"
   local archive="${CACHE_DIR}/postman-linux-x64.tar.gz"
 
   if [[ ! -d "$install_dir" ]]; then
@@ -945,7 +967,6 @@ _install_postman() {
       sudo rm -rf "$install_dir"
       sudo mkdir -p "$install_dir"
       sudo tar -xzf "$archive" -C /opt
-      sudo mv /opt/Postman "$install_dir"
       sudo chown -R "$USER:$USER" "$install_dir"
       ok "Postman installed"
   else
@@ -962,7 +983,7 @@ _install_postman() {
 Encoding=UTF-8
 Name=Postman
 Comment=API Development Environment
-Exec=${install_dir}/app/Postman %U
+Exec=${install_dir}/app/Postman --gtk-version=3 %U
 Icon=${install_dir}/app/resources/app/assets/icon.png
 Terminal=false
 Type=Application
