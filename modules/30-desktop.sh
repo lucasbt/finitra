@@ -46,6 +46,7 @@ WALLS_FOLDERS=(
 	"solarized"
 	"spam"
 	"unsorted"
+  "colorful"
 )
 
 module_30_desktop() {
