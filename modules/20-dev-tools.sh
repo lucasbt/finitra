@@ -414,26 +414,37 @@ _install_github_copilot() {
 
   step "Installing/Updating GitHub Copilot CLI"
 
+  # pega versão instalada (somente semver)
+  local current
+  current=$(sudo -u "$user" bash -c "
+    export NVM_DIR=\"$nvm_dir\"
+    [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
+    copilot --version 2>/dev/null | grep -Eo '[0-9]+\\.[0-9]+\\.[0-9]+' || true
+  ")
+
+  # pega versão mais recente do npm
+  local latest
+  latest=$(npm view "$pkg" version 2>/dev/null || true)
+
+  echo "Current: ${current:-none}"
+  echo "Latest:  ${latest:-unknown}"
+
+  # se já está atualizado, não instala nada
+  if [[ -n "$current" && -n "$latest" && "$current" == "$latest" ]]; then
+    echo "Already up to date. Skipping install."
+    ok "GitHub Copilot CLI ready"
+    return 0
+  fi
+
+  log_info "Installing/updating Copilot CLI..."
+
   sudo -u "$user" bash -c "
-    export NVM_DIR=\"${nvm_dir}\"
+    export NVM_DIR=\"$nvm_dir\"
     [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
 
     nvm use 22 >/dev/null 2>&1 || true
 
-    CURRENT=\$(copilot --version 2>/dev/null || echo \"none\")
-    LATEST=\$(npm view $pkg version 2>/dev/null || echo \"\")
-
-    echo \"Current: \$CURRENT\"
-    echo \"Latest:  \$LATEST\"
-
-    if [[ \"\$CURRENT\" == \"\$LATEST\" && -n \"\$CURRENT\" ]]; then
-      echo \"Already up to date. Skipping install.\"
-      exit 0
-    fi
-
     npm install -g $pkg@latest --loglevel=error --engine-strict=false
-
-    echo \"Updated: \$(copilot --version 2>/dev/null || echo 'unknown')\"
   " || {
     log_error "Failed to install/update GitHub Copilot CLI"
     return 1
