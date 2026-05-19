@@ -406,49 +406,36 @@ _install_qwen_code() {
 }
 
 # ── github copilot ──────────────────────────────────
-_install_github_copilot() {
+_install_copilot() {
   local user="${SETUP_USER:-$USER}"
-  local nvm_dir="${SETUP_HOME:-$HOME}/.nvm"
+  local user_home="${SETUP_HOME:-$HOME}"
+  local nvm_dir="${user_home}/.nvm"
   local pkg="@github/copilot"
 
   step "Installing/Updating GitHub Copilot CLI"
 
-  local current
-  current=$(sudo -u "$user" bash -c "
-    export NVM_DIR=\"$nvm_dir\"
-    [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
-    copilot --version 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' || true
-  ")
-
-  local remote
-  remote=$(npm view "$pkg" version 2>/dev/null || true)
-
-  echo "Current: ${current:-none}"
-  echo "Remote:  ${remote:-unknown}"
-
-  # fallback seguro
-  if [[ -z "$remote" ]]; then
-    log_info "Could not fetch remote version, skipping install for safety"
-    return 0
-  fi
-
-  # SKIP REAL
-  if [[ -n "$current" && "$current" == "$remote" ]]; then
-    skip "Copilot already up to date ($current)"
-    return 0
-  fi
-
-  log_info "Updating Copilot CLI..."
-
   sudo -u "$user" bash -c "
-    export NVM_DIR=\"$nvm_dir\"
+    export NVM_DIR=\"${nvm_dir}\"
     [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
+
+    nvm use 22 >/dev/null 2>&1 || true
+
+    CURRENT=\$(copilot --version 2>/dev/null || echo \"none\")
+    LATEST=\$(npm view $pkg version 2>/dev/null || echo \"\")
+
+    echo \"Current: \$CURRENT\"
+    echo \"Latest:  \$LATEST\"
+
+    if [[ \"\$CURRENT\" == \"\$LATEST\" && -n \"\$CURRENT\" ]]; then
+      echo \"Already up to date. Skipping install.\"
+      exit 0
+    fi
 
     npm install -g $pkg@latest --loglevel=error --engine-strict=false
 
-    echo \"Installed: \$(copilot --version 2>/dev/null || echo 'unknown')\"
+    echo \"Updated: \$(copilot --version 2>/dev/null || echo 'unknown')\"
   " || {
-    log_error "Failed to install Copilot CLI"
+    log_error "Failed to install/update GitHub Copilot CLI"
     return 1
   }
 
@@ -497,7 +484,7 @@ EOF
   fi
 
   log_info "Installing/updating Windsurf..."
-  sudo dnf install -y windsurf || {
+  sudo dnf install -yq windsurf || {
     log_error "Failed to install Windsurf"
     return 1
   }
@@ -1002,13 +989,35 @@ _install_awscli() {
     local install_dir="/usr/local/aws-cli"
     local bin_dir="/usr/local/bin"
 
+    step "Checking AWS CLI"
+
     # Versão instalada
     local current_version=""
     if command -v aws &>/dev/null; then
         current_version=$(aws --version 2>&1 | awk -F/ '{print $2}' | awk '{print $1}')
     fi
 
-    step "Checking AWS CLI"
+    # 🔥 Versão remota real (GitHub tags)
+    local remote_version
+    remote_version=$(curl -s https://api.github.com/repos/aws/aws-cli/tags \
+        | jq -r '.[0].name' 2>/dev/null \
+        | sed 's/^v//')
+
+    if [[ -z "$remote_version" || "$remote_version" == "null" ]]; then
+        log_error "Failed to fetch remote AWS CLI version"
+        return 1
+    fi
+
+    log_info "Current AWS CLI: ${current_version:-none}"
+    log_info "Latest AWS CLI:  $remote_version"
+
+    # Se já está atualizado, sai
+    if [[ -n "$current_version" && "$current_version" == "$remote_version" ]]; then
+        skip "AWS CLI already at latest version ($current_version)"
+        return 0
+    fi
+
+    step "Downloading AWS CLI v2"
 
     cached_download \
         "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" \
@@ -1017,16 +1026,7 @@ _install_awscli() {
     rm -rf "$extract_dir"
     unzip -q "$zip_file" -d "$extract_dir"
 
-    local new_version
-    new_version=$("$extract_dir/aws/dist/aws" --version 2>&1 | awk -F/ '{print $2}' | awk '{print $1}')
-
-    if [[ "$current_version" == "$new_version" && -n "$current_version" ]]; then
-        skip "AWS CLI already at latest version ($current_version)"
-        rm -rf "$extract_dir"
-        return
-    fi
-
-    step "Installing/Updating AWS CLI to $new_version"
+    step "Installing/Updating AWS CLI to $remote_version"
 
     sudo "$extract_dir/aws/install" \
         --install-dir "$install_dir" \
@@ -1035,9 +1035,8 @@ _install_awscli() {
 
     rm -rf "$extract_dir"
 
-    ok "AWS CLI now at $new_version"
+    ok "AWS CLI now at $remote_version"
 }
-
 
 # =============================================================================
 # 8. Clientes de API REST
