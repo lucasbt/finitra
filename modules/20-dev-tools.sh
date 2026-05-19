@@ -390,6 +390,82 @@ _install_qwen_code() {
 
   ok "Qwen Code ready"
 }
+
+# ── github copilot ──────────────────────────────────
+_install_github_copilot() {
+  local user="${SETUP_USER:-$USER}"
+  local user_home="${SETUP_HOME:-$HOME}"
+  local nvm_dir="${user_home}/.nvm"
+
+  step "Installing/Updating GitHub Copilot CLI"
+
+  log_info "Installing @github/copilot via npm..."
+
+  sudo -u "$user" bash -c "
+    export NVM_DIR=\"${nvm_dir}\"
+    [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
+
+    nvm use 22 >/dev/null 2>&1 || true
+
+    echo \"Node version: \$(node -v 2>/dev/null || echo 'missing')\"
+    echo \"npm version: \$(npm -v 2>/dev/null || echo 'missing')\"
+
+    echo \"Current version: \$(copilot --version 2>/dev/null || echo 'not installed')\"
+
+    npm install -g @github/copilot@latest --loglevel=error --engine-strict=false
+
+    echo \"Updated version: \$(copilot --version 2>/dev/null || echo 'unknown')\"
+  " || {
+    log_error "Failed to install/update GitHub Copilot CLI"
+    return 1
+  }
+
+  ok "GitHub Copilot CLI ready"
+}
+
+# ── Windsurf ──────────────────────────────────
+_install_windsurf() {
+  step "Installing/Updating Windsurf"
+
+  log_info "Configuring Windsurf RPM repository..."
+
+  sudo bash -c '
+    set -e
+
+    REPO_FILE="/etc/yum.repos.d/windsurf.repo"
+    REPO_URL="https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/yum/repo/"
+    KEY_URL="https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/yum/RPM-GPG-KEY-windsurf"
+
+    # Import GPG key only if not already imported
+    rpm -q gpg-pubkey --qf "%{name}-%{version}-%{release}\n" | grep -q windsurf || {
+      rpm --import "$KEY_URL"
+    }
+
+    # Write repo file only if missing or changed
+    if [ ! -f "$REPO_FILE" ] || ! grep -q "windsurf-stable" "$REPO_FILE"; then
+      cat > "$REPO_FILE" <<EOF
+[windsurf]
+name=Windsurf Repository
+baseurl=$REPO_URL
+enabled=1
+autorefresh=1
+gpgcheck=1
+gpgkey=$KEY_URL
+EOF
+    fi
+  '
+
+  log_info "Refreshing DNF metadata..."
+  sudo dnf makecache --refresh -y
+
+  log_info "Installing Windsurf..."
+  sudo dnf install -y windsurf || {
+    log_error "Failed to install Windsurf"
+    return 1
+  }
+
+  ok "Windsurf ready"
+}
  
 # ── OpenCode (binário Go via script oficial) ──────────────────────────────────
 _install_opencode() {
