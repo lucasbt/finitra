@@ -327,7 +327,7 @@ EOF
 _install_ai_cli_tools() {
   _install_gemini_cli
   _install_qwen_code
-  _install_github_copilot
+  _install_copilot
   _install_windsurf
   _install_opencode
 }
@@ -412,7 +412,7 @@ _install_copilot() {
   local nvm_dir="${user_home}/.nvm"
   local pkg="@github/copilot"
 
-  step "Installing/Updating GitHub Copilot CLI"
+  step "Installing/Updating Copilot CLI"
 
   sudo -u "$user" bash -c "
     export NVM_DIR=\"${nvm_dir}\"
@@ -1017,7 +1017,7 @@ _install_awscli() {
         return 0
     fi
 
-    step "Downloading AWS CLI v2"
+    log_info "Downloading AWS CLI v2"
 
     cached_download \
         "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" \
@@ -1026,7 +1026,7 @@ _install_awscli() {
     rm -rf "$extract_dir"
     unzip -q "$zip_file" -d "$extract_dir"
 
-    step "Installing/Updating AWS CLI to $remote_version"
+    log_info "Installing/Updating AWS CLI to $remote_version"
 
     sudo "$extract_dir/aws/install" \
         --install-dir "$install_dir" \
