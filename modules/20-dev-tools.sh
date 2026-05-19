@@ -57,7 +57,6 @@ module_20_dev_tools() {
   log_success "Module $MODULE_NAME completed."
 }
 
-
 # =============================================================================
 # 2. Controle de versão
 # =============================================================================
@@ -328,6 +327,8 @@ EOF
 _install_ai_cli_tools() {
   _install_gemini_cli
   _install_qwen_code
+  _install_github_copilot
+  _install_windsurf
   _install_opencode
 }
  
@@ -337,20 +338,28 @@ _install_gemini_cli() {
   local user="${SETUP_USER:-$USER}"
   local user_home="${SETUP_HOME:-$HOME}"
   local nvm_dir="${user_home}/.nvm"
+  local pkg="@google/gemini-cli"
 
   step "Installing/Updating Gemini CLI"
-
-  log_info "Ensuring latest @google/gemini-cli via npm..."
 
   sudo -u "$user" bash -c "
     export NVM_DIR=\"${nvm_dir}\"
     [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
 
-    echo \"Current version: \$(gemini --version 2>/dev/null || echo 'not installed')\"
+    CURRENT=\$(gemini --version 2>/dev/null || echo \"none\")
+    LATEST=\$(npm view $pkg version 2>/dev/null || echo \"\")
 
-    npm install -g @google/gemini-cli@latest --loglevel=error
+    echo \"Current: \$CURRENT\"
+    echo \"Latest:  \$LATEST\"
 
-    echo \"Updated version: \$(gemini --version 2>/dev/null || echo 'unknown')\"
+    if [[ \"\$CURRENT\" == \"\$LATEST\" && -n \"\$CURRENT\" ]]; then
+      echo \"Already up to date. Skipping install.\"
+      exit 0
+    fi
+
+    npm install -g $pkg@latest --loglevel=error
+
+    echo \"Updated: \$(gemini --version 2>/dev/null || echo 'unknown')\"
   " || {
     log_error "Failed to install/update Gemini CLI"
     return 1
@@ -364,10 +373,9 @@ _install_qwen_code() {
   local user="${SETUP_USER:-$USER}"
   local user_home="${SETUP_HOME:-$HOME}"
   local nvm_dir="${user_home}/.nvm"
+  local pkg="@qwen-code/qwen-code"
 
   step "Installing/Updating Qwen Code"
-
-  log_info "Installing @qwen-code/qwen-code via npm (no external installer)..."
 
   sudo -u "$user" bash -c "
     export NVM_DIR=\"${nvm_dir}\"
@@ -375,14 +383,20 @@ _install_qwen_code() {
 
     nvm use 22 >/dev/null 2>&1 || true
 
-    echo \"Node version: \$(node -v 2>/dev/null || echo 'missing')\"
-    echo \"npm version: \$(npm -v 2>/dev/null || echo 'missing')\"
+    CURRENT=\$(qwen --version 2>/dev/null || echo \"none\")
+    LATEST=\$(npm view $pkg version 2>/dev/null || echo \"\")
 
-    echo \"Current version: \$(qwen --version 2>/dev/null || echo 'not installed')\"
+    echo \"Current: \$CURRENT\"
+    echo \"Latest:  \$LATEST\"
 
-    npm install -g @qwen-code/qwen-code@latest --loglevel=error --engine-strict=false
+    if [[ \"\$CURRENT\" == \"\$LATEST\" && -n \"\$CURRENT\" ]]; then
+      echo \"Already up to date. Skipping install.\"
+      exit 0
+    fi
 
-    echo \"Updated version: \$(qwen --version 2>/dev/null || echo 'unknown')\"
+    npm install -g $pkg@latest --loglevel=error --engine-strict=false
+
+    echo \"Updated: \$(qwen --version 2>/dev/null || echo 'unknown')\"
   " || {
     log_error "Failed to install/update Qwen Code"
     return 1
@@ -396,10 +410,9 @@ _install_github_copilot() {
   local user="${SETUP_USER:-$USER}"
   local user_home="${SETUP_HOME:-$HOME}"
   local nvm_dir="${user_home}/.nvm"
+  local pkg="@github/copilot"
 
   step "Installing/Updating GitHub Copilot CLI"
-
-  log_info "Installing @github/copilot via npm..."
 
   sudo -u "$user" bash -c "
     export NVM_DIR=\"${nvm_dir}\"
@@ -407,14 +420,20 @@ _install_github_copilot() {
 
     nvm use 22 >/dev/null 2>&1 || true
 
-    echo \"Node version: \$(node -v 2>/dev/null || echo 'missing')\"
-    echo \"npm version: \$(npm -v 2>/dev/null || echo 'missing')\"
+    CURRENT=\$(copilot --version 2>/dev/null || echo \"none\")
+    LATEST=\$(npm view $pkg version 2>/dev/null || echo \"\")
 
-    echo \"Current version: \$(copilot --version 2>/dev/null || echo 'not installed')\"
+    echo \"Current: \$CURRENT\"
+    echo \"Latest:  \$LATEST\"
 
-    npm install -g @github/copilot@latest --loglevel=error --engine-strict=false
+    if [[ \"\$CURRENT\" == \"\$LATEST\" && -n \"\$CURRENT\" ]]; then
+      echo \"Already up to date. Skipping install.\"
+      exit 0
+    fi
 
-    echo \"Updated version: \$(copilot --version 2>/dev/null || echo 'unknown')\"
+    npm install -g $pkg@latest --loglevel=error --engine-strict=false
+
+    echo \"Updated: \$(copilot --version 2>/dev/null || echo 'unknown')\"
   " || {
     log_error "Failed to install/update GitHub Copilot CLI"
     return 1
@@ -427,38 +446,17 @@ _install_github_copilot() {
 _install_windsurf() {
   step "Installing/Updating Windsurf"
 
-  log_info "Configuring Windsurf RPM repository..."
-
-  sudo bash -c '
-    set -e
-
-    REPO_FILE="/etc/yum.repos.d/windsurf.repo"
-    REPO_URL="https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/yum/repo/"
-    KEY_URL="https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/yum/RPM-GPG-KEY-windsurf"
-
-    # Import GPG key only if not already imported
-    rpm -q gpg-pubkey --qf "%{name}-%{version}-%{release}\n" | grep -q windsurf || {
-      rpm --import "$KEY_URL"
-    }
-
-    # Write repo file only if missing or changed
-    if [ ! -f "$REPO_FILE" ] || ! grep -q "windsurf-stable" "$REPO_FILE"; then
-      cat > "$REPO_FILE" <<EOF
-[windsurf]
-name=Windsurf Repository
-baseurl=$REPO_URL
-enabled=1
-autorefresh=1
-gpgcheck=1
-gpgkey=$KEY_URL
-EOF
-    fi
-  '
-
   log_info "Refreshing DNF metadata..."
   sudo dnf makecache --refresh -y
 
-  log_info "Installing Windsurf..."
+  if dnf list installed windsurf >/dev/null 2>&1; then
+    if ! dnf check-update windsurf >/dev/null 2>&1; then
+      skip "Windsurf already up to date"
+      return 0
+    fi
+  fi
+
+  log_info "Installing/Updating Windsurf..."
   sudo dnf install -y windsurf || {
     log_error "Failed to install Windsurf"
     return 1
@@ -478,28 +476,27 @@ _install_opencode() {
   step "Installing OpenCode"
 
   if sudo -u "$user" bash -c "[[ -x \"$binary\" ]]"; then
-    skip "OpenCode already installed: $($binary --version 2>/dev/null)"
-    log_info "Upgrading OpenCode..."
+    CURRENT=$($binary --version 2>/dev/null || echo "none")
+
+    log_info "OpenCode installed: $CURRENT"
+    log_info "Checking updates..."
+
+    sudo -u "$user" "$binary" upgrade --check 2>/dev/null || true
     sudo -u "$user" "$binary" upgrade 2>/dev/null || true
-    return
+
+    return 0
   fi
 
-  log_info "Downloading and installing OpenCode via install script..."
+  log_info "Downloading OpenCode installer..."
 
   sudo -u "$user" bash -c "curl -fsSL https://opencode.ai/install | bash" || {
     log_error "Failed to install OpenCode"
     return 1
   }
 
-  if [[ ! -x "$binary" ]]; then
-    log_error "OpenCode binary not found at expected path: $binary"
-    return 1
-  fi
-
   mkdir -p "$BIN_DIR"
   ln -sf "$binary" "$symlink"
 
-  log_info "Symlink created: $symlink → $binary"
   ok "OpenCode installed"
 }
 
