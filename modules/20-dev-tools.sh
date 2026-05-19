@@ -413,24 +413,22 @@ _install_github_copilot() {
 
   step "Installing/Updating GitHub Copilot CLI"
 
-  # versão instalada (limpa)
   local current
   current=$(sudo -u "$user" bash -c "
     export NVM_DIR=\"$nvm_dir\"
     [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
-    copilot --version 2>/dev/null | grep -Eo '[0-9]+\\.[0-9]+\\.[0-9]+' || true
+    copilot --version 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' || true
   ")
 
-  # versão remota (IMPORTANTE: fallback seguro)
   local remote
-  remote=$(npm view "$pkg" version 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' || true)
+  remote=$(npm view "$pkg" version 2>/dev/null || true)
 
   echo "Current: ${current:-none}"
   echo "Remote:  ${remote:-unknown}"
 
-  # se não conseguir obter versão remota → não faz upgrade forçado
+  # fallback seguro
   if [[ -z "$remote" ]]; then
-    log_info "Could not fetch remote version, skipping safety install"
+    log_info "Could not fetch remote version, skipping install for safety"
     return 0
   fi
 
@@ -446,7 +444,6 @@ _install_github_copilot() {
     export NVM_DIR=\"$nvm_dir\"
     [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
 
-    nvm use 22 >/dev/null 2>&1 || true
     npm install -g $pkg@latest --loglevel=error --engine-strict=false
 
     echo \"Installed: \$(copilot --version 2>/dev/null || echo 'unknown')\"
@@ -495,7 +492,8 @@ EOF
     log_info "Windsurf already installed: $CURRENT"
 
     log_info "Checking for updates..."
-    run_as_root dnf check-update --refresh --repo=windsurf 2>/dev/null || true
+    run_as_root dnf makecache --refresh --disablerepo="*" --enablerepo="windsurf" >/dev/null
+    run_as_root dnf check-update --disablerepo="*" --enablerepo="windsurf" windsurf 2>/dev/null || true
   fi
 
   log_info "Installing/updating Windsurf..."
