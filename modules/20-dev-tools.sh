@@ -446,17 +446,33 @@ _install_github_copilot() {
 _install_windsurf() {
   step "Installing/Updating Windsurf"
 
-  log_info "Refreshing DNF metadata..."
-  sudo dnf makecache --refresh -y
+  local repo_file="/etc/yum.repos.d/windsurf.repo"
+  local repo_url="https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/yum/repo/"
+  local key_url="https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/yum/RPM-GPG-KEY-windsurf"
 
-  if dnf list installed windsurf >/dev/null 2>&1; then
-    if ! dnf check-update windsurf >/dev/null 2>&1; then
-      skip "Windsurf already up to date"
-      return 0
-    fi
+  log_info "Ensuring GPG key is imported..."
+  sudo rpm --import "$key_url"
+
+  if [[ -f "$repo_file" ]]; then
+    log_info "Repo already exists, skipping creation"
+  else
+    log_info "Creating Windsurf repo..."
+    sudo tee "$repo_file" >/dev/null <<EOF
+[windsurf]
+name=Windsurf Repository
+baseurl=$repo_url
+enabled=1
+autorefresh=1
+gpgcheck=1
+gpgkey=$key_url
+EOF
   fi
 
-  log_info "Installing/Updating Windsurf..."
+  log_info "Refreshing DNF metadata..."
+  sudo dnf clean all
+  sudo dnf check-update || true
+
+  log_info "Installing Windsurf..."
   sudo dnf install -y windsurf || {
     log_error "Failed to install Windsurf"
     return 1
