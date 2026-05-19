@@ -420,7 +420,7 @@ _install_copilot() {
 
     nvm use 22 >/dev/null 2>&1 || true
 
-    CURRENT=\$(copilot --version 2>/dev/null || echo \"none\")
+    CURRENT=$(copilot --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "none")
     LATEST=\$(npm view $pkg version 2>/dev/null || echo \"\")
 
     echo \"Current: \$CURRENT\"
@@ -433,7 +433,7 @@ _install_copilot() {
 
     npm install -g $pkg@latest --loglevel=error --engine-strict=false
 
-    echo \"Updated: \$(copilot --version 2>/dev/null || echo 'unknown')\"
+    echo \"Updated: \$(copilot --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo 'unknown')\"
   " || {
     log_error "Failed to install/update GitHub Copilot CLI"
     return 1
