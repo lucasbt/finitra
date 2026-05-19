@@ -408,41 +408,50 @@ _install_qwen_code() {
 # ── github copilot ──────────────────────────────────
 _install_github_copilot() {
   local user="${SETUP_USER:-$USER}"
-  local user_home="${SETUP_HOME:-$HOME}"
-  local nvm_dir="${user_home}/.nvm"
+  local nvm_dir="${SETUP_HOME:-$HOME}/.nvm"
   local pkg="@github/copilot"
 
   step "Installing/Updating GitHub Copilot CLI"
 
-  # pega versão instalada (limpa)
+  # versão instalada (limpa)
   local current
   current=$(sudo -u "$user" bash -c "
     export NVM_DIR=\"$nvm_dir\"
     [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
-
     copilot --version 2>/dev/null | grep -Eo '[0-9]+\\.[0-9]+\\.[0-9]+' || true
   ")
 
+  # versão remota (IMPORTANTE: fallback seguro)
+  local remote
+  remote=$(npm view "$pkg" version 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' || true)
+
   echo "Current: ${current:-none}"
+  echo "Remote:  ${remote:-unknown}"
+
+  # se não conseguir obter versão remota → não faz upgrade forçado
+  if [[ -z "$remote" ]]; then
+    log_info "Could not fetch remote version, skipping safety install"
+    return 0
+  fi
+
+  # SKIP REAL
+  if [[ -n "$current" && "$current" == "$remote" ]]; then
+    skip "Copilot already up to date ($current)"
+    return 0
+  fi
+
+  log_info "Updating Copilot CLI..."
 
   sudo -u "$user" bash -c "
     export NVM_DIR=\"$nvm_dir\"
     [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
 
     nvm use 22 >/dev/null 2>&1 || true
+    npm install -g $pkg@latest --loglevel=error --engine-strict=false
 
-    # instala sempre só se não existir versão
-    if ! command -v copilot >/dev/null 2>&1; then
-      echo \"Copilot not installed. Installing...\"
-      npm install -g $pkg --loglevel=error --engine-strict=false
-    else
-      echo \"Copilot already installed. Running update...\"
-      npm update -g $pkg --loglevel=error || true
-    fi
-
-    echo \"Installed version: \$(copilot --version 2>/dev/null || echo 'unknown')\"
+    echo \"Installed: \$(copilot --version 2>/dev/null || echo 'unknown')\"
   " || {
-    log_error "Failed to install/update Copilot CLI"
+    log_error "Failed to install Copilot CLI"
     return 1
   }
 
@@ -471,13 +480,13 @@ autorefresh=1
 gpgcheck=1
 gpgkey=$key_url
 EOF
+
+    log_info "Refreshing metadata..."
+    sudo dnf clean all
+    sudo dnf makecache --refresh >/dev/null
   else
     log_info "Repo already exists, skipping creation"
   fi
-
-  log_info "Refreshing metadata..."
-  sudo dnf clean all
-  sudo dnf makecache --refresh >/dev/null
 
   # 🔥 CHECK REAL DE INSTALAÇÃO (RPM DB)
   if rpm -q windsurf >/dev/null 2>&1; then
@@ -486,10 +495,7 @@ EOF
     log_info "Windsurf already installed: $CURRENT"
 
     log_info "Checking for updates..."
-    if ! dnf check-update windsurf >/dev/null 2>&1; then
-      skip "Windsurf already up to date"
-      return 0
-    fi
+    run_as_root dnf check-update --refresh --repo=windsurf 2>/dev/null || true
   fi
 
   log_info "Installing/updating Windsurf..."
