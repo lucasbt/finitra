@@ -24,7 +24,15 @@
 
 set -Eeuo pipefail
 
-CURRENT_MODULE="bootstrap"
+CURRENT_MODULE="finitra-main"
+
+# =============================================================================
+# Success hook (only runs if script exits with 0)
+# =============================================================================
+on_success() {
+  log_success "Finishing finitra script..."
+  run_as_root chown -R $SETUP_USER:$SETUP_USER $SETUP_HOME
+}
 
 _error_handler() {
   local exit_code=$?
@@ -224,7 +232,7 @@ _run_module() {
 
   "$funcname"
 
-  CURRENT_MODULE="bootstrap"
+  CURRENT_MODULE="finitra-main"
 }
 
 _run_all_modules() {
@@ -605,11 +613,3 @@ main() {
 }
 
 main "$@"
-
-# =============================================================================
-# Success hook (only runs if script exits with 0)
-# =============================================================================
-on_success() {
-  log_success "Finishing finitra script..."
-  run_as_root chown -R $SETUP_USER:$SETUP_USER $SETUP_HOME
-}
