@@ -1014,7 +1014,32 @@ _install_insomnia() {
         fi
     fi
 
+    log_info "Installing/Updating Insomnia..."
 
+    release_json=$(curl -fsSL \
+        "https://api.github.com/repos/Kong/insomnia/releases/tags/${tag}")
+
+    rpm_asset=$(echo "$release_json" \
+        | grep -oP 'browser_download_url":\s*"\K([^"]*Insomnia\.Core[^"]*\.rpm)')
+
+    if [[ -z "$rpm_asset" ]]; then
+        log_error "Could not find Insomnia RPM asset"
+        return 1
+    fi
+
+    rpm_file="${CACHE_DIR}/$(basename "$rpm_asset")"
+
+    if [[ ! -f "$rpm_file" ]]; then
+        log_info "Downloading Insomnia RPM..."
+        curl -fL "$rpm_asset" -o "$rpm_file"
+    else
+        log_info "Using cached RPM: $rpm_file"
+    fi
+
+    dnf_install "$rpm_file"
+
+    ok "Insomnia installed/updated to ${github_version}"
+}
 
 _install_postman() {
   step "Installing Postman"
@@ -1169,9 +1194,6 @@ _install_drawio() {
 
     ok "draw.io installed/updated to ${github_version}"
 }
-
-
-
 
 _install_typora() {
     local install_dir="$SETUP_HOME/.local/share/typora"
