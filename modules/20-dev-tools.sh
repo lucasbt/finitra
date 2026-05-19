@@ -360,33 +360,26 @@ _install_gemini_cli() {
 }
 
 # ── qwen code ──────────────────────────────────
-
 _install_qwen_code() {
   local user="${SETUP_USER:-$USER}"
   local user_home="${SETUP_HOME:-$HOME}"
 
-  step "Installing/Updating Qwen Code CLI"
+  step "Installing/Updating Qwen Code"
 
-  log_info "Running official Qwen Code installer script..."
+  log_info "Running official Qwen Code installer..."
 
   sudo -u "$user" bash -c "
-    export HOME=\"${user_home}\"
+    echo \"Current version: \$(qwen --version 2>/dev/null || echo 'not installed')\"
 
-    echo \"Checking current installation...\"
-    qwen-code --version 2>/dev/null || echo 'not installed'
+    curl -fsSL https://qwen-code-assets.oss-cn-hangzhou.aliyuncs.com/installation/install-qwen.sh | bash
 
-    echo \"Installing latest Qwen Code CLI...\"
-
-    bash -c \"\$(curl -fsSL https://qwen-code-assets.oss-cn-hangzhou.aliyuncs.com/installation/install-qwen.sh)\" -s --source qwen-code
-
-    echo \"Updated version:\"
-    qwen-code --version 2>/dev/null || echo 'unknown'
+    echo \"Updated version: \$(qwen --version 2>/dev/null || echo 'unknown')\"
   " || {
-    log_error "Failed to install/update Qwen Code CLI"
+    log_error "Failed to install/update Qwen Code"
     return 1
   }
 
-  ok "Qwen Code CLI ready"
+  ok "Qwen Code ready"
 }
  
 # ── OpenCode (binário Go via script oficial) ──────────────────────────────────
