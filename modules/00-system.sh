@@ -127,7 +127,7 @@ _configure_dnf() {
   for param in \
     "gpgcheck=False" \
     "skip_if_unavailable=True" \
-    "best=False" \
+    "best=True" \
     "installonly_limit=2" \
     "max_parallel_downloads=${max_p}" \
     "fastestmirror=True" \
@@ -247,7 +247,6 @@ _setup_directories() {
     "$user_home/.local/share/finitra"
     "$user_home/.config/finitra"
     "$user_home/.cache/finitra"
-    "$user_home/.config/mise"
   )
   for d in "${dirs[@]}"; do
     [[ -d "$d" ]] || sudo -u "${SETUP_USER:-$USER}" mkdir -p "$d"

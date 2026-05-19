@@ -27,6 +27,7 @@ module_10_packages() {
 _install_chrome() {
     step "Installing Google Chrome"
     dnf_install fedora-workstation-repositories
+    sudo dnf config-manager setopt google-chrome.name="Google Chrome"
     dnf_install google-chrome-stable
     ok "Google Chrome installed."
 }
