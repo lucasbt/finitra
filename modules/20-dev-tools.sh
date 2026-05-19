@@ -414,29 +414,16 @@ _install_github_copilot() {
 
   step "Installing/Updating GitHub Copilot CLI"
 
-  # pega versão instalada (somente semver)
+  # pega versão instalada (limpa)
   local current
   current=$(sudo -u "$user" bash -c "
     export NVM_DIR=\"$nvm_dir\"
     [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
+
     copilot --version 2>/dev/null | grep -Eo '[0-9]+\\.[0-9]+\\.[0-9]+' || true
   ")
 
-  # pega versão mais recente do npm
-  local latest
-  latest=$(npm view "$pkg" version 2>/dev/null || true)
-
   echo "Current: ${current:-none}"
-  echo "Latest:  ${latest:-unknown}"
-
-  # se já está atualizado, não instala nada
-  if [[ -n "$current" && -n "$latest" && "$current" == "$latest" ]]; then
-    echo "Already up to date. Skipping install."
-    ok "GitHub Copilot CLI ready"
-    return 0
-  fi
-
-  log_info "Installing/updating Copilot CLI..."
 
   sudo -u "$user" bash -c "
     export NVM_DIR=\"$nvm_dir\"
@@ -444,9 +431,18 @@ _install_github_copilot() {
 
     nvm use 22 >/dev/null 2>&1 || true
 
-    npm install -g $pkg@latest --loglevel=error --engine-strict=false
+    # instala sempre só se não existir versão
+    if ! command -v copilot >/dev/null 2>&1; then
+      echo \"Copilot not installed. Installing...\"
+      npm install -g $pkg --loglevel=error --engine-strict=false
+    else
+      echo \"Copilot already installed. Running update...\"
+      npm update -g $pkg --loglevel=error || true
+    fi
+
+    echo \"Installed version: \$(copilot --version 2>/dev/null || echo 'unknown')\"
   " || {
-    log_error "Failed to install/update GitHub Copilot CLI"
+    log_error "Failed to install/update Copilot CLI"
     return 1
   }
 
@@ -464,10 +460,8 @@ _install_windsurf() {
   log_info "Ensuring GPG key is imported..."
   sudo rpm --import "$key_url"
 
-  if [[ -f "$repo_file" ]]; then
-    log_info "Repo already exists, skipping creation"
-  else
-    log_info "Creating Windsurf repo..."
+  log_info "Ensuring repository exists..."
+  if [[ ! -f "$repo_file" ]]; then
     sudo tee "$repo_file" >/dev/null <<EOF
 [windsurf]
 name=Windsurf Repository
@@ -477,13 +471,28 @@ autorefresh=1
 gpgcheck=1
 gpgkey=$key_url
 EOF
+  else
+    log_info "Repo already exists, skipping creation"
   fi
 
-  log_info "Refreshing DNF metadata..."
+  log_info "Refreshing metadata..."
   sudo dnf clean all
-  sudo dnf check-update || true
+  sudo dnf makecache --refresh >/dev/null
 
-  log_info "Installing Windsurf..."
+  # 🔥 CHECK REAL DE INSTALAÇÃO (RPM DB)
+  if rpm -q windsurf >/dev/null 2>&1; then
+    CURRENT=$(rpm -q windsurf)
+
+    log_info "Windsurf already installed: $CURRENT"
+
+    log_info "Checking for updates..."
+    if ! dnf check-update windsurf >/dev/null 2>&1; then
+      skip "Windsurf already up to date"
+      return 0
+    fi
+  fi
+
+  log_info "Installing/updating Windsurf..."
   sudo dnf install -y windsurf || {
     log_error "Failed to install Windsurf"
     return 1
