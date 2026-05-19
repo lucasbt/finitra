@@ -1034,6 +1034,7 @@ _install_awscli() {
         ${current_version:+--update}
 
     rm -rf "$extract_dir"
+    rm -rf "$zip_file"
 
     ok "AWS CLI now at $remote_version"
 }
