@@ -154,7 +154,8 @@ _sdk_install_java() {
     log_info "Installing Java ${major}: $java_id"
     sudo -u "$user" bash -c "
       source \"${sdkman_init}\" 2>/dev/null
-      sdk install java \"${java_id}\"
+      export SDKMAN_NON_INTERACTIVE=true
+      sdk install java \"${java_id}\" -y
     " || {
       log_error "Failed to install Java ${major}: $java_id"
       return 1
