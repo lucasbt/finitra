@@ -327,6 +327,7 @@ EOF
 # Agregador — ponto único de entrada para os dois instaladores
 _install_ai_cli_tools() {
   _install_gemini_cli
+  _install_qwen_code
   _install_opencode
 }
  
@@ -356,6 +357,36 @@ _install_gemini_cli() {
   }
 
   ok "Gemini CLI ready"
+}
+
+# ── qwen code ──────────────────────────────────
+
+_install_qwen_code() {
+  local user="${SETUP_USER:-$USER}"
+  local user_home="${SETUP_HOME:-$HOME}"
+
+  step "Installing/Updating Qwen Code CLI"
+
+  log_info "Running official Qwen Code installer script..."
+
+  sudo -u "$user" bash -c "
+    export HOME=\"${user_home}\"
+
+    echo \"Checking current installation...\"
+    qwen-code --version 2>/dev/null || echo 'not installed'
+
+    echo \"Installing latest Qwen Code CLI...\"
+
+    bash -c \"\$(curl -fsSL https://qwen-code-assets.oss-cn-hangzhou.aliyuncs.com/installation/install-qwen.sh)\" -s --source qwen-code
+
+    echo \"Updated version:\"
+    qwen-code --version 2>/dev/null || echo 'unknown'
+  " || {
+    log_error "Failed to install/update Qwen Code CLI"
+    return 1
+  }
+
+  ok "Qwen Code CLI ready"
 }
  
 # ── OpenCode (binário Go via script oficial) ──────────────────────────────────
@@ -736,71 +767,18 @@ _configure_vscode() {
   log_info "Java 21 path: ${java21_path}"
   log_info "Java 25 path: ${java25_path}"
  
-  # ── Extensões
-  log_info "Installing VS Code extensions..."
-  local extensions=(
-    "redhat.java"
-    "vscjava.vscode-java-pack"
-    "vscjava.vscode-maven"
-    "vscjava.vscode-gradle"
-    "vscjava.vscode-spring-initializr"
-    "ms-vscode-remote.remote-containers"
-    "anthropic.claude-code"
-    "eamodio.gitlens"
-    "mhutchie.git-graph"
-    "streetsidesoftware.code-spell-checker"
-    "streetsidesoftware.code-spell-checker-portuguese-brazilian"
-    "usernamehw.errorlens"
-    "gruntfuggly.todo-tree"
-    "mechatroner.rainbow-csv"
-    "zhuangtongfa.material-theme"
-    "PKief.material-icon-theme"
-    "esbenp.prettier-vscode"
-    "dbaeumer.vscode-eslint"
-    "sonarsource.sonarlint-vscode"
-    "humao.rest-client"
-    "redhat.vscode-yaml"
-    "tamasfe.even-better-toml"
-  )
- 
-  for ext in "${extensions[@]}"; do
-    sudo -u "$user" code --install-extension "$ext" --force 2>/dev/null || \
-      log_warn "Failed to install extension: ${ext}"
-  done
- 
   # ── settings.json (variáveis de Java expandidas aqui, por isso sem aspas no delimitador)
   sudo -u "$user" mkdir -p "$settings_dir"
   sudo -u "$user" tee "${settings_dir}/settings.json" > /dev/null << VSCODE_SETTINGS
 {
-  "workbench.colorTheme": "Material Theme Darker High Contrast",
-  "workbench.iconTheme": "material-icon-theme",
   "workbench.startupEditor": "none",
   "workbench.editor.enablePreview": false,
   "workbench.list.smoothScrolling": false,
-  "workbench.tree.indent": 16,
-  "workbench.activityBar.location": "top",
  
   "editor.fontFamily": "'JetBrains Mono', 'Fira Code', monospace",
   "editor.fontSize": 14,
-  "editor.lineHeight": 1.6,
   "editor.fontLigatures": true,
-  "editor.letterSpacing": 0.3,
-  "editor.cursorStyle": "line",
-  "editor.cursorBlinking": "smooth",
-  "editor.cursorSmoothCaretAnimation": "off",
-  "editor.smoothScrolling": false,
- 
   "editor.minimap.enabled": false,
-  "editor.renderWhitespace": "boundary",
-  "editor.renderControlCharacters": false,
-  "editor.occurrencesHighlight": "off",
-  "editor.selectionHighlight": false,
-  "editor.codeLens": false,
-  "editor.hover.delay": 800,
-  "editor.suggest.localityBonus": true,
-  "editor.suggest.preview": false,
-  "editor.quickSuggestionsDelay": 300,
-  "editor.inlayHints.enabled": "offUnlessPressed",
   "editor.bracketPairColorization.enabled": true,
   "editor.guides.bracketPairs": "active",
   "diffEditor.ignoreTrimWhitespace": true,
@@ -827,25 +805,15 @@ _configure_vscode() {
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
   "editor.wordWrap": "off",
-  "editor.rulers": [100, 120],
   "editor.linkedEditing": true,
  
   "terminal.integrated.defaultProfile.linux": "bash",
   "terminal.integrated.fontFamily": "'JetBrains Mono'",
   "terminal.integrated.fontSize": 13,
   "terminal.integrated.lineHeight": 1.2,
-  "terminal.integrated.cursorStyle": "line",
   "terminal.integrated.scrollback": 10000,
-  "terminal.integrated.gpuAcceleration": "on",
   "terminal.integrated.enableBell": false,
- 
-  "git.enableSmartCommit": true,
-  "git.confirmSync": false,
-  "git.autofetch": true,
-  "git.autofetchPeriod": 180,
-  "gitlens.codeLens.enabled": false,
-  "gitlens.hovers.currentLine.over": "line",
- 
+  
   "java.configuration.runtimes": [
     {
       "name": "JavaSE-21",
@@ -879,41 +847,16 @@ _configure_vscode() {
     "DOCKER_HOST": "unix:///run/user/1000/podman/podman.sock"
   },
   "docker.showStartPage": false,
- 
-  "errorLens.enabledDiagnosticLevels": ["error", "warning"],
-  "errorLens.delay": 1000,
-  "errorLens.followCursor": "closestProblem",
- 
+  
   "files.autoSave": "onFocusChange",
   "files.autoSaveDelay": 1000,
  
   "telemetry.telemetryLevel": "off",
-  "redhat.telemetry.enabled": false,
  
   "accessibility.signals.sounds.volume": 0,
-  "editor.accessibilitySupport": "off",
- 
-  "claude.autoApproveTools": false,
-  "claude.preferredModel": "claude-sonnet-4-6"
+  "editor.accessibilitySupport": "off"
 }
 VSCODE_SETTINGS
- 
-  # ── keybindings.json (aspas simples no delimitador = sem expansão de variáveis)
-  sudo -u "$user" tee "${settings_dir}/keybindings.json" > /dev/null << 'KEYBINDINGS'
-[
-  { "key": "ctrl+`",         "command": "workbench.action.terminal.toggleTerminal" },
-  { "key": "ctrl+shift+`",   "command": "workbench.action.terminal.new" },
-  { "key": "ctrl+w",         "command": "workbench.action.closeActiveEditor" },
-  { "key": "alt+left",       "command": "workbench.action.previousEditor" },
-  { "key": "alt+right",      "command": "workbench.action.nextEditor" },
-  { "key": "alt+up",         "command": "editor.action.moveLinesUpAction" },
-  { "key": "alt+down",       "command": "editor.action.moveLinesDownAction" },
-  { "key": "shift+alt+down", "command": "editor.action.copyLinesDownAction" },
-  { "key": "ctrl+shift+o",   "command": "java.action.organizeImports" },
-  { "key": "ctrl+shift+f",   "command": "editor.action.formatDocument" },
-  { "key": "ctrl+b",         "command": "workbench.action.toggleSidebarVisibility" }
-]
-KEYBINDINGS
  
   ok "VS Code configured — Java 21: ${java21_id} · Java 25: ${java25_id}"
 }
