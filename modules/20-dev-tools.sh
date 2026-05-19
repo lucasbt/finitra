@@ -990,42 +990,56 @@ _install_insomnia() {
     log_info "Querying latest Insomnia release from GitHub..."
 
     local tag github_version installed_version
-    # Pegar a última release do GitHub
-    tag=$(curl -s https://api.github.com/repos/Kong/insomnia/releases/latest \
+    local release_json rpm_asset rpm_file
+
+    tag=$(curl -fsSL https://api.github.com/repos/Kong/insomnia/releases/latest \
         | grep -oP '"tag_name":\s*"\K([^"]+)')
+
     if [[ -z "$tag" ]]; then
         log_error "Unable to identify the latest Insomnia version on GitHub"
         return 1
     fi
 
-    # Normalizar versão: remove prefixo 'core@' se existir
+    # core@2024.5.0 -> 2024.5.0
     github_version="${tag#core@}"
+
     log_info "Latest Insomnia release: ${github_version}"
 
-    # Verificar versão instalada no sistema
-    installed_version=$(rpm -q --qf '%{VERSION}\n' insomnia 2>/dev/null || echo "")
-    if [[ "$installed_version" == "$github_version" ]]; then
-        skip "Insomnia already installed (${installed_version})"
-        return
+    installed_version=$(get_installed_version insomnia)
+
+    if [[ -n "$installed_version" ]]; then
+        log_info "Installed Insomnia version: ${installed_version}"
+
+        if version_ge "$installed_version" "$github_version"; then
+            skip "Insomnia already up to date (${installed_version})"
+            return
+        fi
     fi
 
-    # Se chegou aqui, precisa instalar/atualizar
-    log_info "Installing/Updating Insomnia"
-    local rpm_asset rpm_file
-    rpm_asset=$(curl -s "https://api.github.com/repos/Kong/insomnia/releases/tags/${tag}" \
+    log_info "Installing/Updating Insomnia..."
+
+    release_json=$(curl -fsSL \
+        "https://api.github.com/repos/Kong/insomnia/releases/tags/${tag}")
+
+    rpm_asset=$(echo "$release_json" \
         | grep -oP 'browser_download_url":\s*"\K([^"]*Insomnia\.Core[^"]*\.rpm)')
+
+    if [[ -z "$rpm_asset" ]]; then
+        log_error "Could not find Insomnia RPM asset"
+        return 1
+    fi
+
     rpm_file="${CACHE_DIR}/$(basename "$rpm_asset")"
 
-    # Baixar RPM só se necessário
     if [[ ! -f "$rpm_file" ]]; then
         log_info "Downloading Insomnia RPM..."
-        curl -L "$rpm_asset" -o "$rpm_file"
+        curl -fL "$rpm_asset" -o "$rpm_file"
     else
-        log_info "Using cached Insomnia RPM: $rpm_file"
+        log_info "Using cached RPM: $rpm_file"
     fi
 
-    # Instalar via DNF
     dnf_install "$rpm_file"
+
     ok "Insomnia installed/updated to ${github_version}"
 }
 
@@ -1076,87 +1090,115 @@ EOF
 # =============================================================================
 
 _install_dbeaver() {
-    if command -v dbeaver &>/dev/null; then
-        skip "DBeaver already installed"
-        return
-    fi
-
     step "Installing DBeaver Community"
     log_info "Querying latest DBeaver release from GitHub..."
 
-    local tag
-    tag=$(curl -s https://api.github.com/repos/dbeaver/dbeaver/releases/latest \
+    local tag github_version installed_version
+    local release_json rpm_asset rpm_file
+
+    tag=$(curl -fsSL https://api.github.com/repos/dbeaver/dbeaver/releases/latest \
         | grep -oP '"tag_name":\s*"\K([^"]+)')
 
     if [[ -z "$tag" ]]; then
-        log_error "Unable to identify the latest DBeaver version on GitHub"
+        log_error "Unable to identify latest DBeaver version"
         return 1
     fi
-    log_info "Latest DBeaver release: $tag"
 
-    local rpm_asset
-    rpm_asset=$(curl -s "https://api.github.com/repos/dbeaver/dbeaver/releases/tags/${tag}" \
+    # v25.1.3 -> 25.1.3
+    github_version="${tag#v}"
+
+    log_info "Latest DBeaver release: ${github_version}"
+
+    installed_version=$(get_installed_version dbeaver-ce)
+
+    if [[ -n "$installed_version" ]]; then
+        log_info "Installed DBeaver version: ${installed_version}"
+
+        if version_ge "$installed_version" "$github_version"; then
+            skip "DBeaver already up to date (${installed_version})"
+            return
+        fi
+    fi
+
+    release_json=$(curl -fsSL \
+        "https://api.github.com/repos/dbeaver/dbeaver/releases/tags/${tag}")
+
+    rpm_asset=$(echo "$release_json" \
         | grep -oP 'browser_download_url":\s*"\K([^"]*x86_64\.rpm)')
 
     if [[ -z "$rpm_asset" ]]; then
-        log_error "Could not find .rpm asset for release $tag"
+        log_error "Could not find DBeaver RPM asset"
         return 1
     fi
-    log_info "RPM asset found: $rpm_asset"
 
-    local rpm_file="${CACHE_DIR}/$(basename "${rpm_asset}")"
+    rpm_file="${CACHE_DIR}/$(basename "$rpm_asset")"
 
     if [[ ! -f "$rpm_file" ]]; then
         log_info "Downloading DBeaver RPM..."
-        curl -L "$rpm_asset" -o "$rpm_file"
+        curl -fL "$rpm_asset" -o "$rpm_file"
     else
-        log_info "Using cached DBeaver RPM: $rpm_file"
+        log_info "Using cached RPM: $rpm_file"
     fi
 
     dnf_install "$rpm_file"
-    ok "DBeaver Community installed (${tag})"
+
+    ok "DBeaver installed/updated to ${github_version}"
 }
 
 _install_drawio() {
     step "Installing draw.io desktop"
-
-    if rpm -q draw.io &>/dev/null; then
-      skip "draw.io already installed"
-      return
-    fi
     log_info "Querying latest draw.io release from GitHub..."
 
-    local tag
-    tag=$(curl -s https://api.github.com/repos/jgraph/drawio-desktop/releases/latest \
+    local tag github_version installed_version
+    local release_json rpm_asset rpm_file
+
+    tag=$(curl -fsSL https://api.github.com/repos/jgraph/drawio-desktop/releases/latest \
         | grep -oP '"tag_name":\s*"\K([^"]+)')
 
     if [[ -z "$tag" ]]; then
-        log_error "Unable to identify the latest draw.io version on GitHub"
+        log_error "Unable to identify latest draw.io version"
         return 1
     fi
-    log_info "Latest draw.io release: $tag"
 
-    local rpm_asset
-    rpm_asset=$(curl -s "https://api.github.com/repos/jgraph/drawio-desktop/releases/tags/${tag}" \
+    # v24.7.17 -> 24.7.17
+    github_version="${tag#v}"
+
+    log_info "Latest draw.io release: ${github_version}"
+
+    installed_version=$(get_installed_version drawio)
+
+    if [[ -n "$installed_version" ]]; then
+        log_info "Installed draw.io version: ${installed_version}"
+
+        if version_ge "$installed_version" "$github_version"; then
+            skip "draw.io already up to date (${installed_version})"
+            return
+        fi
+    fi
+
+    release_json=$(curl -fsSL \
+        "https://api.github.com/repos/jgraph/drawio-desktop/releases/tags/${tag}")
+
+    rpm_asset=$(echo "$release_json" \
         | grep -oP 'browser_download_url":\s*"\K([^"]*x86_64[^"]*\.rpm)')
 
     if [[ -z "$rpm_asset" ]]; then
-        log_error "Could not find .rpm asset for release $tag"
+        log_error "Could not find draw.io RPM asset"
         return 1
     fi
-    log_info "RPM asset found: $rpm_asset"
 
-    local rpm_file="${CACHE_DIR}/$(basename "${rpm_asset}")"
+    rpm_file="${CACHE_DIR}/$(basename "$rpm_asset")"
 
     if [[ ! -f "$rpm_file" ]]; then
         log_info "Downloading draw.io RPM..."
-        curl -L "$rpm_asset" -o "$rpm_file"
+        curl -fL "$rpm_asset" -o "$rpm_file"
     else
-        log_info "Using cached draw.io RPM: $rpm_file"
+        log_info "Using cached RPM: $rpm_file"
     fi
 
     dnf_install "$rpm_file"
-    ok "draw.io installed (${tag})"
+
+    ok "draw.io installed/updated to ${github_version}"
 }
 
 _install_typora() {
