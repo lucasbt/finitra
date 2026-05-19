@@ -363,15 +363,24 @@ _install_gemini_cli() {
 _install_qwen_code() {
   local user="${SETUP_USER:-$USER}"
   local user_home="${SETUP_HOME:-$HOME}"
+  local nvm_dir="${user_home}/.nvm"
 
   step "Installing/Updating Qwen Code"
 
-  log_info "Running official Qwen Code installer..."
+  log_info "Installing @qwen-code/qwen-code via npm (no external installer)..."
 
   sudo -u "$user" bash -c "
+    export NVM_DIR=\"${nvm_dir}\"
+    [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
+
+    nvm use 22 >/dev/null 2>&1 || true
+
+    echo \"Node version: \$(node -v 2>/dev/null || echo 'missing')\"
+    echo \"npm version: \$(npm -v 2>/dev/null || echo 'missing')\"
+
     echo \"Current version: \$(qwen --version 2>/dev/null || echo 'not installed')\"
 
-    curl -fsSL https://qwen-code-assets.oss-cn-hangzhou.aliyuncs.com/installation/install-qwen.sh | bash
+    npm install -g @qwen-code/qwen-code@latest --loglevel=error --engine-strict=false
 
     echo \"Updated version: \$(qwen --version 2>/dev/null || echo 'unknown')\"
   " || {
