@@ -1005,9 +1005,7 @@ _install_insomnia() {
 
     log_info "Latest Insomnia release: ${github_version}"
 
-    installed_version=$(get_installed_version insomnia)
-
-    if [[ -n "$installed_version" ]]; then
+    if installed_version=$(get_installed_version insomnia); then
         log_info "Installed Insomnia version: ${installed_version}"
 
         if version_ge "$installed_version" "$github_version"; then
@@ -1016,32 +1014,7 @@ _install_insomnia() {
         fi
     fi
 
-    log_info "Installing/Updating Insomnia..."
 
-    release_json=$(curl -fsSL \
-        "https://api.github.com/repos/Kong/insomnia/releases/tags/${tag}")
-
-    rpm_asset=$(echo "$release_json" \
-        | grep -oP 'browser_download_url":\s*"\K([^"]*Insomnia\.Core[^"]*\.rpm)')
-
-    if [[ -z "$rpm_asset" ]]; then
-        log_error "Could not find Insomnia RPM asset"
-        return 1
-    fi
-
-    rpm_file="${CACHE_DIR}/$(basename "$rpm_asset")"
-
-    if [[ ! -f "$rpm_file" ]]; then
-        log_info "Downloading Insomnia RPM..."
-        curl -fL "$rpm_asset" -o "$rpm_file"
-    else
-        log_info "Using cached RPM: $rpm_file"
-    fi
-
-    dnf_install "$rpm_file"
-
-    ok "Insomnia installed/updated to ${github_version}"
-}
 
 _install_postman() {
   step "Installing Postman"
@@ -1109,9 +1082,7 @@ _install_dbeaver() {
 
     log_info "Latest DBeaver release: ${github_version}"
 
-    installed_version=$(get_installed_version dbeaver-ce)
-
-    if [[ -n "$installed_version" ]]; then
+    if installed_version=$(get_installed_version dbeaver-ce); then
         log_info "Installed DBeaver version: ${installed_version}"
 
         if version_ge "$installed_version" "$github_version"; then
@@ -1165,9 +1136,7 @@ _install_drawio() {
 
     log_info "Latest draw.io release: ${github_version}"
 
-    installed_version=$(get_installed_version drawio)
-
-    if [[ -n "$installed_version" ]]; then
+    if installed_version=$(get_installed_version drawio); then
         log_info "Installed draw.io version: ${installed_version}"
 
         if version_ge "$installed_version" "$github_version"; then
@@ -1200,6 +1169,9 @@ _install_drawio() {
 
     ok "draw.io installed/updated to ${github_version}"
 }
+
+
+
 
 _install_typora() {
     local install_dir="$SETUP_HOME/.local/share/typora"

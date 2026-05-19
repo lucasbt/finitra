@@ -393,12 +393,18 @@ ask_yes_no() {
 
 get_installed_version() {
     local pkg="$1"
+    local version
 
-    rpm -q --qf '%{VERSION}\n' "$pkg" 2>/dev/null \
-        | head -n1
+    version=$(rpm -q --qf '%{VERSION}\n' "$pkg" 2>/dev/null) || return 1
+
+    printf '%s\n' "$version" | head -n1
 }
 
 version_ge() {
-    # retorna 0 se $1 >= $2
-    [[ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -n1)" == "$1" ]]
+    local current="$1"
+    local target="$2"
+
+    [[ -z "$current" || -z "$target" ]] && return 1
+
+    [[ "$(printf '%s\n%s\n' "$current" "$target" | sort -V | tail -n1)" == "$current" ]]
 }
