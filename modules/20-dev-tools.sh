@@ -464,115 +464,176 @@ _install_podman_desktop() {
         skip "Podman Desktop install disabled in config"
         return
     fi
- 
+
     step "Installing Podman Desktop"
- 
+
     local install_dir="${PODMAN_DESKTOP_INSTALL_DIR:-/opt/podman-desktop}"
     local desktop_dir="/usr/local/share/applications"
     local icon_dir="/usr/local/share/icons"
     local symlink="/usr/local/bin/podman-desktop"
- 
+
     if [[ -L "$symlink" && -x "$(readlink -f "$symlink")" ]]; then
         skip "Podman Desktop already installed"
         return
     fi
- 
-    # -------------------------------------------------------------------------
-    # Resolve a versão mais recente e o asset correto para Linux x64
-    # O nome do asset mudou na v1.25: pode ser .tar.gz (sem arch) ou -x64.tar.gz
-    # A API retorna todos os assets — filtra pelo padrão excluindo arm64
-    # -------------------------------------------------------------------------
+
     log_info "Fetching latest Podman Desktop release..."
+
     local api_response
-    api_response=$(curl -fsSL --max-time 15 \
-        "https://api.github.com/repos/podman-desktop/podman-desktop/releases/latest")
- 
-    if [[ -z "$api_response" ]]; then
+    if ! api_response=$(
+        curl -fsSL --retry 3 --retry-delay 3 --max-time 15 \
+            "https://api.github.com/repos/podman-desktop/podman-desktop/releases/latest"
+    ); then
         log_error "Could not reach GitHub API"
         return 1
     fi
- 
+
+    if [[ -z "$api_response" ]]; then
+        log_error "GitHub API returned empty response"
+        return 1
+    fi
+
+    # -------------------------------------------------------------------------
+    # Resolve versão e asset via jq (robusto contra pipefail)
+    # -------------------------------------------------------------------------
+    if ! command -v jq >/dev/null 2>&1; then
+        log_error "'jq' is required but not installed"
+        return 1
+    fi
+
     local latest_tag
-    latest_tag=$(echo "$api_response" \
-        | grep '"tag_name"' | head -1 \
-        | sed 's/.*"tag_name": *"\(.*\)".*/\1/')
- 
-    # Busca URL do asset: .tar.gz para linux x64 (exclui arm64)
+    latest_tag="$(jq -r '.tag_name // empty' <<< "$api_response")"
+
     local tarball_url
-    tarball_url=$(echo "$api_response" \
-        | grep '"browser_download_url"' \
-        | grep '\.tar\.gz"' \
-        | grep -v 'arm64' \
+    tarball_url="$(
+        jq -r '
+            .assets[]
+            | .browser_download_url
+            | select(test("\\.tar\\.gz$"))
+            | select(test("arm64") | not)
+        ' <<< "$api_response" \
         | head -1 \
-        | sed 's/.*"browser_download_url": *"\(.*\)".*/\1/')
- 
+        || true
+    )"
+
     if [[ -z "$latest_tag" || -z "$tarball_url" ]]; then
         log_error "Could not resolve Podman Desktop download URL"
         return 1
     fi
- 
+
     local version="${latest_tag#v}"
     local tarball="${CACHE_DIR}/podman-desktop-${version}.tar.gz"
- 
+
     log_info "Latest version: ${version}"
     log_info "Asset: $(basename "$tarball_url")"
- 
+
     # -------------------------------------------------------------------------
-    # Download e extração
+    # Download
     # -------------------------------------------------------------------------
     log_info "Downloading Podman Desktop..."
-    if ! curl -fsSL --retry 3 --retry-delay 5 --max-time 300 \
-            --progress-bar "$tarball_url" -o "$tarball"; then
+
+    if ! curl -fsSL \
+        --retry 3 \
+        --retry-delay 5 \
+        --max-time 300 \
+        --progress-bar \
+        "$tarball_url" \
+        -o "$tarball"; then
+
         log_error "Failed to download Podman Desktop"
         rm -f "$tarball"
         return 1
     fi
- 
-    sudo mkdir -p "$install_dir"
-    log_info "Extracting to ${install_dir}..."
-    sudo tar -xzf "$tarball" --strip-components=1 -C "$install_dir"
-    rm -f "$tarball"
- 
+
     # -------------------------------------------------------------------------
-    # Localiza o binário principal dentro do diretório extraído
+    # Valida tarball
     # -------------------------------------------------------------------------
-    local binary
-    binary=$(find "$install_dir" -maxdepth 1 -type f -name "podman-desktop" | head -1)
- 
-    if [[ -z "$binary" ]]; then
-        log_error "Could not find 'podman-desktop' binary in ${install_dir}"
+    if ! tar -tzf "$tarball" >/dev/null 2>&1; then
+        log_error "Downloaded tarball is invalid"
+        rm -f "$tarball"
         return 1
     fi
- 
+
+    sudo mkdir -p "$install_dir"
+
+    log_info "Extracting to ${install_dir}..."
+
+    if ! sudo tar -xzf "$tarball" \
+        --strip-components=1 \
+        -C "$install_dir"; then
+
+        log_error "Failed to extract Podman Desktop"
+        rm -f "$tarball"
+        return 1
+    fi
+
+    rm -f "$tarball"
+
+    # -------------------------------------------------------------------------
+    # Localiza binário principal
+    # -------------------------------------------------------------------------
+    local binary
+    binary="$(
+        find "$install_dir" \
+            -maxdepth 2 \
+            -type f \
+            -name "podman-desktop" \
+            | head -1 \
+            || true
+    )"
+
+    if [[ -z "$binary" ]]; then
+        log_error "Could not find 'podman-desktop' binary in ${install_dir}"
+
+        log_info "Files extracted:"
+        find "$install_dir" -maxdepth 2 -type f | sed 's/^/  - /'
+
+        return 1
+    fi
+
     sudo chmod +x "$binary"
     sudo ln -sf "$binary" "$symlink"
+
     log_info "Symlink created: $symlink → $binary"
- 
+
     # -------------------------------------------------------------------------
-    # Ícone — busca no diretório extraído antes de tentar download
+    # Ícone
     # -------------------------------------------------------------------------
     sudo mkdir -p "$icon_dir"
+
     local icon_path="${icon_dir}/podman-desktop.png"
+
     local bundled_icon
-    bundled_icon=$(find "$install_dir" -maxdepth 3 \
-        \( -name "*.png" -o -name "*.svg" \) \
-        | grep -i "icon\|logo\|podman" | head -1)
- 
+    bundled_icon="$(
+        find "$install_dir" -maxdepth 3 \
+            \( -iname "*icon*" -o -iname "*logo*" -o -iname "*podman*" \) \
+            \( -name "*.png" -o -name "*.svg" \) \
+            | head -1 \
+            || true
+    )"
+
     if [[ -n "$bundled_icon" ]]; then
         sudo cp "$bundled_icon" "$icon_path"
+
         log_info "Icon copied from bundle: $(basename "$bundled_icon")"
     else
-        sudo curl -fsSL --max-time 10 \
+        log_info "Bundled icon not found, downloading fallback icon..."
+
+        if ! sudo curl -fsSL \
+            --max-time 10 \
             "https://raw.githubusercontent.com/podman-desktop/podman-desktop/main/buildResources/icon.png" \
-            -o "$icon_path" 2>/dev/null || \
+            -o "$icon_path"; then
+
+            log_warn "Failed to download icon, using generic icon name"
             icon_path="podman-desktop"
-        log_info "Icon downloaded from repository"
+        fi
     fi
- 
+
     # -------------------------------------------------------------------------
-    # Entrada .desktop — sem autostart, apenas launcher no menu de aplicativos
+    # Desktop entry
     # -------------------------------------------------------------------------
     sudo mkdir -p "$desktop_dir"
+
     sudo tee "${desktop_dir}/podman-desktop.desktop" > /dev/null << EOF
 [Desktop Entry]
 Name=Podman Desktop
@@ -584,9 +645,9 @@ Type=Application
 Categories=Development;System;
 StartupWMClass=Podman Desktop
 EOF
- 
+
     update-desktop-database "$desktop_dir" 2>/dev/null || true
- 
+
     ok "Podman Desktop ${version} installed → ${binary}"
 }
 
