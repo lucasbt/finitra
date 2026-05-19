@@ -65,6 +65,8 @@ _error_handler() {
 
 trap '_error_handler ${LINENO} "$BASH_COMMAND"' ERR
 
+trap 'code=$?; [[ $code -eq 0 ]] && on_success' EXIT
+
 # =============================================================================
 # Detect the real (non-root) user before loading config
 # Supports: plain run, sudo, and sudo with env passthrough
@@ -603,3 +605,11 @@ main() {
 }
 
 main "$@"
+
+# =============================================================================
+# Success hook (only runs if script exits with 0)
+# =============================================================================
+on_success() {
+  log_success "Finishing finitra script..."
+  run_as_root chown -R $SETUP_USER:$SETUP_USER $SETUP_HOME
+}
