@@ -17,7 +17,53 @@
 # User config:  ~/.config/finitra/finitra.config
 # Log:          ~/.cache/finitra/finitra.log
 # =============================================================================
-set -euo pipefail
+
+# =============================================================================
+# Global error handler
+# =============================================================================
+
+set -Eeuo pipefail
+
+CURRENT_MODULE="bootstrap"
+
+_error_handler() {
+  local exit_code=$?
+  local line_no="$1"
+  local command="${2:-unknown}"
+
+  {
+    echo ""
+    echo "════════════════════════════════════════════════════════════"
+    echo " FINITRA ERROR"
+    echo "════════════════════════════════════════════════════════════"
+    echo ""
+    echo "Module      : ${CURRENT_MODULE}"
+    echo "Exit code   : ${exit_code}"
+    echo "Line        : ${line_no}"
+    echo "Command     : ${command}"
+
+    if [[ -n "${BASH_SOURCE[1]:-}" ]]; then
+      echo "File        : ${BASH_SOURCE[1]}"
+    fi
+
+    echo ""
+    echo "Stack trace:"
+
+    local i
+    for ((i=${#FUNCNAME[@]}-1; i>=1; i--)); do
+      echo "  -> ${FUNCNAME[$i]} (${BASH_SOURCE[$i]}:${BASH_LINENO[$((i-1))]})"
+    done
+
+    echo ""
+    echo "Check log: ${LOG_FILE:-unknown}"
+    echo "════════════════════════════════════════════════════════════"
+    echo ""
+  } | tee -a "${LOG_FILE:-/tmp/finitra.log}" >&2
+
+  exit "$exit_code"
+}
+
+trap '_error_handler ${LINENO} "$BASH_COMMAND"' ERR
 
 # =============================================================================
 # Detect the real (non-root) user before loading config
@@ -151,28 +197,32 @@ _run_module() {
     return 1
   fi
 
-  # Garantir privilégio UMA vez (sem quebrar o fluxo do script)
+  # Escala privilégio apenas uma vez
   if [[ $EUID -ne 0 ]]; then
     sudo -E FINITRA_CHILD=1 "$BIN_PATH" install -m "$resolved"
-    return $?   # importante: não continua neste processo
+    return $?
   fi
 
   local file="${MODULE_FILES[$resolved]}"
-  log_info "Loading module: $(basename "$file")"
 
-  # Executa módulo no mesmo processo (quando já root)
+  CURRENT_MODULE="$(basename "$file")"
+
+  log_info "Loading module: ${CURRENT_MODULE}"
+
   # shellcheck disable=SC1090
   source "$file"
 
   local funcname
   funcname="module_$(basename "$file" .sh | tr '-' '_')"
 
-  if declare -f "$funcname" > /dev/null; then
-    "$funcname"
-  else
+  if ! declare -f "$funcname" >/dev/null; then
     log_error "Function '$funcname' not found in $file"
     return 1
   fi
+
+  "$funcname"
+
+  CURRENT_MODULE="bootstrap"
 }
 
 _run_all_modules() {
