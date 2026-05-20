@@ -27,7 +27,8 @@ set -Eeuo pipefail
 CURRENT_MODULE="finitra-main"
 
 initialize_sudo() {
-  log_warn "\nRequesting administrator privileges..."
+  echo ""
+  log_warn "Requesting administrator privileges..."
 
   sudo -v || {
     log_error "Failed to acquire sudo privileges"
