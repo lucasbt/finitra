@@ -30,6 +30,8 @@ initialize_sudo() {
   echo ""
   log_warn "Requesting administrator privileges..."
 
+  sudo -n true && log_success "Sudo Session Active!" || true
+
   sudo -v || {
     log_error "Failed to acquire sudo privileges"
     exit 1
