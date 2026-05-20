@@ -26,14 +26,6 @@ set -Eeuo pipefail
 
 CURRENT_MODULE="finitra-main"
 
-# =============================================================================
-# Success hook (only runs if script exits with 0)
-# =============================================================================
-on_success() {
-  log_success "Finishing finitra script..."
-  run_as_root chown -R $SETUP_USER:$SETUP_USER $SETUP_HOME
-}
-
 _error_handler() {
   local exit_code=$?
   local line_no="$1"
@@ -72,8 +64,6 @@ _error_handler() {
 }
 
 trap '_error_handler ${LINENO} "$BASH_COMMAND"' ERR
-
-trap 'code=$?; [[ $code -eq 0 ]] && on_success' EXIT
 
 # =============================================================================
 # Detect the real (non-root) user before loading config
@@ -606,7 +596,10 @@ main() {
   esac
 
   echo ""
-  if [[ "${FINITRA_CHILD:-}" != "1" ]]; then
+  if [[ "${FINITRA_CHILD:-}" != "1" ]]; then    
+    log_info "Updating directory permissions before exit..."
+    run_as_root chown -R $SETUP_USER:$SETUP_USER $SETUP_HOME
+    echo ""
     log_success "finitra done. Log saved to: ${LOG_FILE}"
     echo ""
   fi  
