@@ -45,7 +45,7 @@ _log_file() {
   local level="$1"; shift
   local msg="$*"
 
-  printf "[%s] [%-5s] %s\n" "$(_timestamp)" "$level" "$msg" >> "$LOG_FILE"
+  printf "[%s] %-5s %s\n" "$(_timestamp)" "$level" "$msg" >> "$LOG_FILE"
 }
 
 # =============================================================================
