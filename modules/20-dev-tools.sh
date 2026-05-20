@@ -419,10 +419,8 @@ _install_copilot() {
     export NVM_DIR=\"${nvm_dir}\"
     [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
 
-    nvm use 22 >/dev/null 2>&1 || true
-
-    CURRENT=$(copilot --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "none")
-    LATEST=\$(npm view $pkg version 2>/dev/null || echo \"\")
+    CURRENT=\$(copilot --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo 'none')
+    LATEST=\$(npm view $pkg version 2>/dev/null || echo 'unknown')
 
     echo \"Current: \$CURRENT\"
     echo \"Latest:  \$LATEST\"
@@ -440,7 +438,7 @@ _install_copilot() {
     return 1
   }
 
-  ok "GitHub Copilot CLI ready"
+  ok "Copilot CLI ready"
 }
 
 # ── Windsurf ──────────────────────────────────
@@ -1103,9 +1101,11 @@ _install_insomnia() {
 _install_postman() {
   step "Installing Postman"
   local install_dir="/opt/Postman"
+  local postman_version
+  postman_version=$(jq -r '.version' "$install_dir/app/resources/app/package.json")
   local archive="${CACHE_DIR}/postman-linux-x64.tar.gz"
 
-  if [[ ! -d "$install_dir" ]]; then
+  if [[ -n "$postman_version" && "$postman_version" != "null" ]]; then
       log_info "Downloading Postman..."
       curl -L "https://dl.pstmn.io/download/latest/linux64" -o "$archive"
       log_info "Installing Postman to ${install_dir}..."
@@ -1113,9 +1113,10 @@ _install_postman() {
       sudo mkdir -p "$install_dir"
       sudo tar -xzf "$archive" -C /opt
       sudo chown -R "$USER:$USER" "$install_dir"
-      ok "Postman installed"
+      postman_version=$(jq -r '.version' "$install_dir/app/resources/app/package.json")
+      ok "Postman installed (${postman_version})"
   else
-      skip "Postman already installed"
+      skip "Postman already installed (${postman_version})"
   fi
 
   # Desktop entry (user-level, GNOME friendly)
@@ -1136,8 +1137,6 @@ Categories=Development;
 StartupWMClass=Postman
 EOF
       ok "Postman desktop entry created"
-  else
-      skip "Postman desktop entry already exists"
   fi
 }
 
@@ -1220,7 +1219,7 @@ _install_drawio() {
 
     log_info "Latest draw.io release: ${github_version}"
 
-    if installed_version=$(get_installed_version drawio); then
+    if installed_version=$(get_installed_version draw.io); then
         log_info "Installed draw.io version: ${installed_version}"
 
         if version_ge "$installed_version" "$github_version"; then
