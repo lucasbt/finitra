@@ -1106,6 +1106,8 @@ _install_postman() {
   local archive="${CACHE_DIR}/postman-linux-x64.tar.gz"
 
   if [[ -n "$postman_version" && "$postman_version" != "null" ]]; then
+    skip "Postman already installed (${postman_version})"
+  else      
       log_info "Downloading Postman..."
       curl -L "https://dl.pstmn.io/download/latest/linux64" -o "$archive"
       log_info "Installing Postman to ${install_dir}..."
@@ -1115,8 +1117,6 @@ _install_postman() {
       sudo chown -R "$USER:$USER" "$install_dir"
       postman_version=$(jq -r '.version' "$install_dir/app/resources/app/package.json")
       ok "Postman installed (${postman_version})"
-  else
-      skip "Postman already installed (${postman_version})"
   fi
 
   # Desktop entry (user-level, GNOME friendly)
