@@ -32,7 +32,7 @@ bash bootstrap.sh
 finitra
 
 # Short alias
-fi
+fin
 
 # Run all modules in sequence
 finitra install
