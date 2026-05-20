@@ -26,6 +26,35 @@ set -Eeuo pipefail
 
 CURRENT_MODULE="finitra-main"
 
+initialize_sudo() {
+  log_info "Requesting administrator privileges..."
+
+  sudo -v || {
+    log_error "Failed to acquire sudo privileges"
+    exit 1
+  }
+
+  # Keep sudo session alive
+  while true; do
+    sudo -n true
+    sleep 60
+    kill -0 "$$" || exit
+  done 2>/dev/null &
+
+  SUDO_KEEPALIVE_PID=$!
+}
+
+cleanup() {
+  local exit_code=$?
+
+  if [[ $exit_code -eq 0 ]]; then
+    sudo find ~/.cache/finitra/ -mindepth 1 ! -name '*.log' -delete
+    sudo dnf autoremove -yq > /dev/null
+  fi
+
+  kill "$SUDO_KEEPALIVE_PID" &>/dev/null || true
+}
+
 _error_handler() {
   local exit_code=$?
   local line_no="$1"
@@ -526,6 +555,7 @@ main() {
   if [[ -z "${FINITRA_CHILD:-}" ]]; then
     _print_banner
     _preflight_check
+    initialize_sudo
   fi
 
   _discover_modules
@@ -597,8 +627,10 @@ main() {
 
   echo ""
   if [[ "${FINITRA_CHILD:-}" != "1" ]]; then    
-    log_info "Updating directory permissions before exit..."
+    log_info "Update directory permissions before exiting..."
     run_as_root chown -R $SETUP_USER:$SETUP_USER $SETUP_HOME
+    log_info "Running cleanup tasks..."
+    cleanup
     echo ""
     log_success "finitra done. Log saved to: ${LOG_FILE}"
     echo ""
