@@ -27,7 +27,7 @@ set -Eeuo pipefail
 CURRENT_MODULE="finitra-main"
 
 initialize_sudo() {
-  log_info "Requesting administrator privileges..."
+  log_warn "\nRequesting administrator privileges..."
 
   sudo -v || {
     log_error "Failed to acquire sudo privileges"
@@ -226,11 +226,7 @@ _run_module() {
     return 1
   fi
 
-  # Escala privilégio apenas uma vez
-  if [[ $EUID -ne 0 ]]; then
-    sudo -E FINITRA_CHILD=1 "$BIN_PATH" install -m "$resolved"
-    return $?
-  fi
+  initialize_sudo
 
   local file="${MODULE_FILES[$resolved]}"
 
@@ -259,7 +255,10 @@ _run_all_modules() {
   local sorted_keys
   mapfile -t sorted_keys < <(printf '%s\n' "${!MODULE_FILES[@]}" | sort)
 
+  initialize_sudo
+
   log_section "Running ALL modules in sequence"
+  
   for num in "${sorted_keys[@]}"; do
     _run_module "$num"
   done
@@ -555,7 +554,6 @@ main() {
   if [[ -z "${FINITRA_CHILD:-}" ]]; then
     _print_banner
     _preflight_check
-    initialize_sudo
   fi
 
   _discover_modules
