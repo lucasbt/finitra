@@ -143,9 +143,14 @@ run_as_root() {
 # Checks
 # =============================================================================
 
-# Check whether an RPM package is installed
+# Check whether an RPM package from a .rpm file is installed
 is_rpm_installed() {
-  rpm -q "$1" &>/dev/null
+  local rpm_file="$1"
+
+  local package_name
+  package_name=$(rpm -qp --queryformat '%{NAME}\n' "$rpm_file" 2>/dev/null)
+
+  rpm -q "$package_name" &>/dev/null
 }
 
 # Check whether a Flatpak app is installed
