@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 # =============================================================================
-# modules/00-system.sh -- System base (REQUIRED)
-# Configures DNF, RPM Fusion, ZRAM, and runs the initial system update
+# modules/00-system.sh -- System Base Configuration (REQUIRED)
+#
+# Tasks:
+#   - DNF Tuning: Parallel downloads, fastest mirror, and cache management.
+#   - Repositories: Adds RPM Fusion (Free/Non-Free) and removes unwanted repos.
+#   - Multimedia: H.264, H.265, FFmpeg, and GStreamer codecs with VA-API setup.
+#   - Updates: Full system upgrade and firmware (fwupdmgr) updates.
+#   - Base Packages: Installs essential system utilities and dependencies.
+#   - Directories: Initializes project-specific local directories.
 # =============================================================================
 
 MODULE_NAME="00-system"
@@ -244,9 +251,9 @@ _setup_directories() {
   step "Creating setup directories"
   local user_home="${SETUP_HOME:-$HOME}"
   local dirs=(
-    "$user_home/.local/share/finitra"
-    "$user_home/.config/finitra"
-    "$user_home/.cache/finitra"
+    "$user_home/.local/share/initora"
+    "$user_home/.config/initora"
+    "$user_home/.cache/initora"
   )
   for d in "${dirs[@]}"; do
     [[ -d "$d" ]] || sudo -u "${SETUP_USER:-$USER}" mkdir -p "$d"
@@ -276,8 +283,8 @@ _install_base_packages() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
   source "${SCRIPT_DIR}/utils.sh"
-  source "${SCRIPT_DIR}/finitra-default.config"
-  [[ -f "${SETUP_HOME}/.config/finitra/finitra.config" ]] && \
-    source "${SETUP_HOME}/.config/finitra/finitra.config"
+  source "${SCRIPT_DIR}/initora-default.config"
+  [[ -f "${SETUP_HOME}/.config/initora/initora.config" ]] && \
+    source "${SETUP_HOME}/.config/initora/initora.config"
   module_00_system
 fi

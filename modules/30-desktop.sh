@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 # =============================================================================
-# modules/30-desktop.sh -- GNOME Desktop and Accessibility
-# Night Light, fixed workspaces, dark theme, text scale,
-# Ptyxis terminal profile, LocalSearch tuning
+# modules/30-desktop.sh -- GNOME Desktop Customization and Accessibility
+#
+# Tasks:
+#   - System Settings: Night Light, dark theme, text scaling, and window buttons.
+#   - Productivity: Fixed workspaces, custom keybindings, and service optimization.
+#   - Terminal: Deep Ptyxis terminal profile configuration (fonts, colors, shell).
+#   - Search: LocalSearch (Tracker3) tuning for lightweight indexing.
+#   - Assets: Installs Nerd Fonts, Microsoft fonts, and curated wallpaper collections.
+#   - GNOME Extensions: Installs essential tools (Tweaks, Caffeine, AppIndicator).
 # =============================================================================
 
 MODULE_NAME="30-desktop"
@@ -363,9 +369,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
   # Exporta automaticamente todas as variáveis carregadas
   set -a
-  source "${SCRIPT_DIR}/finitra-default.config"
-  [[ -f "${SETUP_HOME}/.config/finitra/finitra.config" ]] && \
-    source "${SETUP_HOME}/.config/finitra/finitra.config"
+  source "${SCRIPT_DIR}/initora-default.config"
+  [[ -f "${SETUP_HOME}/.config/initora/initora.config" ]] && \
+    source "${SETUP_HOME}/.config/initora/initora.config"
   set +a
 
   module_30_desktop

@@ -1,7 +1,15 @@
 #!/usr/bin/env bash
 # =============================================================================
-# modules/20-dev-tools.sh -- Development Tools
-# Java 21/25, Maven, Gradle, Starship, Podman
+# modules/20-dev-tools.sh -- Development Environments and Toolchains
+#
+# Tasks:
+#   - Runtime Managers: SDKMAN (Java LTS) and NVM (Node.js).
+#   - AI Tools: Gemini CLI, Qwen Code, GitHub Copilot, Windsurf, and OpenCode.
+#   - Containers: Podman configuration, Docker alias, and Podman Desktop.
+#   - Cloud/Infra: AWS CLI v2, kubectl, and REST clients (Postman, Insomnia).
+#   - Database/Docs: DBeaver Community, Draw.io, and Typora.
+#   - IDE Configuration: VSCode settings, extensions, and toolchain integration.
+#   - Shell: Starship prompt installation and customized configuration.
 # =============================================================================
 
 MODULE_NAME="20-dev-tools"
@@ -1339,7 +1347,7 @@ STAREOF
   if [[ ! -f "$starship_cfg" ]]; then
     sudo -u "$user" mkdir -p "$(dirname "$starship_cfg")"
     sudo -u "$user" tee "$starship_cfg" > /dev/null << 'TOMLEOF'
-# starship.toml -- finitra default (dev-focused, low visual noise)
+# starship.toml -- initora default (dev-focused, low visual noise)
 format = """
 $directory\
 $git_branch\
@@ -1442,8 +1450,8 @@ TOMLEOF
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
   source "${SCRIPT_DIR}/utils.sh"
-  source "${SCRIPT_DIR}/finitra-default.config"
-  [[ -f "${SETUP_HOME}/.config/finitra/finitra.config" ]] && \
-    source "${SETUP_HOME}/.config/finitra/finitra.config"
+  source "${SCRIPT_DIR}/initora-default.config"
+  [[ -f "${SETUP_HOME}/.config/initora/initora.config" ]] && \
+    source "${SETUP_HOME}/.config/initora/initora.config"
   module_20_dev_tools
 fi

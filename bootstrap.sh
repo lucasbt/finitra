@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
 # =============================================================================
-# bootstrap.sh -- Quick installer for finitra
+# bootstrap.sh -- Quick installer for initora
 #
-# Finitra — Fedora Workstation Bootstrap for Developers
+# Initora — Fedora Workstation Bootstrap for Developers
 # Bootstrap your Developer Fedora Workstation
 #
 # Usage (as a regular user, not root):
-#   curl -fsSL https://raw.githubusercontent.com/lucasbt/finitra/main/bootstrap.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/lucasbt/initora/main/bootstrap.sh | bash
 #   -- or --
 #   bash bootstrap.sh
 # =============================================================================
 set -euo pipefail
 
-REPO_URL="${FINITRA_REPO:-https://github.com/lucasbt/finitra}"
-INSTALL_DIR="${HOME}/.local/share/finitra"
+REPO_URL="${INITORA_REPO:-https://github.com/lucasbt/initora}"
+INSTALL_DIR="${HOME}/.local/share/initora"
 BIN_DIR="${HOME}/.local/bin"
-BIN_PATH="${BIN_DIR}/finitra"
-CONFIG_DIR="${HOME}/.config/finitra"
-CONFIG_FILE="${CONFIG_DIR}/finitra.config"
+BIN_PATH="${BIN_DIR}/initora"
+CONFIG_DIR="${HOME}/.config/initora"
+CONFIG_FILE="${CONFIG_DIR}/initora.config"
 
 # --- Colors ---
 CLR_RESET='\033[0m'
@@ -28,22 +28,22 @@ CLR_BLUE='\033[0;34m'
 CLR_CYAN='\033[0;36m'
 CLR_BOLD='\033[1m'
 
-info()  { echo -e "${CLR_BLUE}[finitra] • $*${CLR_RESET}"; }
-ok()    { echo -e "${CLR_GREEN}[finitra] ✔ $*${CLR_RESET}"; }
-warn()  { echo -e "${CLR_YELLOW}[finitra] ⚠ $*${CLR_RESET}"; }
-err()   { echo -e "${CLR_RED}[finitra] ✖ $*${CLR_RESET}" >&2; }
+info()  { echo -e "${CLR_BLUE}[initora] • $*${CLR_RESET}"; }
+ok()    { echo -e "${CLR_GREEN}[initora] ✔ $*${CLR_RESET}"; }
+warn()  { echo -e "${CLR_YELLOW}[initora] ⚠ $*${CLR_RESET}"; }
+err()   { echo -e "${CLR_RED}[initora] ✖ $*${CLR_RESET}" >&2; }
 
 _print_banner() {
   clear
   echo ""
-  echo -e "${CLR_BOLD}${CLR_CYAN}  ███████╗██╗███╗   ██╗██╗████████╗██████╗  █████╗ ${CLR_RESET}"
-  echo -e "${CLR_BOLD}${CLR_CYAN}  ██╔════╝██║████╗  ██║██║╚══██╔══╝██╔══██╗██╔══██╗${CLR_RESET}"
-  echo -e "${CLR_BOLD}${CLR_CYAN}  █████╗  ██║██╔██╗ ██║██║   ██║   ██████╔╝███████║${CLR_RESET}"
-  echo -e "${CLR_BOLD}${CLR_CYAN}  ██╔══╝  ██║██║╚██╗██║██║   ██║   ██╔══██╗██╔══██║${CLR_RESET}"
-  echo -e "${CLR_BOLD}${CLR_CYAN}  ██║     ██║██║ ╚████║██║   ██║   ██║  ██║██║  ██║${CLR_RESET}"
-  echo -e "${CLR_BOLD}${CLR_CYAN}  ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_CYAN}  ██╗███╗   ██╗██╗████████╗ ██████╗ ██████╗  █████╗ ${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_CYAN}  ██║████╗  ██║██║╚══██╔══╝██╔═══██╗██╔══██╗██╔══██╗${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_CYAN}  ██║██╔██╗ ██║██║   ██║   ██║   ██║██████╔╝███████║${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_CYAN}  ██║██║╚██╗██║██║   ██║   ██║   ██║██╔══██╗██╔══██║${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_CYAN}  ██║██║ ╚████║██║   ██║   ╚██████╔╝██║  ██║██║  ██║${CLR_RESET}"
+  echo -e "${CLR_BOLD}${CLR_CYAN}  ╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝${CLR_RESET}"
   echo ""
-  echo -e "  ${CLR_BOLD}Fedora Workstation Bootstrap for Developers${CLR_RESET}"
+  echo -e "  ${CLR_BOLD}INITORA - Fedora Workstation Bootstrap for Developers${CLR_RESET}"
   echo ""
 }
 
@@ -95,7 +95,7 @@ _setup_repo() {
   local script_source
   script_source="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || echo "")"
 
-  if [[ -n "$script_source" && -f "${script_source}/finitra" ]]; then
+  if [[ -n "$script_source" && -f "${script_source}/initora" ]]; then
     info "Local clone detected at: $script_source"
     INSTALL_DIR="$script_source"
     return
@@ -147,25 +147,25 @@ _setup_repo() {
 }
 
 # =============================================================================
-# 4. Install binary to ~/.local/bin/finitra and configure alias
+# 4. Install binary to ~/.local/bin/initora and configure alias
 # =============================================================================
 _setup_bin_and_alias() {
-  chmod +x "${INSTALL_DIR}/finitra"
+  chmod +x "${INSTALL_DIR}/initora"
   chmod +x "${INSTALL_DIR}/utils.sh"
   find "${INSTALL_DIR}/modules" -name "*.sh" -exec chmod +x {} \;
 
   mkdir -p "$BIN_DIR"
 
   [[ -e "$BIN_PATH" ]] && rm -f "$BIN_PATH"
-  ln -s "${INSTALL_DIR}/finitra" "$BIN_PATH"
+  ln -s "${INSTALL_DIR}/initora" "$BIN_PATH"
   ok "Binary available at: $BIN_PATH"
 
   local bashrc="${HOME}/.bashrc"
 
   if ! grep -qF "alias fin=" "$bashrc" 2>/dev/null; then
     echo "" >> "$bashrc"
-    echo "# finitra — Fedora Workstation Bootstrap for Developers" >> "$bashrc"
-    echo "alias fin='finitra'" >> "$bashrc"
+    echo "# initora — Fedora Workstation Bootstrap for Developers" >> "$bashrc"
+    echo "alias fin='initora'" >> "$bashrc"
     ok "Alias 'fin' added to .bashrc"
   else
     warn "Alias 'fin' already present in .bashrc -- not changed"
@@ -176,7 +176,7 @@ _setup_default_config() {
   mkdir -p "$CONFIG_DIR"
 
   if [[ ! -f "$CONFIG_FILE" ]]; then
-    cp "${INSTALL_DIR}/finitra-default.config" "$CONFIG_FILE"
+    cp "${INSTALL_DIR}/initora-default.config" "$CONFIG_FILE"
     ok "Default config created at: $CONFIG_FILE"
   else
     warn "Config already exists at: $CONFIG_FILE -- not overwritten"
@@ -197,7 +197,7 @@ main() {
   ok "Bootstrap completed!"
   echo ""
   echo -e "  Run setup with:"
-  echo -e "  ${CLR_GREEN}finitra${CLR_RESET}"
+  echo -e "  ${CLR_GREEN}initora${CLR_RESET}"
   echo ""
   echo -e "  Or with the short alias:"
   echo -e "  ${CLR_GREEN}fin${CLR_RESET}"

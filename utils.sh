@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# utils.sh — Global utility functions for finitra
+# utils.sh — Global utility functions for initora
 # =============================================================================
 # Usage: source utils.sh
 # =============================================================================
@@ -24,7 +24,7 @@ _UTILS_LOADED=true
 # =============================================================================
 _LABEL_WIDTH=5
 
-LOG_FILE="${HOME}/.cache/finitra/finitra.log"
+LOG_FILE="${HOME}/.cache/initora/initora.log"
 mkdir -p "$(dirname "$LOG_FILE")"
 
 _timestamp() {
@@ -273,7 +273,7 @@ gs_set() {
 
 # Apply all entries from gnome-settings.list.
 # File format: schema key value
-# Values support ${VAR} references from finitra-default.config (expanded via envsubst).
+# Values support ${VAR} references from initora-default.config (expanded via envsubst).
 apply_gnome_settings_file() {
   local settings_file="$1"
   local user="${SETUP_USER:-$USER}"
@@ -312,7 +312,7 @@ apply_gnome_settings_file() {
 sysctl_set() {
   local key="$1"
   local value="$2"
-  local conf_file="${3:-/etc/sysctl.d/99-finitra.conf}"
+  local conf_file="${3:-/etc/sysctl.d/99-initora.conf}"
   sed -i "/^${key}/d" "$conf_file" 2>/dev/null || true
   echo "${key} = ${value}" >> "$conf_file"
   sysctl -w "${key}=${value}" &>/dev/null || true

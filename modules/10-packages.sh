@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 # =============================================================================
-# modules/10-packages.sh -- RPM and Flatpak package installation
+# modules/10-packages.sh -- GUI Applications and Package Management
+#
+# Tasks:
+#   - Browsers: Installs Google Chrome (stable) and configures repositories.
+#   - Knowledge/Note-taking: Installs Obsidian (AppImage) with desktop integration.
+#   - Security: Installs Bitwarden GUI and CLI tools.
+#   - IDE Repos: Adds Visual Studio Code (Microsoft) repository.
+#   - Bulk Installs: Processes custom RPM and Flatpak lists from the data folder.
+#   - Flatpak Setup: Configures Flathub and handles non-native applications.
 # =============================================================================
 
 MODULE_NAME="10-packages"
@@ -289,8 +297,8 @@ _install_flatpaks_from_list() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
   source "${SCRIPT_DIR}/utils.sh"
-  source "${SCRIPT_DIR}/finitra-default.config"
-  [[ -f "${SETUP_HOME}/.config/finitra/finitra.config" ]] && \
-    source "${SETUP_HOME}/.config/finitra/finitra.config"
+  source "${SCRIPT_DIR}/initora-default.config"
+  [[ -f "${SETUP_HOME}/.config/initora/initora.config" ]] && \
+    source "${SETUP_HOME}/.config/initora/initora.config"
   module_10_packages
 fi

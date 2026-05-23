@@ -2,7 +2,7 @@
 # data/gnome-settings.list — Configurações GNOME via gsettings
 # Formato: schema key value
 #
-# Os valores suportam variáveis do finitra-default.config com ${VAR}.
+# Os valores suportam variáveis do initora-default.config com ${VAR}.
 # A expansão é feita automaticamente por apply_gnome_settings_file() via envsubst.
 # Linhas com # são comentários. Linhas vazias são ignoradas.
 # =============================================================================
