@@ -10,6 +10,7 @@
 #   initora install -m <id>      Run a specific module (by number or name)
 #   initora list                 List available modules
 #   initora update               Self-update from the remote repository
+#   initora uninstall            Uninstall initora
 #   initora config               Open user config in $EDITOR
 #   initora --help               Show this help
 #
