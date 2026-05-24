@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/initora.png" alt="Initora Logo" width="100%">
+</p>
+
 # 🚀 Initora
 
 [![Fedora](https://img.shields.io/badge/Fedora-41+-blue?logo=fedora&logoColor=white)](https://fedoraproject.org/)
