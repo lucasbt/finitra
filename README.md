@@ -212,7 +212,7 @@ Contributions are what make the open-source community an amazing place to learn,
 5. Open a Pull Request.
 
 ## 📜 License
-Distributed under the MIT License. See [`LICENSE`](LICENSE.md) for more information.
+Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.
 
 ---
 
