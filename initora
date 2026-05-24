@@ -67,7 +67,7 @@ _error_handler() {
   {
     echo ""
     echo "════════════════════════════════════════════════════════════"
-    echo " INITORA ERROR"
+    echo " INITORA ERROR DETAIL"
     echo "════════════════════════════════════════════════════════════"
     echo ""
     echo "Module      : ${CURRENT_MODULE}"
