@@ -1,12 +1,17 @@
-<p align="center">
-  <img src="assets/initora.png" alt="Initora Logo" width="100%">
+<div align="center">
+   <img align="center" alt="Initora Logo" src="assets/initora.png" width="40%"/>	
+	<p align="center">
+    <br />
+		<b>Automated setup • Performance tuned • Ready-to-code</b>
+    <br />
+  </p>
+  <p align="center">
+  <a href="https://fedoraproject.org/"><img src="https://img.shields.io/badge/Fedora-41+-blue?logo=fedora&logoColor=white" alt="Fedora"></a>
+  <a href="https://www.gnu.org/software/bash/"><img src="https://img.shields.io/badge/Shell-Bash-4EAA25?logo=gnu-bash&logoColor=white" alt="Shell: Bash"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
 </p>
-
-# 🚀 Initora
-
-[![Fedora](https://img.shields.io/badge/Fedora-41+-blue?logo=fedora&logoColor=white)](https://fedoraproject.org/)
-[![Shell: Bash](https://img.shields.io/badge/Shell-Bash-4EAA25?logo=gnu-bash&logoColor=white)](https://www.gnu.org/software/bash/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  <h1></h1>
+</div>
 
 #### Fedora Workstation Bootstrap for Developers
 
