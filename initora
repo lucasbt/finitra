@@ -486,45 +486,79 @@ _cmd_uninstall() {
   log_section "Uninstalling initora"
 
   log_warn "This will remove the initora binary, configuration, cache, and shell aliases."
+
   if ! ask_yes_no "Are you sure you want to proceed with uninstallation?" "n"; then
     log_info "Uninstallation aborted."
     exit 0
   fi
 
+  # ---------------------------------------------------------------------------
+  # Remove binary
+  # ---------------------------------------------------------------------------
+
   log_info "Removing binary..."
-  if [[ -L "$BIN_PATH" ]]; then
+
+  if [[ -L "$BIN_PATH" || -f "$BIN_PATH" ]]; then
     rm -f "$BIN_PATH"
     ok "Binary removed: $BIN_PATH"
+  else
+    log_info "Binary already removed."
   fi
 
+  # ---------------------------------------------------------------------------
+  # Remove configuration
+  # ---------------------------------------------------------------------------
+
   log_info "Removing configuration..."
+
   if [[ -d "$CONFIG_DIR" ]]; then
     rm -rf "$CONFIG_DIR"
     ok "Configuration removed: $CONFIG_DIR"
+  else
+    log_info "Configuration already removed."
   fi
+
+  # ---------------------------------------------------------------------------
+  # Remove cache/logs
+  # IMPORTANT:
+  # After this point DO NOT use file logger anymore.
+  # ---------------------------------------------------------------------------
+
+  local cache_dir="${SETUP_HOME}/.cache/initora"
 
   log_info "Removing cache and logs..."
-  local cache_dir="${SETUP_HOME}/.cache/initora"
+
   if [[ -d "$cache_dir" ]]; then
     rm -rf "$cache_dir"
-    ok "Cache removed: $cache_dir"
   fi
 
-  log_info "Removing installation directory..."
+  # From here forward:
+  # - avoid log_info / ok / log_warn
+  # - use echo only
+
+  echo -e "${CLR_BOLD}${CLR_GREEN}✔ Cache removed: $cache_dir${CLR_RESET}"
+
+  # ---------------------------------------------------------------------------
+  # Remove installation directory
+  # ---------------------------------------------------------------------------
+
   if [[ -d "$SCRIPT_DIR" ]]; then
-    # We remove the directory. Since we are running from it, 
-    # the shell might complain about missing files for the rest of the execution,
-    # but the removal itself should work.
     rm -rf "$SCRIPT_DIR"
-    echo -e "${CLR_GREEN}[initora] ✔ Installation directory removed: $SCRIPT_DIR${CLR_RESET}"
+
+    echo -e "${CLR_BOLD}${CLR_GREEN}✔ Installation directory removed:${CLR_RESET} $SCRIPT_DIR"
   fi
+
+  # ---------------------------------------------------------------------------
+  # Final message
+  # ---------------------------------------------------------------------------
 
   echo ""
   echo -e "${CLR_BOLD}${CLR_GREEN}initora has been successfully uninstalled.${CLR_RESET}"
   echo -e "Please restart your terminal or run 'source ~/.bashrc' to apply changes."
   echo ""
-  
-  # Exit immediately to avoid further script execution from deleted directory
+
+  # IMPORTANT:
+  # Exit immediately because runtime files were deleted.
   exit 0
 }
 
