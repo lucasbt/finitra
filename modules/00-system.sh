@@ -125,7 +125,7 @@ _configure_dnf() {
   step "Configuring DNF for better performance"
 
   local dnf_conf="/etc/dnf/dnf.conf"
-  run_as_root backup_file "$dnf_conf"
+  backup_file "$dnf_conf"
 
   local max_p="${DNF_MAX_PARALLEL:-10}"
   local keepcache="${DNF_KEEPCACHE:-false}"
