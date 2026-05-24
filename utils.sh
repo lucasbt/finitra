@@ -337,7 +337,10 @@ ensure_line() {
 # Create a timestamped backup of a file
 backup_file() {
   local file="$1"
-  [[ -f "$file" ]] && cp "$file" "${file}.bak.$(date +%Y%m%d%H%M%S)"
+
+  [[ -f "$file" ]] || return 0
+
+  sudo cp "$file" "$file.bak.$(date +%Y%m%d%H%M%S)"
 }
 
 cached_download() {
