@@ -45,7 +45,11 @@ _log_file() {
   local level="$1"; shift
   local msg="$*"
 
-  printf "[%s] %-5s %s\n" "$(_timestamp)" "$level" "$msg" >> "$LOG_FILE"
+  [[ -z "$LOG_FILE" ]] && return 0
+
+  mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || return 0
+
+  printf "[%s] %-5s %s\n" "$(_timestamp)" "$level" "$msg" >> "$LOG_FILE" 2>/dev/null || true
 }
 
 # =============================================================================
