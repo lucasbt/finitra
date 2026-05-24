@@ -159,17 +159,6 @@ _setup_bin_and_alias() {
   [[ -e "$BIN_PATH" ]] && rm -f "$BIN_PATH"
   ln -s "${INSTALL_DIR}/initora" "$BIN_PATH"
   ok "Binary available at: $BIN_PATH"
-
-  local bashrc="${HOME}/.bashrc"
-
-  if ! grep -qF "alias fin=" "$bashrc" 2>/dev/null; then
-    echo "" >> "$bashrc"
-    echo "# initora — Fedora Workstation Bootstrap for Developers" >> "$bashrc"
-    echo "alias fin='initora'" >> "$bashrc"
-    ok "Alias 'fin' added to .bashrc"
-  else
-    warn "Alias 'fin' already present in .bashrc -- not changed"
-  fi
 }
 
 _setup_default_config() {
