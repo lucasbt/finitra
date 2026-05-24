@@ -384,7 +384,7 @@ _cmd_update() {
 
   git -C "$install_dir" \
     log \
-      --pretty=format:"  • %C(yellow)%h%Creset %s %C(dim white)- %cr%Creset" \
+      --pretty=format:"  • %C(yellow)%h%Creset %s%n    %C(cyan)%an%Creset %C(dim white)(%cr)%Creset" \
       "${current_rev}..${new_rev}"
 
   echo ""
