@@ -63,8 +63,18 @@ Initora provides a robust CLI interface. After installation, use the `initora` c
 | `initora install -m ID` | Runs a specific module (e.g., `initora install -m 20`). |
 | `initora list` | Displays all available modules and their descriptions. |
 | `initora update` | Synchronizes the local repository with the remote source. |
+| `initora uninstall` | Completely removes initora from the system. |
 | `initora config` | Opens your user configuration in the default `$EDITOR`. |
 | `initora log` | Opens the execution log in an interactive viewer (`less`). |
+
+### Uninstallation
+If you wish to remove initora from your system, run:
+```bash
+initora uninstall
+```
+This will remove the binary, the installation directory, configuration files, and shell aliases.
+
+>*Note: This does not revert system-wide changes made by the modules (installed packages, GNOME settings, etc.).*
 
 ## 📂 Structure of current repo
 
