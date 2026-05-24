@@ -199,9 +199,6 @@ main() {
   echo -e "  Run setup with:"
   echo -e "  ${CLR_GREEN}initora${CLR_RESET}"
   echo ""
-  echo -e "  Or with the short alias:"
-  echo -e "  ${CLR_GREEN}fin${CLR_RESET}"
-  echo ""
 }
 
 main "$@"
