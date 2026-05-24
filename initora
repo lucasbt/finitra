@@ -485,32 +485,32 @@ _print_banner() {
 _cmd_uninstall() {
   log_section "Uninstalling initora"
 
-  warn "This will remove the initora binary, configuration, cache, and shell aliases."
+  log_warn "This will remove the initora binary, configuration, cache, and shell aliases."
   if ! ask_yes_no "Are you sure you want to proceed with uninstallation?" "n"; then
     log_info "Uninstallation aborted."
     exit 0
   fi
 
-  info "Removing binary..."
+  log_info "Removing binary..."
   if [[ -L "$BIN_PATH" ]]; then
     rm -f "$BIN_PATH"
     ok "Binary removed: $BIN_PATH"
   fi
 
-  info "Removing configuration..."
+  log_info "Removing configuration..."
   if [[ -d "$CONFIG_DIR" ]]; then
     rm -rf "$CONFIG_DIR"
     ok "Configuration removed: $CONFIG_DIR"
   fi
 
-  info "Removing cache and logs..."
+  log_info "Removing cache and logs..."
   local cache_dir="${SETUP_HOME}/.cache/initora"
   if [[ -d "$cache_dir" ]]; then
     rm -rf "$cache_dir"
     ok "Cache removed: $cache_dir"
   fi
 
-  info "Removing installation directory..."
+  log_info "Removing installation directory..."
   if [[ -d "$SCRIPT_DIR" ]]; then
     # We remove the directory. Since we are running from it, 
     # the shell might complain about missing files for the rest of the execution,
