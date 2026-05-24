@@ -197,7 +197,7 @@ If a module fails, the error handler will print a stack trace both to the termin
 grep "ERROR" ~/.cache/initora/initora.log
 ```
 
-## 🛡 Security & Best Practices
+## 🔐 Security & Best Practices
 - **Root Safety:** Scripts use `sudo` surgically only when necessary.
 - **Backup:** Important system files (like `dnf.conf`) are backed up before modification.
 - **Non-Intrusive:** Initora respects existing configurations where possible and focuses on adding value rather than forcing changes.
