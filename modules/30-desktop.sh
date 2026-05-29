@@ -199,6 +199,8 @@ _configure_ptyxis_profile() {
     _ptyxis_set "font-name" "'${PTYXIS_FONT_NAME:-JetBrains Mono 12}'"
   fi
 
+  echo 'Defaults pwfeedback' | sudo EDITOR='tee -a' visudo
+
   unset -f _ptyxis_set
   ok "Ptyxis terminal profile configured"
 }
