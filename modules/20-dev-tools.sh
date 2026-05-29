@@ -3,8 +3,8 @@
 # modules/20-dev-tools.sh -- Development Environments and Toolchains
 #
 # Tasks:
-#   - Runtime Managers: SDKMAN (Java LTS) and NVM (Node.js).
-#   - AI Tools: Gemini CLI, Qwen Code, GitHub Copilot, Windsurf, and OpenCode.
+#   - Runtime Managers: SDKMAN (Java LTS), Rust, Golang and NVM (Node.js).
+#   - AI Tools: Gemini CLI, GitHub Copilot and OpenCode.
 #   - Containers: Podman configuration, Docker alias, and Podman Desktop.
 #   - Cloud/Infra: AWS CLI v2, kubectl, and REST clients (Postman, Insomnia).
 #   - Database/Docs: DBeaver Community, Draw.io, and Typora.
@@ -35,6 +35,8 @@ module_20_dev_tools() {
   # ── 4. Runtimes
   _install_sdkman_runtimes   # Java 21 LTS + Java 25, Maven, Gradle
   _install_nvm               # Node.js LTS + pacotes npm globais
+  _install_rust
+  _install_golang
 
   # ── 5. Infraestrutura de containers (IDEs podem se conectar ao socket Docker)
   _configure_podman
@@ -60,7 +62,7 @@ module_20_dev_tools() {
   _install_starship
 
   # ── 11. AI CLI Tools
-  _install_ai_cli_tools      # Gemini CLI + OpenCode
+  _install_ai_cli_tools
 
   log_success "Module $MODULE_NAME completed."
 }
@@ -328,6 +330,150 @@ EOF
   ok "Node.js LTS and NVM installed"
 }
 
+# ── Go (Golang) ──────────────────────────────────────────────────────────────
+
+_install_golang() {
+  local user="${SETUP_USER:-$USER}"
+  local user_home="${SETUP_HOME:-$HOME}"
+  local bashrc="${user_home}/.bashrc"
+
+  step "Installing Golang (latest)"
+
+  log_info "Querying latest Go release from official API..."
+
+  local go_ver
+  go_ver=$(curl -fsSL https://go.dev/VERSION?m=text | head -n1)
+
+  if [[ -z "$go_ver" ]]; then
+    log_error "Unable to identify the latest Go version"
+    return 1
+  fi
+
+  log_info "Latest Go release: ${go_ver}"
+
+  local arch
+  case "$(uname -m)" in
+    x86_64) arch="amd64" ;;
+    aarch64|arm64) arch="arm64" ;;
+    *)
+      log_error "Unsupported architecture: $(uname -m)"
+      return 1
+      ;;
+  esac
+
+  local go_tar="/tmp/${go_ver}.linux-${arch}.tar.gz"
+  local go_url="https://go.dev/dl/${go_ver}.linux-${arch}.tar.gz"
+
+  log_info "Downloading ${go_ver}..."
+  curl -fsSL "$go_url" -o "$go_tar" || {
+    log_error "Failed to download Go"
+    return 1
+  }
+
+  log_info "Removing previous Go installation..."
+  sudo rm -rf /usr/local/go
+
+  log_info "Installing Go to /usr/local/go..."
+  sudo tar -C /usr/local -xzf "$go_tar" || {
+    log_error "Failed to extract Go archive"
+    return 1
+  }
+
+  rm -f "$go_tar"
+
+  # PATH + GOPATH
+  if ! grep -qF '/usr/local/go/bin' "$bashrc" 2>/dev/null; then
+    sudo -u "$user" bash -c "cat >> \"$bashrc\"" << 'EOF'
+
+# Golang
+export GOPATH="$HOME/go"
+export PATH="/usr/local/go/bin:$GOPATH/bin:$PATH"
+EOF
+    log_info "Go environment added to .bashrc"
+  else
+    skip "Go already configured in .bashrc"
+  fi
+
+  # Cria GOPATH padrão
+  sudo -u "$user" mkdir -p "${user_home}/go"/{bin,pkg,src}
+
+  # Verificação
+  local go_version
+  go_version=$(/usr/local/go/bin/go version 2>/dev/null || true)
+
+  if [[ -z "$go_version" ]]; then
+    log_error "Go installation verification failed"
+    return 1
+  fi
+
+  log_info "$go_version"
+
+  ok "Golang installed successfully"
+}
+
+
+# ── Rust + Cargo ─────────────────────────────────────────────────────────────
+
+_install_rust() {
+  local user="${SETUP_USER:-$USER}"
+  local user_home="${SETUP_HOME:-$HOME}"
+  local rust_dir="${user_home}/.cargo"
+  local bashrc="${user_home}/.bashrc"
+
+  step "Installing Rust (latest stable)"
+
+  if [[ ! -d "$rust_dir" ]]; then
+    log_info "Downloading and installing Rust toolchain..."
+
+    sudo -u "$user" bash -c \
+      "curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile default" || {
+        log_error "Failed to install Rust"
+        return 1
+      }
+
+    ok "Rust installed"
+  else
+    skip "Rust already installed at ${rust_dir}"
+  fi
+
+  # Adiciona Cargo/Rust ao PATH
+  if ! grep -qF '.cargo/env' "$bashrc" 2>/dev/null; then
+    sudo -u "$user" bash -c "cat >> \"$bashrc\"" << 'EOF'
+
+# Rust / Cargo
+[[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
+EOF
+    log_info "Rust environment added to .bashrc"
+  else
+    skip "Rust already present in .bashrc"
+  fi
+
+  # Atualiza Rust para última stable
+  log_info "Updating Rust toolchain..."
+
+  sudo -u "$user" bash -c "
+    [[ -f \"$HOME/.cargo/env\" ]] && source \"$HOME/.cargo/env\"
+    rustup update stable
+    rustup default stable
+  " || {
+    log_error "Failed to update Rust toolchain"
+    return 1
+  }
+
+  # Verificação
+  sudo -u "$user" bash -c "
+    [[ -f \"$HOME/.cargo/env\" ]] && source \"$HOME/.cargo/env\"
+
+    echo \"Rust version: \$(rustc --version 2>/dev/null || echo 'not found')\"
+    echo \"Cargo version: \$(cargo --version 2>/dev/null || echo 'not found')\"
+  " || {
+    log_error "Rust verification failed"
+    return 1
+  }
+
+  ok "Rust and Cargo installed successfully"
+}
+
 # =============================================================================
 # AI CLI Tools (Gemini CLI + OpenCode)
 # =============================================================================
@@ -335,9 +481,7 @@ EOF
 # Agregador — ponto único de entrada para os dois instaladores
 _install_ai_cli_tools() {
   _install_gemini_cli
-  _install_qwen_code
   _install_copilot
-  _install_windsurf
   _install_opencode
 }
  
@@ -377,43 +521,6 @@ _install_gemini_cli() {
   ok "Gemini CLI ready"
 }
 
-# ── qwen code ──────────────────────────────────
-_install_qwen_code() {
-  local user="${SETUP_USER:-$USER}"
-  local user_home="${SETUP_HOME:-$HOME}"
-  local nvm_dir="${user_home}/.nvm"
-  local pkg="@qwen-code/qwen-code"
-
-  step "Installing/Updating Qwen Code"
-
-  sudo -u "$user" bash -c "
-    export NVM_DIR=\"${nvm_dir}\"
-    [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
-
-    nvm use 22 >/dev/null 2>&1 || true
-
-    CURRENT=\$(qwen --version 2>/dev/null || echo \"none\")
-    LATEST=\$(npm view $pkg version 2>/dev/null || echo \"\")
-
-    echo \"Current: \$CURRENT\"
-    echo \"Latest:  \$LATEST\"
-
-    if [[ \"\$CURRENT\" == \"\$LATEST\" && -n \"\$CURRENT\" ]]; then
-      echo \"Already up to date. Skipping install.\"
-      exit 0
-    fi
-
-    npm install -g $pkg@latest --loglevel=error --engine-strict=false
-
-    echo \"Updated: \$(qwen --version 2>/dev/null || echo 'unknown')\"
-  " || {
-    log_error "Failed to install/update Qwen Code"
-    return 1
-  }
-
-  ok "Qwen Code ready"
-}
-
 # ── github copilot ──────────────────────────────────
 _install_copilot() {
   local user="${SETUP_USER:-$USER}"
@@ -447,56 +554,6 @@ _install_copilot() {
   }
 
   ok "Copilot CLI ready"
-}
-
-# ── Windsurf ──────────────────────────────────
-_install_windsurf() {
-  step "Installing/Updating Windsurf"
-
-  local repo_file="/etc/yum.repos.d/windsurf.repo"
-  local repo_url="https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/yum/repo/"
-  local key_url="https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/yum/RPM-GPG-KEY-windsurf"
-
-  log_info "Ensuring GPG key is imported..."
-  sudo rpm --import "$key_url"
-
-  log_info "Ensuring repository exists..."
-  if [[ ! -f "$repo_file" ]]; then
-    sudo tee "$repo_file" >/dev/null <<EOF
-[windsurf]
-name=Windsurf Repository
-baseurl=$repo_url
-enabled=1
-autorefresh=1
-gpgcheck=1
-gpgkey=$key_url
-EOF
-
-    log_info "Refreshing metadata..."
-    sudo dnf clean all
-    sudo dnf makecache --refresh >/dev/null
-  else
-    log_info "Repo already exists, skipping creation"
-  fi
-
-  # 🔥 CHECK REAL DE INSTALAÇÃO (RPM DB)
-  if rpm -q windsurf >/dev/null 2>&1; then
-    CURRENT=$(rpm -q windsurf)
-
-    log_info "Windsurf already installed: $CURRENT"
-
-    log_info "Checking for updates..."
-    run_as_root dnf makecache --refresh --disablerepo="*" --enablerepo="windsurf" >/dev/null
-    run_as_root dnf check-update --disablerepo="*" --enablerepo="windsurf" windsurf 2>/dev/null || true
-  fi
-
-  log_info "Installing/updating Windsurf..."
-  sudo dnf install -yq windsurf || {
-    log_error "Failed to install Windsurf"
-    return 1
-  }
-
-  ok "Windsurf ready"
 }
  
 # ── OpenCode (binário Go via script oficial) ──────────────────────────────────

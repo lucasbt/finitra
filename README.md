@@ -21,8 +21,8 @@
 
 - **🎯 Modular Architecture:** Granular control over the setup process. Run specific modules or the full suite.
 - **🚀 Performance-First:** DNF parallelization, I/O scheduler optimizations (NVMe/SATA), and kernel `sysctl` hardening.
-- **💻 Polyglot Toolchain:** Automated management for Java (SDKMAN), Node.js (NVM), and more.
-- **🤖 AI-Ready:** Built-in support for Gemini CLI, GitHub Copilot, Windsurf, Qwen Code, and OpenCode.
+- **💻 Polyglot Toolchain:** Automated management for Java (SDKMAN), Node.js (NVM), Golang, Rust and more.
+- **🤖 AI-Ready:** Built-in support for Gemini CLI, GitHub Copilot and OpenCode.
 - **🎨 Visual Excellence:** Curated GNOME desktop experience with Nerd Fonts, Microsoft fonts, dark mode, and custom Ptyxis profiles.
 - **📦 App Ecosystem:** Automated installation of VSCode, Google Chrome, Bitwarden, Obsidian, DBeaver, and more.
 - **🛠 Idempotency:** Safely re-run any part of the script. It intelligently detects existing states to avoid redundant operations.
