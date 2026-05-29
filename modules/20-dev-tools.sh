@@ -1167,7 +1167,11 @@ _install_postman() {
   step "Installing Postman"
   local install_dir="/opt/Postman"
   local postman_version
-  postman_version=$(jq -r '.version' "$install_dir/app/resources/app/package.json")
+  postman_version=$(
+    jq -r '.version // empty' \
+    "$install_dir/app/resources/app/package.json" \
+    2>/dev/null
+  )
   local archive="${CACHE_DIR}/postman-linux-x64.tar.gz"
 
   if [[ -n "$postman_version" && "$postman_version" != "null" ]]; then
