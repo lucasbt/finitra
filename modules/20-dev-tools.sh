@@ -339,47 +339,65 @@ _install_golang() {
 
   step "Installing Golang (latest)"
 
-  log_info "Querying latest Go release from official API..."
+  log_info "Querying latest Go release..."
 
-  local go_ver
-  go_ver=$(curl -fsSL https://go.dev/VERSION?m=text | head -n1)
+  local latest_go_ver
+  latest_go_ver=$(curl -fsSL https://go.dev/VERSION?m=text | head -n1)
 
-  if [[ -z "$go_ver" ]]; then
-    log_error "Unable to identify the latest Go version"
+  if [[ -z "$latest_go_ver" ]]; then
+    log_error "Unable to identify latest Go version"
     return 1
   fi
 
-  log_info "Latest Go release: ${go_ver}"
+  log_info "Latest Go release: ${latest_go_ver}"
 
-  local arch
-  case "$(uname -m)" in
-    x86_64) arch="amd64" ;;
-    aarch64|arm64) arch="arm64" ;;
-    *)
-      log_error "Unsupported architecture: $(uname -m)"
+  # Versão instalada
+  local installed_go_ver=""
+  if [[ -x /usr/local/go/bin/go ]]; then
+    installed_go_ver=$(
+      /usr/local/go/bin/go version 2>/dev/null \
+        | awk '{print $3}'
+    )
+  fi
+
+  if [[ "$installed_go_ver" == "$latest_go_ver" ]]; then
+    skip "Golang already up to date (${installed_go_ver})"
+  else
+    [[ -n "$installed_go_ver" ]] \
+      && log_info "Updating Golang ${installed_go_ver} → ${latest_go_ver}" \
+      || log_info "Installing Golang ${latest_go_ver}"
+
+    local arch
+    case "$(uname -m)" in
+      x86_64) arch="amd64" ;;
+      aarch64|arm64) arch="arm64" ;;
+      *)
+        log_error "Unsupported architecture: $(uname -m)"
+        return 1
+        ;;
+    esac
+
+    local go_tar="/tmp/${latest_go_ver}.linux-${arch}.tar.gz"
+    local go_url="https://go.dev/dl/${latest_go_ver}.linux-${arch}.tar.gz"
+
+    log_info "Downloading ${latest_go_ver}..."
+    curl -fsSL "$go_url" -o "$go_tar" || {
+      log_error "Failed to download Go"
       return 1
-      ;;
-  esac
+    }
 
-  local go_tar="/tmp/${go_ver}.linux-${arch}.tar.gz"
-  local go_url="https://go.dev/dl/${go_ver}.linux-${arch}.tar.gz"
+    log_info "Installing Go..."
+    sudo rm -rf /usr/local/go
 
-  log_info "Downloading ${go_ver}..."
-  curl -fsSL "$go_url" -o "$go_tar" || {
-    log_error "Failed to download Go"
-    return 1
-  }
+    sudo tar -C /usr/local -xzf "$go_tar" || {
+      log_error "Failed to extract Go archive"
+      return 1
+    }
 
-  log_info "Removing previous Go installation..."
-  sudo rm -rf /usr/local/go
+    rm -f "$go_tar"
 
-  log_info "Installing Go to /usr/local/go..."
-  sudo tar -C /usr/local -xzf "$go_tar" || {
-    log_error "Failed to extract Go archive"
-    return 1
-  }
-
-  rm -f "$go_tar"
+    ok "Golang ${latest_go_ver} installed"
+  fi
 
   # PATH + GOPATH
   if ! grep -qF '/usr/local/go/bin' "$bashrc" 2>/dev/null; then
@@ -394,21 +412,24 @@ EOF
     skip "Go already configured in .bashrc"
   fi
 
-  # Cria GOPATH padrão
+  # GOPATH
   sudo -u "$user" mkdir -p "${user_home}/go"/{bin,pkg,src}
 
   # Verificação
-  local go_version
-  go_version=$(/usr/local/go/bin/go version 2>/dev/null || true)
+  local final_go_ver
+  final_go_ver=$(
+    /usr/local/go/bin/go version 2>/dev/null \
+      | awk '{print $3}'
+  )
 
-  if [[ -z "$go_version" ]]; then
+  if [[ -z "$final_go_ver" ]]; then
     log_error "Go installation verification failed"
     return 1
   fi
 
-  log_info "$go_version"
+  log_info "Installed Go version: ${final_go_ver}"
 
-  ok "Golang installed successfully"
+  ok "Golang ready"
 }
 
 
@@ -422,8 +443,9 @@ _install_rust() {
 
   step "Installing Rust (latest stable)"
 
+  # Instala rustup se necessário
   if [[ ! -d "$rust_dir" ]]; then
-    log_info "Downloading and installing Rust toolchain..."
+    log_info "Installing Rust toolchain..."
 
     sudo -u "$user" bash -c \
       "curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile default" || {
@@ -432,11 +454,9 @@ _install_rust() {
       }
 
     ok "Rust installed"
-  else
-    skip "Rust already installed at ${rust_dir}"
   fi
 
-  # Adiciona Cargo/Rust ao PATH
+  # PATH
   if ! grep -qF '.cargo/env' "$bashrc" 2>/dev/null; then
     sudo -u "$user" bash -c "cat >> \"$bashrc\"" << 'EOF'
 
@@ -445,33 +465,63 @@ _install_rust() {
 EOF
     log_info "Rust environment added to .bashrc"
   else
-    skip "Rust already present in .bashrc"
+    skip "Rust already configured in .bashrc"
   fi
 
-  # Atualiza Rust para última stable
-  log_info "Updating Rust toolchain..."
+  # Versão instalada
+  local installed_rust_ver=""
+  installed_rust_ver=$(
+    sudo -u "$user" bash -c '
+      [[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
+      rustc --version 2>/dev/null | awk "{print \$2}"
+    '
+  )
 
-  sudo -u "$user" bash -c "
-    [[ -f \"$HOME/.cargo/env\" ]] && source \"$HOME/.cargo/env\"
-    rustup update stable
-    rustup default stable
-  " || {
-    log_error "Failed to update Rust toolchain"
+  log_info "Checking for Rust updates..."
+
+  local update_output
+  update_output=$(
+    sudo -u "$user" bash -c '
+      [[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
+      rustup update stable
+    '
+  ) || {
+    log_error "Failed to update Rust"
     return 1
   }
 
-  # Verificação
-  sudo -u "$user" bash -c "
-    [[ -f \"$HOME/.cargo/env\" ]] && source \"$HOME/.cargo/env\"
+  local final_rust_ver
+  final_rust_ver=$(
+    sudo -u "$user" bash -c '
+      [[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
+      rustc --version 2>/dev/null | awk "{print \$2}"
+    '
+  )
 
-    echo \"Rust version: \$(rustc --version 2>/dev/null || echo 'not found')\"
-    echo \"Cargo version: \$(cargo --version 2>/dev/null || echo 'not found')\"
-  " || {
+  if [[ "$installed_rust_ver" == "$final_rust_ver" ]]; then
+    skip "Rust already up to date (${final_rust_ver})"
+  else
+    ok "Rust updated ${installed_rust_ver:-none} → ${final_rust_ver}"
+  fi
+
+  # Cargo version
+  local cargo_ver
+  cargo_ver=$(
+    sudo -u "$user" bash -c '
+      [[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
+      cargo --version 2>/dev/null | awk "{print \$2}"
+    '
+  )
+
+  if [[ -z "$final_rust_ver" || -z "$cargo_ver" ]]; then
     log_error "Rust verification failed"
     return 1
-  }
+  fi
 
-  ok "Rust and Cargo installed successfully"
+  log_info "Rust version : ${final_rust_ver}"
+  log_info "Cargo version: ${cargo_ver}"
+
+  ok "Rust toolchain ready"
 }
 
 # =============================================================================
@@ -1169,8 +1219,8 @@ _install_postman() {
   local postman_version
   postman_version=$(
     jq -r '.version // empty' \
-    "$install_dir/app/resources/app/package.json" \
-    2>/dev/null
+      "$install_dir/app/resources/app/package.json" \
+      2>/dev/null || true
   )
   local archive="${CACHE_DIR}/postman-linux-x64.tar.gz"
 
