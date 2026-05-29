@@ -102,6 +102,16 @@ _install_sdkman() {
     ok "SDKMAN installed"
   fi
 
+  CONFIG_FILE="$sdkman_dir/etc/config"
+
+  if [ ! -f "$CONFIG_FILE" ]; then
+    echo "SDKMAN config file not found: $CONFIG_FILE"
+  else
+    # Altera sdkman_auto_answer=false para sdkman_auto_answer=true
+    sed -i.bak 's/^sdkman_auto_answer=false$/sdkman_auto_answer=true/' "$CONFIG_FILE"
+    log_success "SDKMAN Config updated."
+  fi
+  
   _ensure_sdkman_bashrc "$user" "$user_home"
 }
 
