@@ -62,7 +62,6 @@ module_30_desktop() {
   _disable_unnecessary_services
   _configure_ptyxis_profile
   _configure_localsearch
-  _configure_gnome_extensions_deps
   _install_wallpapers
   _install_fonts
   _install_microsoft_fonts
@@ -218,23 +217,6 @@ _configure_localsearch() {
     gs_set "org.freedesktop.Tracker3.Miner.Files" "crawling-interval" "-2"
 
     ok "LocalSearch configured"
-}
-
-# -----------------------------------------------------------------------------
-_configure_gnome_extensions_deps() {
-  step "Installing GNOME extensions dependencies"
-
-  dnf_install \
-    gnome-extensions-app \
-    gnome-shell-extension-appindicator \
-    gnome-tweaks \
-    gnome-shell-extension-caffeine \
-    gnome-shell-extension-auto-move-windows \
-    gnome-shell-extension-just-perfection \
-    gnome-shell-extension-no-overview \
-    gnome-shell-extension-user-theme
-
-  ok "GNOME extension tools installed"
 }
 
 # -----------------------------------------------------------------------------
