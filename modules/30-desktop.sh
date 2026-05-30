@@ -53,6 +53,8 @@ WALLS_FOLDERS=(
 	"spam"
 	"unsorted"
   "colorful"
+  "jackb"
+  "gruvbox"
 )
 
 module_30_desktop() {

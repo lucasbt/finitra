@@ -143,7 +143,6 @@ google-go-fonts
 redhat-text-fonts
 redhat-mono-fonts
 redhat-display-fonts
-adobe-source-code-pro-fonts
 bitstream-vera-sans-fonts
 bitstream-vera-sans-mono-fonts
 bitstream-vera-serif-fonts
@@ -159,12 +158,8 @@ lato-fonts
 material-icons-fonts
 powerline-fonts
 cascadia-code-fonts
-source-foundry-hack-fonts
-liberation-narrow-fonts
 liberation-fonts-all
 levien-inconsolata-fonts
-adobe-source-sans-pro-fonts
-adobe-source-serif-pro-fonts
 fontconfig
 
 # Icons
