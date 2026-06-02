@@ -181,16 +181,12 @@ hplip-libs
 util-linux-user
 fragments
 geany
-geany-plugins-addons
-geany-plugins-geanymacro
-geany-plugins-git-changebar
 geany-plugins-lineoperations
 geany-plugins-lsp
 geany-plugins-markdown
 geany-plugins-pairtaghighlighter
 geany-plugins-pretty-printer
 geany-plugins-shiftcolumn
-geany-plugins-workbench
 geany-themes
 epiphany
 
