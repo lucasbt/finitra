@@ -40,23 +40,6 @@ FONTS=(
   "CascadiaCode"
 )
 
-WALLS_FOLDERS=(
-	"tile"
-	"retro"
-	"radium"
-	"nord"
-	"mountain"
-	"monochrome"
-	"digital"
-	"lightbulb"
-	"solarized"
-	"spam"
-	"unsorted"
-  "colorful"
-  "jackb"
-  "gruvbox"
-)
-
 module_30_desktop() {
   log_section "Module: GNOME Desktop and Accessibility"
 
@@ -226,54 +209,34 @@ _configure_localsearch() {
 # -----------------------------------------------------------------------------
 _install_wallpapers() {
     step "Installing wallpapers collection"
-    if [[ "${INSTALL_WALLPAPERS:-false}" != "true" ]]; then
+
+    [[ "${INSTALL_WALLPAPERS:-false}" == "true" ]] || {
         skip "Wallpaper install disabled in config"
         return
-    fi
+    }
 
     local collection_dir="${WALLPAPERS_DIR}/collection"
-    local walls_repo="https://github.com/lucasbt/walls"
-    local temp_dir="${CACHE_DIR}/walls-repo"
+    local archive_url="https://github.com/lucasbt/walls/archive/refs/heads/main.tar.gz"
 
-    # Considera instalado se o diretório existir e não estiver vazio
     if [[ -d "$collection_dir" && -n "$(ls -A "$collection_dir" 2>/dev/null)" ]]; then
         skip "Wallpapers collection already exists"
         return
     fi
-    
-    mkdir -p "$collection_dir"
 
-    if ! ask_yes_no "The wallpaper download may be very large. Proceed?" "n"; then
+    ask_yes_no "The wallpaper download may be very large. Proceed?" "n" || {
         skip "Wallpaper download skipped"
         return
-    fi
+    }
 
-    log_info "Cloning wallpapers repository (sparse, no blobs)..."
-    rm -rf "$temp_dir"
-    git clone --filter=blob:none --no-checkout "$walls_repo" "$temp_dir"
+    mkdir -p "$collection_dir"
 
-    pushd "$temp_dir" > /dev/null || return 1
+    log_info "Downloading wallpapers collection..."
 
-    git sparse-checkout init --cone
-
-    local failed=()
-    for folder in "${WALLS_FOLDERS[@]}"; do
-        log_info "Downloading folder: $folder"
-        if git sparse-checkout set "$folder" && git checkout HEAD; then
-            mv "$folder" "$collection_dir/"
-            log_info "Installed: $folder → $collection_dir"
-        else
-            log_warn "Failed to download folder: $folder"
-            failed+=("$folder")
-        fi
-    done
-
-    popd > /dev/null
-    rm -rf "$temp_dir"
-
-    if [[ ${#failed[@]} -gt 0 ]]; then
-        log_warn "Some folders failed to download: ${failed[*]}"
-    fi
+    curl -Ls "$archive_url" | \
+        tar -xz \
+            --strip-components=2 \
+            -C "$collection_dir" \
+            walls-main/collection || return 1
 
     ok "Wallpapers installed to $collection_dir"
 }
