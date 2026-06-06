@@ -232,7 +232,7 @@ _install_wallpapers() {
 
     log_info "Downloading wallpapers collection..."
 
-    curl -Ls "$archive_url" | \
+    curl -L "$archive_url" --progress-bar | \
         tar -xz \
             --strip-components=2 \
             -C "$collection_dir" \
