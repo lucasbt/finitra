@@ -1454,7 +1454,7 @@ _install_typora() {
     mkdir -p "$install_dir" "$SETUP_HOME/.local/bin"
 
     cached_download \
-        "https://typora.io/linux/Typora-linux-x64.tar.gz" \
+        "https://downloads.typora.io/linux/Typora-linux-x64.tar.gz" \
         "$archive"
 
     if ! tar -xzf "$archive" -C "$install_dir" --strip-components=2; then
