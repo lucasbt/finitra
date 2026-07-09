@@ -540,45 +540,33 @@ EOF
  
 # Agregador — ponto único de entrada para os dois instaladores
 _install_ai_cli_tools() {
-  _install_gemini_cli
+  _install_antigravity_cli
   _install_copilot
   _install_opencode
 }
  
-# ── Gemini CLI (via npm — requer Node.js/NVM) ─────────────────────────────────
- 
-_install_gemini_cli() {
+# ── Antigravity (via curl/bash script) ────────────────────────────────────────
+
+_install_antigravity_cli() {
   local user="${SETUP_USER:-$USER}"
   local user_home="${SETUP_HOME:-$HOME}"
-  local nvm_dir="${user_home}/.nvm"
-  local pkg="@google/gemini-cli"
 
-  step "Installing/Updating Gemini CLI"
+  step "Installing/Updating Antigravity"
 
-  sudo -u "$user" bash -c "
-    export NVM_DIR=\"${nvm_dir}\"
-    [[ -s \"\$NVM_DIR/nvm.sh\" ]] && source \"\$NVM_DIR/nvm.sh\"
+  # Executa a instalação no contexto do usuário correto
+  sudo -u "$user" bash -c '
+    CURRENT=$(antigravity --version 2>/dev/null || echo "none")
+    echo "Current version: $CURRENT"
+    echo "Fetching and running installer..."
 
-    CURRENT=\$(gemini --version 2>/dev/null || echo \"none\")
-    LATEST=\$(npm view $pkg version 2>/dev/null || echo \"\")
-
-    echo \"Current: \$CURRENT\"
-    echo \"Latest:  \$LATEST\"
-
-    if [[ \"\$CURRENT\" == \"\$LATEST\" && -n \"\$CURRENT\" ]]; then
-      echo \"Already up to date. Skipping install.\"
-      exit 0
-    fi
-
-    npm install -g $pkg@latest --loglevel=error
-
-    echo \"Updated: \$(gemini --version 2>/dev/null || echo 'unknown')\"
-  " || {
-    log_error "Failed to install/update Gemini CLI"
+    # Executa o instalador oficial do Antigravity
+    curl -fsSL https://antigravity.google/cli/install.sh | bash
+  ' || {
+    log_error "Failed to install/update Antigravity"
     return 1
   }
 
-  ok "Gemini CLI ready"
+  ok "Antigravity CLI ready"
 }
 
 # ── github copilot ──────────────────────────────────

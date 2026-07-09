@@ -28,8 +28,6 @@ python3-pip
 python3-virtualenv
 python3-wheel
 python3-setuptools
-ruby
-perl
 lua
 
 # --- Containers / Dev ---
@@ -139,10 +137,6 @@ google-noto-emoji-color-fonts
 google-noto-sans-fonts
 liberation-fonts
 google-carlito-fonts
-google-go-fonts
-redhat-text-fonts
-redhat-mono-fonts
-redhat-display-fonts
 bitstream-vera-sans-fonts
 bitstream-vera-sans-mono-fonts
 bitstream-vera-serif-fonts
@@ -185,10 +179,6 @@ geany-plugins-lineoperations
 geany-plugins-lsp
 geany-plugins-markdown
 geany-plugins-pairtaghighlighter
-geany-plugins-pretty-printer
-geany-plugins-shiftcolumn
-geany-themes
-epiphany
 
 # Misc
 xorg-x11-font-utils
