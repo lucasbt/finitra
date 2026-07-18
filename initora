@@ -271,6 +271,79 @@ _run_all_modules() {
 }
 
 # =============================================================================
+# Migrations
+#
+# Migration files live under ${SCRIPT_DIR}/migrations and follow the same
+# naming convention as modules: NNNN-description.sh -> function
+# migration_NNNN_description().
+#
+# Applied migrations are recorded (one id per line) in a state file kept
+# OUTSIDE the git working tree (${CONFIG_DIR}), since `initora update` may
+# run `git reset --hard` + `git clean -fd` on the install dir, which would
+# wipe out any state file stored inside it. It also can't live under
+# ~/.cache/initora, since cleanup() purges that directory (except *.log)
+# after every successful run.
+# =============================================================================
+
+MIGRATIONS_DIR="${SCRIPT_DIR}/migrations"
+MIGRATIONS_STATE_FILE="${CONFIG_DIR}/migrations_applied"
+
+_run_pending_migrations() {
+  [[ -d "$MIGRATIONS_DIR" ]] || return 0
+
+  mkdir -p "$CONFIG_DIR"
+  touch "$MIGRATIONS_STATE_FILE"
+
+  find "$MIGRATIONS_DIR" -maxdepth 1 -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
+
+  local pending=()
+  local file id
+  while IFS= read -r -d '' file; do
+    id="$(basename "$file" .sh)"
+    grep -qxF "$id" "$MIGRATIONS_STATE_FILE" || pending+=("$file")
+  done < <(find "$MIGRATIONS_DIR" -maxdepth 1 -name "*.sh" -print0 | sort -z)
+
+  if [[ ${#pending[@]} -eq 0 ]]; then
+    log_info "No pending migrations."
+    return 0
+  fi
+
+  log_section "Applying ${#pending[@]} pending migration(s)"
+
+  local funcname
+  for file in "${pending[@]}"; do
+    id="$(basename "$file" .sh)"
+    funcname="migration_$(echo "$id" | tr '-' '_')"
+
+    log_info "Applying migration: ${id}"
+
+    # shellcheck disable=SC1090
+    source "$file"
+
+    if ! declare -f "$funcname" >/dev/null; then
+      log_error "Function '${funcname}' not found in ${file}"
+      log_error "Migration file must define: ${funcname}() { ... }"
+      log_error "Aborting. Fix the migration and re-run 'initora update'."
+      return 1
+    fi
+
+    if "$funcname"; then
+      echo "$id" >> "$MIGRATIONS_STATE_FILE"
+      log_success "Migration applied: ${id}"
+    else
+      log_error "Migration failed: ${id}"
+      log_error "Aborting remaining migrations. Fix the issue and re-run 'initora update'."
+      unset -f "$funcname"
+      return 1
+    fi
+
+    unset -f "$funcname"
+  done
+
+  log_success "All pending migrations applied."
+}
+
+# =============================================================================
 # Self-update
 # =============================================================================
 
@@ -287,6 +360,10 @@ _cmd_update() {
 
   local current_rev
   current_rev="$(git -C "$install_dir" rev-parse HEAD 2>/dev/null)"
+
+  # Ignore file-mode-only diffs (chmod +x applied to modules/migrations on
+  # every run) so they're never mistaken for local changes on a re-run.
+  git -C "$install_dir" config core.fileMode false
 
   local has_changes=false
 
@@ -349,6 +426,10 @@ _cmd_update() {
     -name "*.sh" \
     -exec chmod +x {} \;
 
+  find "${install_dir}/migrations" \
+    -name "*.sh" \
+    -exec chmod +x {} \; 2>/dev/null || true
+
   # ---------------------------------------------------------------------------
   # Version / revision info
   # ---------------------------------------------------------------------------
@@ -361,6 +442,18 @@ _cmd_update() {
     cat "${install_dir}/version" 2>/dev/null \
       | tr -d '[:space:]'
   )"
+
+  # ---------------------------------------------------------------------------
+  # Pending migrations
+  # Runs regardless of whether the repo itself changed: a migration can be
+  # left pending from a previous update (e.g. it failed, or the state file
+  # was reset), so it must be checked every time, not just on new commits.
+  # ---------------------------------------------------------------------------
+
+  _run_pending_migrations || {
+    log_error "Update finished with pending/failed migrations. See log for details."
+    exit 1
+  }
 
   # ---------------------------------------------------------------------------
   # Already updated

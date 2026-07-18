@@ -18,6 +18,8 @@ BIN_DIR="${HOME}/.local/bin"
 BIN_PATH="${BIN_DIR}/initora"
 CONFIG_DIR="${HOME}/.config/initora"
 CONFIG_FILE="${CONFIG_DIR}/initora.config"
+DESKTOP_DIR="${HOME}/.local/share/applications"
+DESKTOP_FILE="${DESKTOP_DIR}/initora.desktop"
 
 # --- Colors ---
 CLR_RESET='\033[0m'
@@ -105,9 +107,15 @@ _setup_repo() {
     info "Cloning repository to $INSTALL_DIR"
     mkdir -p "$(dirname "$INSTALL_DIR")"
     git clone "$REPO_URL" "$INSTALL_DIR"
+    git -C "$INSTALL_DIR" config core.fileMode false
     ok "Repository cloned"
     return
   fi
+
+  # Ignore file-mode-only diffs (e.g. the chmod +x this script itself applies
+  # to initora/utils.sh/modules on every run) so they are never mistaken for
+  # local changes on a re-run.
+  git -C "$INSTALL_DIR" config core.fileMode false
 
   local has_local_changes=false
   if ! git -C "$INSTALL_DIR" diff --quiet 2>/dev/null || \
@@ -173,6 +181,46 @@ _setup_default_config() {
 }
 
 # =============================================================================
+# 5. Create .desktop entry so initora shows up in the GNOME menu, launched
+#    inside Ptyxis (Fedora Workstation's default terminal)
+# =============================================================================
+_setup_desktop_entry() {
+  if ! command -v ptyxis &>/dev/null; then
+    warn "ptyxis not found -- .desktop entry will still be created, but won't launch until ptyxis is installed"
+  fi
+
+  local icon_path="${INSTALL_DIR}/assets/initora.png"
+  if [[ ! -f "$icon_path" ]]; then
+    warn "Icon not found at $icon_path -- falling back to generic icon"
+    icon_path="utilities-terminal"
+  fi
+
+  mkdir -p "$DESKTOP_DIR"
+
+  cat > "$DESKTOP_FILE" << DESKTOPEOF
+[Desktop Entry]
+Type=Application
+Name=Initora
+GenericName=Fedora Workstation Bootstrap
+Comment=Bootstrap your Developer Fedora Workstation
+Exec=ptyxis --title="Initora - Fedora Workstation Bootstrap for Developers" -x initora
+Icon=${icon_path}
+Terminal=false
+Categories=Utility;System;Development;
+Keywords=fedora;bootstrap;developer;setup;dev;
+StartupNotify=true
+DESKTOPEOF
+
+  chmod +x "$DESKTOP_FILE"
+
+  if command -v update-desktop-database &>/dev/null; then
+    update-desktop-database "$DESKTOP_DIR" &>/dev/null || true
+  fi
+
+  ok "Menu entry created: $DESKTOP_FILE"
+}
+
+# =============================================================================
 # Main
 # =============================================================================
 main() {
@@ -181,6 +229,7 @@ main() {
   _setup_repo
   _setup_bin_and_alias
   _setup_default_config
+  _setup_desktop_entry
 
   echo ""
   ok "Bootstrap completed!"

@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# migrations/example.sh.template
+#
+# Modelo de migration. Para criar uma nova:
+#   1. copie este arquivo para migrations/NNNN-descricao-curta.sh
+#      (NNNN = próximo número sequencial, ex: 0002-nova-coisa.sh)
+#   2. renomeie a função abaixo para bater com o nome do arquivo:
+#      NNNN-descricao-curta.sh -> migration_NNNN_descricao_curta()
+#
+# Esse arquivo termina em .sh.template (não .sh) de propósito, para que o
+# runner de migrations não tente executá-lo.
+
+migration_NNNN_descricao_curta() {
+  log_info "Executando migration..."
+
+  # Faça aqui a alteração idempotente/pontual necessária, por exemplo:
+  #   - ajustar uma chave no config do usuário
+  #   - mover um arquivo de um local antigo para o novo
+  #   - recriar um symlink
+
+  log_success "Migration concluída."
+  return 0
+}
