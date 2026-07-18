@@ -1,0 +1,43 @@
+name: Validate branch naming convention
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+
+jobs:
+  check-branch-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate source branch prefix
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          echo "Source branch: $BRANCH"
+
+          # Extra protection: block protected/reserved branch names from
+          # ever being treated as a feature/fix branch (defense in depth,
+          # in case branch protection rules are bypassed or misconfigured).
+          if [[ "$BRANCH" == "main" || "$BRANCH" == "master" || "$BRANCH" == "develop" || "$BRANCH" =~ ^release/ ]]; then
+            echo "❌ '$BRANCH' is a reserved/protected branch name and cannot be the source of a PR into main."
+            exit 1
+          fi
+
+          # Extra protection: enforce a consistent naming style
+          # (lowercase letters, numbers, hyphens, slashes only).
+          if [[ ! "$BRANCH" =~ ^[a-z0-9/_-]+$ ]]; then
+            echo "❌ Branch name '$BRANCH' contains invalid characters."
+            echo "Use only lowercase letters, numbers, hyphens (-), underscores (_) and slashes (/)."
+            exit 1
+          fi
+
+          if [[ "$BRANCH" =~ ^(major|breaking)/ ]]; then
+            echo "✅ Valid MAJOR branch."
+          elif [[ "$BRANCH" =~ ^(feature|feat)/ ]]; then
+            echo "✅ Valid MINOR branch."
+          elif [[ "$BRANCH" =~ ^(fix|bugfix|hotfix|chore)/ ]]; then
+            echo "✅ Valid PATCH branch."
+          else
+            echo "❌ Branch name '$BRANCH' does not follow the required naming convention."
+            echo "Allowed prefixes: major/, breaking/, feature/, feat/, fix/, bugfix/, hotfix/, chore/"
+            exit 1
+          fi
