@@ -86,7 +86,7 @@ This will remove the binary, the installation directory, configuration files, an
 ├── initora-default.config  # Default configuration variables
 ├── utils.sh               # Shared helper functions
 ├── version                # Project version
-├── data/                  # Data lists for automated installation
+├��─ data/                  # Data lists for automated installation
 │   ├── flatpak-pkgs.list  # List of Flatpak applications
 │   ├── gnome-settings.list # GSettings configuration list
 │   └── rpm-pkgs.list      # List of DNF/RPM packages
@@ -102,47 +102,165 @@ This will remove the binary, the installation directory, configuration files, an
 
 ## 📂 Modular Architecture
 
-Initora is built on a series of specialized scripts located in the `modules/` directory:
+Initora is built on a series of specialized scripts located in the `modules/` directory. Each module is **independent and idempotent**, meaning you can run them individually or re-run them safely without side effects.
 
 ### [00] System Base ([`00-system.sh`](modules/00-system.sh))
-*Core system setup and repository configuration.*
+*Core system setup, repository management, and multimedia support.*
 
-- **DNF Tuning:** Configures parallel downloads and fastest mirror.
-- **Repositories:** Enables RPM Fusion (Free/Non-free) and cleans unwanted repos.
-- **Multimedia:** Full codec support (H.264/H.265/FFmpeg) with VA-API hardware acceleration.
-- **Updates:** Full system upgrade and firmware (`fwupdmgr`) refresh.
+**What it does:**
+- **DNF Configuration:** Enables parallel package downloads (up to 10 concurrent), activates `fastestmirror` for faster resolution, and sets `defaultyes=True` for unattended installs.
+- **Repository Management:** Installs RPM Fusion (Free/Non-Free) for multimedia and restricted codecs; removes unwanted repos (PyCharm COPR, NVIDIA driver repo, Steam repo).
+- **Multimedia Stack:** Installs comprehensive codec support:
+  - **Video codecs:** H.264, H.265, OpenH264 (for Firefox)
+  - **Audio codecs:** FLAC, FAAC, AAC, MP3 (LAME)
+  - **Hardware acceleration:** VA-API with Intel media drivers (or AMD equivalent)
+  - **Tools:** VLC, FFmpeg (full version from RPM Fusion), GStreamer plugins (base, good, bad, ugly)
+- **System Update:** Performs full `dnf upgrade`, removes orphaned packages, and optionally updates firmware (via `fwupdmgr`).
+- **Base Packages:** Installs essentials: Git, curl, wget, GnuPG, Flatpak, fontconfig, FZF, GNOME Keyring, and OpenSSL.
+- **Directory Setup:** Creates project-specific directories (`~/.local/share/initora`, `~/.config/initora`, `~/.cache/initora`).
+
+---
 
 ### [10] Packages ([`10-packages.sh`](modules/10-packages.sh))
-*Essential GUI applications and list-based management.*
+*Application installation (native and sandboxed) with repository integration.*
 
-- **Browsers:** Google Chrome stable with official repository.
-- **Apps:** Obsidian (AppImage), Bitwarden (GUI & CLI), and VSCode Repo.
-- **Bulk Install:** Processes `data/rpm-pkgs.list` and `data/flatpak-pkgs.list`.
+**What it does:**
+- **Google Chrome:** Installs Chrome stable from the official Google repository for automatic updates.
+- **Obsidian:** Downloads the latest AppImage from GitHub, creates a system launcher (`.desktop` entry), and adds to GNOME applications menu.
+- **Bitwarden:** Installs both:
+  - **GUI** (AppImage) — Full-featured password manager with system integration
+  - **CLI** (`bw`) — Command-line tool for scripting and automation
+- **VSCode:** Adds the official Microsoft repository and installs VSCode for system-wide updates.
+- **Bulk RPM Installation:** Reads `data/rpm-pkgs.list` and installs all packages in batch (20+ categories including development, productivity, graphics, office).
+- **Flathub Setup:** Configures Flatpak and the Flathub remote for sandboxed applications.
+- **Bulk Flatpak Installation:** Reads `data/flatpak-pkgs.list` and installs Flatpak apps (messaging, media, utilities, GNOME extensions).
+- **Font Cache Update:** Refreshes the system font cache after installation.
+
+---
 
 ### [20] Dev Tools ([`20-dev-tools.sh`](modules/20-dev-tools.sh))
-*The developer's heart—toolchains, runtimes, and IDEs.*
+*The heart of the developer workstation—runtimes, toolchains, containers, and editors.*
 
-- **Runtimes:** SDKMAN for Java (LTS), NVM for Node.js, Rust (via rustup), and Golang.
-- **AI Stack:** Antigravity CLI, GitHub Copilot, and OpenCode.
-- **Infra:** AWS CLI v2, kubectl, Podman (with Docker alias), and Podman Desktop.
-- **IDE:** Deep VSCode and Pulsar configuration (settings.json, extensions, keybindings).
-- **Shell:** Starship prompt with a customized, low-noise configuration.
+**What it does:**
+
+**Runtimes & Language Managers:**
+- **SDKMAN:** Installs Java LTS (21) and Java Latest (25), Maven, Gradle, and configures auto-accept for prompts.
+- **NVM (Node.js):** Installs Node.js LTS with npm and global packages (typescript, ts-node, prettier, eslint).
+- **Rust:** Installs via `rustup` with stable toolchain, Cargo, and automatic PATH setup.
+- **Golang:** Downloads the latest stable Go release, installs to `/usr/local/go`, and configures `GOPATH`.
+
+**AI & Developer Tools:**
+- **Antigravity CLI:** Google's AI tool (successor to Gemini CLI) with automatic installer.
+- **GitHub Copilot CLI:** Command-line interface for GitHub Copilot integration.
+- **OpenCode:** Binary Go-based AI tool for code generation and analysis.
+
+**Container & Cloud Infrastructure:**
+- **Podman:** Full configuration with socket exposure for IDE integration (Docker alias provided).
+- **Podman Desktop:** GUI client for container management with AppImage auto-update.
+- **AWS CLI v2:** Latest AWS command-line tools for infrastructure management.
+- **kubectl:** Kubernetes command-line tool for cluster management.
+- **REST Clients:** Postman (AppImage with deep configuration) and Insomnia for API testing.
+
+**Databases & Documentation:**
+- **DBeaver Community:** Universal database manager with auto-setup.
+- **Draw.io:** Diagramming tool (AppImage).
+- **Typora:** Markdown editor with real-time preview (AppImage).
+
+**Terminals & Shells:**
+- **Starship:** Ultra-fast cross-shell prompt with a minimalist, low-latency configuration optimized for developers.
+
+**IDEs & Editors:**
+- **Visual Studio Code:** Deep configuration including:
+  - Custom `settings.json` for performance tuning (minimap disabled, fontLigatures enabled)
+  - Java runtime configuration (supports both Java 21 and 25 via SDKMAN)
+  - Terminal integration with Ptyxis and Podman socket
+  - Essential extensions (Prettier, ESLint, Docker, Java, Python, Go, Rust, etc.)
+- **IntelliJ IDEA Community:** Automated download and installation from JetBrains release API.
+- **Zed:** Modern code editor (install via official script).
+- **Pulsar:** Community-driven Atom successor with syntax highlighting and language support.
+
+---
 
 ### [30] Desktop ([`30-desktop.sh`](modules/30-desktop.sh))
-*UX, UI, and visual accessibility.*
+*GNOME customization, accessibility, and visual polish.*
 
-- **GNOME:** Night Light, fixed 3 workspaces, text scaling, and optimized keybindings.
-- **Terminal:** Professional Ptyxis profile setup (One Half Black palette).
-- **Search:** LocalSearch (Tracker3) optimization for battery and performance.
-- **Assets:** Nerd Fonts collection, Microsoft Core Fonts, and wallpaper collections.
-- **Desktop Menu:** Integration via `.desktop` entry for system application launcher.
+**What it does:**
+
+**GNOME Settings:**
+- **Theme & Appearance:** Enables dark mode, sets custom GTK/icon themes from configuration.
+- **Night Light:** Enables automatic blue-light reduction (8:00 PM – 8:00 AM by default).
+- **Workspace Management:** Configures fixed 3 workspaces (not dynamic), with keyboard shortcuts for fast navigation (`Super+1/2/3`).
+- **Text Scaling:** Applies user-defined text scale for accessibility.
+- **Window Buttons:** Custom button layout (`appmenu:minimize,maximize,close`).
+- **Sleep Timeouts:** Configures AC power (7200s / 2 hours) and battery (1800s / 30 minutes) sleep timeouts for balanced performance and battery life.
+
+**Terminal Customization:**
+- **Ptyxis Profile:** Deep configuration including:
+  - Color palette (One Half Black — professional, eye-friendly)
+  - Font (JetBrains Mono 12 by default, customizable)
+  - Scrollback history (10,000 lines)
+  - Bold-is-bright and login-shell settings
+- **Custom Keybindings:**
+  - `Super+T` — Open Ptyxis terminal
+  - `Super+Print` — Screenshot with annotation (via Gradia Flatpak)
+- **Sudo Feedback:** Enables visual feedback when typing `sudo` password (asterisks).
+
+**System Optimization:**
+- **Service Cleanup:**
+  - Disables ABRT (crash reporter) for cleaner boot
+  - Disables ModemManager (unless using mobile broadband)
+  - Disables GNOME Remote Desktop (unless needed)
+  - Masks NetworkManager-wait-online for faster boot
+- **LocalSearch (Tracker3):** Disables system-wide file indexing to reduce background CPU/disk usage while keeping desktop search responsive.
+
+**Visual Assets:**
+- **Nerd Fonts:** Downloads and installs 7 monospace Nerd Fonts:
+  - FiraCode, JetBrains Mono, Hack, Meslo, Source Code Pro, Ubuntu Mono, Cascadia Code
+  - All fonts include programming ligatures and Unicode glyphs for IDE/terminal use
+- **Microsoft Core Fonts:** Arial, Times New Roman, Courier New, etc. (via RPM installer).
+- **Wallpaper Collections:** Downloads curated wallpaper collection from GitHub (~100+ high-quality images) if enabled.
+
+---
 
 ### [40] Optimizations ([`40-optimizations.sh`](modules/40-optimizations.sh))
-*Low-level system and hardware tuning.*
+*Low-level system and hardware tuning for performance and battery life.*
 
-- **Kernel:** `sysctl` tuning for `swappiness`, `inotify` (for IDEs), and network.
-- **SSD:** Weekly TRIM activation and I/O scheduler rules (NVMe/SATA).
-- **Logs:** Limits `journald` disk usage and cleans up boot-time overhead.
+**What it does:**
+
+**Kernel Parameters (sysctl):**
+- **Swap Management:** Sets `swappiness=10` to prefer RAM over ZRAM compression, reducing latency.
+- **VFS Cache:** Sets `vfs_cache_pressure=50` to favor inode/dentry caching (benefits SSDs + development workloads).
+- **I/O Tuning:** Optimizes dirty page ratios for lower write latency (`dirty_ratio=10`, `dirty_background_ratio=3`).
+- **inotify Limits:** Increases `max_user_watches` to 524,288 — essential for IDEs (IntelliJ, VS Code) monitoring large projects.
+- **Network (Container Workloads):** Increases TCP backlog and enables TCP fast open for containers and Kubernetes.
+
+**I/O Scheduler Configuration (udev rules):**
+Creates device-specific I/O scheduler rules:
+- **NVMe drives:** Uses `none` scheduler (hardware manages queuing).
+- **SATA SSDs:** Uses `mq-deadline` for low-latency command completion.
+- **HDDs:** Uses `bfq` (Budget Fair Queueing) for fair I/O prioritization.
+
+**Maintenance:**
+- **SSD TRIM (fstrim.timer):** Enables weekly automatic TRIM to maintain SSD performance over time; also runs immediately once.
+- **Journal Management:** Limits `systemd-journald` to 100 MB and 5 files to prevent bloated logs (`/var/log/journal/`).
+
+**Boot Behavior:**
+- Disables `NetworkManager-wait-online.service` for faster boot.
+- Removes GNOME Software autostart to reduce background CPU usage.
+
+---
+
+## 🔄 How Modules Are Executed
+
+When you run `initora install` or select modules interactively:
+
+1. Each module is sourced dynamically from `modules/NN-name.sh`
+2. The module function (e.g., `module_20_dev_tools`) is executed
+3. Logging is performed in real-time to `~/.cache/initora/initora.log`
+4. If a module fails, execution stops and the error is logged with a stack trace
+5. Modules are **fully idempotent** — re-running them detects existing state and skips redundant operations
+
+**Example:** Running `initora install -m 20` will execute all development tools setup and report progress.
 
 ## ⚙️ Customization
 
