@@ -1,31 +1,32 @@
 <div align="center">
    <img align="center" alt="Initora Logo" src="assets/initora.png" width="40%"/>	
 	<p align="center">
-    <br />
+     <br />
 		<b>Automated setup • Performance tuned • Ready-to-code</b>
-    <br />
-  </p>
-  <p align="center">
-  <a href="https://fedoraproject.org/"><img src="https://img.shields.io/badge/Fedora-41+-blue?logo=fedora&logoColor=white" alt="Fedora"></a>
-  <a href="https://www.gnu.org/software/bash/"><img src="https://img.shields.io/badge/Shell-Bash-4EAA25?logo=gnu-bash&logoColor=white" alt="Shell: Bash"></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+     <br />
+   </p>
+   <p align="center">
+   <a href="https://fedoraproject.org/"><img src="https://img.shields.io/badge/Fedora-41+-blue?logo=fedora&logoColor=white" alt="Fedora"></a>
+   <a href="https://www.gnu.org/software/bash/"><img src="https://img.shields.io/badge/Shell-Bash-4EAA25?logo=gnu-bash&logoColor=white" alt="Shell: Bash"></a>
+   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
 </p>
-  <h1></h1>
+   <h1></h1>
 </div>
 
 #### Fedora Workstation Bootstrap for Developers
 
-**Initora** is a high-end, modular, and idempotent bootstrap toolkit designed to transform a fresh Fedora Workstation installation into a professional development powerhouse. It automates everything from kernel-level optimizations to high-level IDE configurations, ensuring a consistent and high-performance environment.
+**Initora** is a high-end, modular, and idempotent bootstrap toolkit designed to transform a fresh Fedora Workstation installation into a professional development powerhouse. It automates everything while respecting your system and existing configurations.
 
 ## ✨ Key Features
 
 - **🎯 Modular Architecture:** Granular control over the setup process. Run specific modules or the full suite.
 - **🚀 Performance-First:** DNF parallelization, I/O scheduler optimizations (NVMe/SATA), and kernel `sysctl` hardening.
 - **💻 Polyglot Toolchain:** Automated management for Java (SDKMAN), Node.js (NVM), Golang, Rust and more.
-- **🤖 AI-Ready:** Built-in support for Gemini CLI, GitHub Copilot and OpenCode.
+- **🤖 AI-Ready:** Built-in support for Antigravity CLI, GitHub Copilot and OpenCode.
 - **🎨 Visual Excellence:** Curated GNOME desktop experience with Nerd Fonts, Microsoft fonts, dark mode, and custom Ptyxis profiles.
-- **📦 App Ecosystem:** Automated installation of VSCode, Google Chrome, Bitwarden, Obsidian, DBeaver, and more.
+- **📦 App Ecosystem:** Automated installation of VSCode, Pulsar, Google Chrome, Bitwarden, Obsidian, DBeaver, and more.
 - **🛠 Idempotency:** Safely re-run any part of the script. It intelligently detects existing states to avoid redundant operations.
+- **🖥️ Desktop Integration:** Initora appears in GNOME applications menu for easy access via Ptyxis terminal.
 
 ## 🚀 Quick Start
 
@@ -89,9 +90,14 @@ This will remove the binary, the installation directory, configuration files, an
 │   ├── flatpak-pkgs.list  # List of Flatpak applications
 │   ├── gnome-settings.list # GSettings configuration list
 │   └── rpm-pkgs.list      # List of DNF/RPM packages
-└── modules/               # Modular setup scripts
-    ├── 00-system.sh
-    └── ...
+├── migrations/            # Database migration scripts
+│   └── 0001-desktop-entry.sh
+├── modules/               # Modular setup scripts
+│   ├── 00-system.sh
+│   └── ...
+└── assets/                # Images and resources
+    ├── initora.png
+    └── wallpaper*.jpg
 ```
 
 ## 📂 Modular Architecture
@@ -116,19 +122,20 @@ Initora is built on a series of specialized scripts located in the `modules/` di
 ### [20] Dev Tools ([`20-dev-tools.sh`](modules/20-dev-tools.sh))
 *The developer's heart—toolchains, runtimes, and IDEs.*
 
-- **Runtimes:** SDKMAN for Java (LTS) and NVM for Node.js.
-- **AI Stack:** Gemini CLI, GitHub Copilot, Windsurf, and more.
+- **Runtimes:** SDKMAN for Java (LTS), NVM for Node.js, Rust (via rustup), and Golang.
+- **AI Stack:** Antigravity CLI, GitHub Copilot, and OpenCode.
 - **Infra:** AWS CLI v2, kubectl, Podman (with Docker alias), and Podman Desktop.
-- **IDE:** Deep VSCode configuration (settings.json, extensions, keybindings).
+- **IDE:** Deep VSCode and Pulsar configuration (settings.json, extensions, keybindings).
 - **Shell:** Starship prompt with a customized, low-noise configuration.
 
 ### [30] Desktop ([`30-desktop.sh`](modules/30-desktop.sh))
 *UX, UI, and visual accessibility.*
 
-- **GNOME:** Night Light, fixed workspaces, text scaling, and optimized keybindings.
+- **GNOME:** Night Light, fixed 3 workspaces, text scaling, and optimized keybindings.
 - **Terminal:** Professional Ptyxis profile setup (One Half Black palette).
 - **Search:** LocalSearch (Tracker3) optimization for battery and performance.
 - **Assets:** Nerd Fonts collection, Microsoft Core Fonts, and wallpaper collections.
+- **Desktop Menu:** Integration via `.desktop` entry for system application launcher.
 
 ### [40] Optimizations ([`40-optimizations.sh`](modules/40-optimizations.sh))
 *Low-level system and hardware tuning.*
@@ -140,7 +147,7 @@ Initora is built on a series of specialized scripts located in the `modules/` di
 ## ⚙️ Customization
 
 ### Alter User Config
-Settings are managed in `~/.config/initora/initora.config`. This file allows you to override any default variable found in [`initora-default.config`](initora-default.config). Use the CLI to edit it easily:
+Settings are managed in `~/.config/initora/initora.config`. This file allows you to override any default variable found in [`initora-default.config`](initora-default.config). Use the CLI to edit:
 ```bash
 initora config
 ```
@@ -179,6 +186,12 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 fi
 ```
 
+## 🔄 Migration System
+
+Initora supports database migrations for applying updates between versions. Migrations are stored in the `migrations/` directory and are applied automatically during `initora update`. This allows for seamless feature updates without requiring a full reinstall.
+
+**Current migrations:**
+- `0001-desktop-entry.sh` — Adds GNOME application menu integration for existing installations.
 
 ## 🔍 Logs & Troubleshooting
 
@@ -207,19 +220,25 @@ If a module fails, the error handler will print a stack trace both to the termin
 grep "ERROR" ~/.cache/initora/initora.log
 ```
 
-## 🔐 Security & Best Practices
-- **Root Safety:** Scripts use `sudo` surgically only when necessary.
-- **Backup:** Important system files (like `dnf.conf`) are backed up before modification.
-- **Non-Intrusive:** Initora respects existing configurations where possible and focuses on adding value rather than forcing changes.
-
 ## 🤝 Contributing
-Contributions are what make the open-source community an amazing place to learn, inspire, and create.
 
+Contributions are what make the open-source community an amazing place to learn, inspire, and create. Please refer to our [`CONTRIBUTING.md`](CONTRIBUTING.md) for detailed guidelines on:
+
+- Branch naming conventions (e.g., `feature/`, `fix/`, `release/`)
+- Automated versioning and release workflow
+- Pull request process
+
+**Quick start:**
 1. Fork the Project.
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`).
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`).
 4. Push to the Branch (`git push origin feature/AmazingFeature`).
 5. Open a Pull Request.
+
+## 🔐 Security & Best Practices
+- **Root Safety:** Scripts use `sudo` surgically only when necessary.
+- **Backup:** Important system files (like `dnf.conf`) are backed up before modification.
+- **Non-Intrusive:** Initora respects existing configurations where possible and focuses on adding value rather than forcing changes.
 
 ## 📜 License
 Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.
