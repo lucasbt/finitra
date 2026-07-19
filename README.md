@@ -19,14 +19,21 @@
 
 ## ✨ Key Features
 
-- **🎯 Modular Architecture:** Granular control over the setup process. Run specific modules or the full suite.
-- **🚀 Performance-First:** DNF parallelization, I/O scheduler optimizations (NVMe/SATA), and kernel `sysctl` hardening.
-- **💻 Polyglot Toolchain:** Automated management for Java (SDKMAN), Node.js (NVM), Golang, Rust and more.
-- **🤖 AI-Ready:** Built-in support for Antigravity CLI, GitHub Copilot and OpenCode.
-- **🎨 Visual Excellence:** Curated GNOME desktop experience with Nerd Fonts, Microsoft fonts, dark mode, and custom Ptyxis profiles.
-- **📦 App Ecosystem:** Automated installation of VSCode, Pulsar, Google Chrome, Bitwarden, Obsidian, DBeaver, and more.
-- **🛠 Idempotency:** Safely re-run any part of the script. It intelligently detects existing states to avoid redundant operations.
-- **🖥️ Desktop Integration:** Initora appears in GNOME applications menu for easy access via Ptyxis terminal.
+- **🎯 Modular Architecture:** 5 independent modules for granular control. Run specific modules or re-run safely anytime—fully idempotent. [See details below](#-modular-architecture)
+
+- **🚀 Performance-First:** DNF parallelization (10 concurrent downloads), NVMe/SATA I/O scheduler optimization, kernel `sysctl` hardening, and SSD TRIM automation.
+
+- **💻 Polyglot Toolchain:** Automated management for Java (SDKMAN: 21 LTS & 25), Node.js (NVM with LTS), Rust (rustup), and Golang (latest stable).
+
+- **🤖 AI-Ready:** Built-in support for Antigravity CLI, GitHub Copilot CLI, and OpenCode.
+
+- **🎨 Visual Excellence:** Dark mode GNOME, 7 Nerd Fonts with ligatures, Microsoft fonts, custom Ptyxis terminal, and curated wallpaper collection.
+
+- **📦 App Ecosystem:** VSCode, IntelliJ IDEA, Zed, Pulsar, Podman, AWS CLI, kubectl, DBeaver, Postman, Insomnia, Obsidian, Bitwarden, Draw.io, Typora, Chrome, and more.
+
+- **🛠 Idempotency:** Safely re-run any module. Detects existing states, skips redundant operations, and updates outdated software.
+
+- **🖥️ Desktop Integration:** Appears in GNOME applications menu. Launch from Activities → "Initora".
 
 ## 🚀 Quick Start
 
@@ -55,27 +62,47 @@ bash bootstrap.sh
 
 ## 🛠 Usage & CLI
 
-Initora provides a robust CLI interface. After installation, use the `initora` command.
+Initora provides a comprehensive CLI with both interactive and scripted modes.
 
 | Command | Description |
 | :--- | :--- |
-| `initora` | Launches the GUM-based interactive module selector. |
-| `initora install` | Executes all modules in sequential order. |
-| `initora install -m ID` | Runs a specific module (e.g., `initora install -m 20`). |
-| `initora list` | Displays all available modules and their descriptions. |
-| `initora update` | Synchronizes the local repository with the remote source. |
-| `initora uninstall` | Completely removes initora from the system. |
-| `initora config` | Opens your user configuration in the default `$EDITOR`. |
-| `initora log` | Opens the execution log in an interactive viewer (`less`). |
+| `initora` | Interactive module selector (GUM UI). Choose modules via menu. |
+| `initora install` | Execute all 5 modules in sequence (full setup). |
+| `initora install -m 20` | Run specific module (e.g., dev tools). Use `00`, `10`, `20`, `30`, `40`. |
+| `initora install -m 20,30` | Run multiple modules (comma-separated). |
+| `initora list` | Show all available modules and their descriptions. |
+| `initora update` | Self-update repository and apply pending migrations. |
+| `initora config` | Edit user configuration file (`~/.config/initora/initora.config`). |
+| `initora log` | View execution logs interactively via `less` (search with `/`). |
+| `initora uninstall` | Remove initora completely (binary, config, cache, aliases). |
+
+### Usage Examples
+
+**Full installation:**
+```bash
+initora install
+```
+
+**Install only Dev Tools:**
+```bash
+initora install -m 20
+```
+
+**Install Desktop + Optimizations:**
+```bash
+initora install -m 30,40
+```
+
+**View logs:**
+```bash
+initora log
+```
 
 ### Uninstallation
-If you wish to remove initora from your system, run:
 ```bash
 initora uninstall
 ```
-This will remove the binary, the installation directory, configuration files, and shell aliases.
-
->*Note: This does not revert system-wide changes made by the modules (installed packages, GNOME settings, etc.).*
+Removes binary, config, cache, and aliases. *(Does not revert installed packages or system changes.)*
 
 ## 📂 Structure of current repo
 
@@ -86,7 +113,7 @@ This will remove the binary, the installation directory, configuration files, an
 ├── initora-default.config  # Default configuration variables
 ├── utils.sh               # Shared helper functions
 ├── version                # Project version
-├��─ data/                  # Data lists for automated installation
+├── data/                  # Data lists for automated installation
 │   ├── flatpak-pkgs.list  # List of Flatpak applications
 │   ├── gnome-settings.list # GSettings configuration list
 │   └── rpm-pkgs.list      # List of DNF/RPM packages
@@ -259,8 +286,6 @@ When you run `initora install` or select modules interactively:
 3. Logging is performed in real-time to `~/.cache/initora/initora.log`
 4. If a module fails, execution stops and the error is logged with a stack trace
 5. Modules are **fully idempotent** — re-running them detects existing state and skips redundant operations
-
-**Example:** Running `initora install -m 20` will execute all development tools setup and report progress.
 
 ## ⚙️ Customization
 
