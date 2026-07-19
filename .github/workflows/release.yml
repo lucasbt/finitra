@@ -1,0 +1,77 @@
+name: Automated Release
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-release')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Calculate New Version by Branch
+        id: bump_version
+        run: |
+          # 1. Read current version (fallback to 1.0.0 if it doesn't exist)
+          CURRENT_VERSION=$(cat version 2>/dev/null || echo "1.0.0")
+          IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
+          
+          # 2. Get the source branch name of the PR (e.g., feature/add-login)
+          SOURCE_BRANCH="${{ github.event.pull_request.head.ref }}"
+          echo "Source branch: $SOURCE_BRANCH"
+          
+          # 3. Decide the increment based on the branch prefix
+          if [[ "$SOURCE_BRANCH" =~ ^(major|release)/ ]]; then
+            major=$((major + 1))
+            minor=0
+            patch=0
+          elif [[ "$SOURCE_BRANCH" =~ ^(feature|feat|minor)/ ]]; then
+            minor=$((minor + 1))
+            patch=0
+          elif [[ "$SOURCE_BRANCH" =~ ^(docs|documentation)/ ]]; then
+            echo "Documentation change only. Skipping Release generation."
+            exit 0 # Successfully terminates the job without creating tag/release
+          else
+            # Safe fallback for bugfix, fix, hotfix, chore or non-standard branches
+            patch=$((patch + 1))
+          fi
+          
+          NEW_VERSION="$major.$minor.$patch"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "New version calculated: v$NEW_VERSION"
+
+      - name: Update Version File
+        run: |
+          echo "${{ env.NEW_VERSION }}" > version
+          git add version
+          git commit -m "chore(release): bump version to ${{ env.NEW_VERSION }} [skip ci]"
+          git push origin main
+
+      - name: Create Tag and Release on GitHub
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ env.NEW_VERSION }}"
+          
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes "Automated release from PR #${{ github.event.pull_request.number }} (Branch: ${{ github.event.pull_request.head.ref }})" \
+            --target main
