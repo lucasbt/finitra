@@ -62,7 +62,7 @@ jobs:
         run: |
           echo "${{ env.NEW_VERSION }}" > version
           git add version
-          git commit -m "chore(release): bump version to ${{ env.NEW_VERSION }} [skip ci]"
+          git commit -m "chore(release): bump version to ${{ env.NEW_VERSION }}"
           git push origin main
 
       - name: Create Tag and Release on GitHub
@@ -71,7 +71,23 @@ jobs:
         run: |
           TAG="v${{ env.NEW_VERSION }}"
           
+          # 1. Create a custom header with PR details
+          echo "## 🚀 What's New in $TAG" > release_notes.md
+          echo "" >> release_notes.md
+          echo "**Source Branch:** \`${{ github.event.pull_request.head.ref }}\`" >> release_notes.md
+          echo "**PR Author:** @${{ github.event.pull_request.user.login }}" >> release_notes.md
+          echo "**Original Description:**" >> release_notes.md
+          echo "> ${{ github.event.pull_request.title }}" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "---" >> release_notes.md
+          
+          # 2. Generate automatic GitHub notes (lists commits and contributors between previous and new tags)
+          # The 'gh release generate-notes' command creates the standard GitHub changelog via terminal
+          gh release generate-notes --tag "$TAG" --target main >> release_notes.md
+          
+          # 3. Create the Official Release using the generated file
           gh release create "$TAG" \
-            --title "$TAG" \
-            --notes "Automated release from PR #${{ github.event.pull_request.number }} (Branch: ${{ github.event.pull_request.head.ref }})" \
+            --title "🚀 Release $TAG" \
+            --notes-file release_notes.md \
             --target main
+
