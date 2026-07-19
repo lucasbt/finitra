@@ -12,8 +12,7 @@ permissions:
 
 jobs:
   release:
-    if: github.event.pull_request.merged == true &&
-      !contains(github.event.pull_request.labels.*.name, 'skip-release')
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     
     steps:
@@ -22,53 +21,24 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Configure Git
+      - name: Read Updated Version
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
-      - name: Calculate New Version by Branch
-        id: bump_version
-        run: |
-          # 1. Read current version (fallback to 1.0.0 if it doesn't exist)
-          CURRENT_VERSION=$(cat version 2>/dev/null || echo "1.0.0")
-          IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
-          
-          # 2. Get the source branch name of the PR (e.g., feature/add-login)
-          SOURCE_BRANCH="${{ github.event.pull_request.head.ref }}"
-          echo "Source branch: $SOURCE_BRANCH"
-          
-          # 3. Decide the increment based on the branch prefix
-          if [[ "$SOURCE_BRANCH" =~ ^(major|release)/ ]]; then
-            major=$((major + 1))
-            minor=0
-            patch=0
-          elif [[ "$SOURCE_BRANCH" =~ ^(feature|feat|minor)/ ]]; then
-            minor=$((minor + 1))
-            patch=0
-          elif [[ "$SOURCE_BRANCH" =~ ^(docs|documentation)/ ]]; then
-            echo "Documentation change only. Skipping Release generation."
-            exit 0 # Successfully terminates the job without creating tag/release
-          else
-            # Safe fallback for bugfix, fix, hotfix, chore or non-standard branches
-            patch=$((patch + 1))
-          fi
-          
-          NEW_VERSION="$major.$minor.$patch"
-          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
-          echo "New version calculated: v$NEW_VERSION"
-
-      - name: Update Version File
-        run: |
-          echo "${{ env.NEW_VERSION }}" > version
-          git add version
-          git commit -m "chore(release): bump version to ${{ env.NEW_VERSION }}"
-          git push origin main
+          # The branch has already been merged, so the correct version is already in the file
+          VERSION=$(cat version)
+          echo "NEW_VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Creating release for version: v$VERSION"
 
       - name: Create Tag and Release on GitHub
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # If it's a documentation branch, we can skip creating the release
+          SOURCE_BRANCH="${{ github.event.pull_request.head.ref }}"
+          if [[ "$SOURCE_BRANCH" =~ ^(docs|documentation)/ ]]; then
+            echo "Documentation PR detected. Skipping Tag/Release creation."
+            exit 0
+          fi
+
           TAG="v${{ env.NEW_VERSION }}"
           
           # 1. Create custom header with PR details
@@ -81,12 +51,9 @@ jobs:
           echo "" >> release_notes.md
           echo "---" >> release_notes.md
           
-          # 2. Create the Official Release using the custom notes and appending auto-generated notes
-          # The '--generate-notes' flag automatically appends commits and contributors to your '--notes-file'
+          # 2. Create the Official Release appending auto-generated notes
           gh release create "$TAG" \
             --title "🚀 Release $TAG" \
             --notes-file release_notes.md \
             --generate-notes \
             --target main
-
-
