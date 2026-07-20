@@ -1,5 +1,5 @@
 <div align="center">
-   <img align="center" alt="Initora Logo" src="assets/initora.png" width="40%"/>	
+   <img align="center" alt="Initora Logo" src="assets/initora_logo_neon.png" width="40%"/>	
 	<p align="center">
      <br />
 		<b>Automated setup • Performance tuned • Ready-to-code</b>
