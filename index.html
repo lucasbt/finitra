@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Initora - Automated Fedora Workstation Bootstrap</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="container">
+                <div class="nav-content">
+                    <h1 class="logo">⚡ Initora</h1>
+                    <ul class="nav-links">
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#install">Instalação</a></li>
+                        <li><a href="#docs">Documentação</a></li>
+                        <li><a href="https://github.com/lucasbt/initora" target="_blank">GitHub</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <h2>Automated Fedora Workstation Bootstrap for Developers</h2>
+                    <p>Transforme uma instalação fresca do Fedora Workstation em um ambiente de desenvolvimento profissional, modular, otimizado e pronto para IA.</p>
+                    <div class="hero-buttons">
+                        <a href="#install" class="btn btn-primary">Instalar Agora</a>
+                        <a href="https://github.com/lucasbt/initora" target="_blank" class="btn btn-secondary">Ver no GitHub</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="features">
+            <div class="container">
+                <h3>✨ Principais Características</h3>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h4>Arquitetura Modular</h4>
+                        <p>5 módulos independentes para controle granular. Execute específicos ou tudo de uma vez.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🚀</div>
+                        <h4>Performance-First</h4>
+                        <p>Parallelização DNF, otimização I/O NVMe/SATA e endurecimento do kernel.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">💻</div>
+                        <h4>Polyglot Toolchain</h4>
+                        <p>Java, Node.js, Rust, Golang e mais - tudo gerenciado automaticamente.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🤖</div>
+                        <h4>AI-Ready</h4>
+                        <p>Suporte integrado para Antigravity CLI, GitHub Copilot CLI e OpenCode.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎨</div>
+                        <h4>Excelência Visual</h4>
+                        <p>Dark mode GNOME, 7 Nerd Fonts com ligaduras e wallpapers curados.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📦</div>
+                        <h4>Ecossistema Completo</h4>
+                        <p>VSCode, IntelliJ, Podman, kubectl, Obsidian, Bitwarden e muito mais.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Installation Section -->
+        <section id="install" class="installation">
+            <div class="container">
+                <h3>🚀 Quick Start</h3>
+                <div class="install-content">
+                    <div class="install-step">
+                        <h4>Instalação em Uma Linha</h4>
+                        <p>A forma mais fácil de provisionar seu sistema:</p>
+                        <pre><code>curl -fsSL https://raw.githubusercontent.com/lucasbt/initora/main/bootstrap.sh | bash</code></pre>
+                    </div>
+                    <div class="install-step">
+                        <h4>Instalação Manual</h4>
+                        <p>Se preferir inspecionar o código antes de executar:</p>
+                        <pre><code>git clone https://github.com/lucasbt/initora ~/.local/share/initora
+cd ~/.local/share/initora
+bash bootstrap.sh</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Modules Section -->
+        <section id="modules" class="modules">
+            <div class="container">
+                <h3>🔧 Módulos Disponíveis</h3>
+                <div class="modules-list">
+                    <div class="module-item">
+                        <h4>[00] System Base</h4>
+                        <p>Setup core, DNF parallelization, RPM Fusion, codecs multimídia.</p>
+                    </div>
+                    <div class="module-item">
+                        <h4>[10] Packages</h4>
+                        <p>Aplicativos nativos e em sandbox - Chrome, Obsidian, Bitwarden, VSCode.</p>
+                    </div>
+                    <div class="module-item">
+                        <h4>[20] Dev Tools</h4>
+                        <p>Runtimes, IDEs, containers - Java, Node.js, Rust, Golang, Podman, kubectl.</p>
+                    </div>
+                    <div class="module-item">
+                        <h4>[30] Desktop</h4>
+                        <p>Customização GNOME, Nerd Fonts, Ptyxis terminal personalizado.</p>
+                    </div>
+                    <div class="module-item">
+                        <h4>[40] Optimizations</h4>
+                        <p>Tuning de kernel, scheduler I/O, SSD TRIM, gerenciamento de journal.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Docs Section -->
+        <section id="docs" class="documentation">
+            <div class="container">
+                <h3>📚 Documentação</h3>
+                <div class="docs-grid">
+                    <div class="doc-card">
+                        <h4>Comandos CLI</h4>
+                        <ul>
+                            <li><code>initora</code> - Seletor interativo de módulos</li>
+                            <li><code>initora install</code> - Executar todos os 5 módulos</li>
+                            <li><code>initora install -m 20</code> - Executar módulo específico</li>
+                            <li><code>initora list</code> - Listar módulos disponíveis</li>
+                            <li><code>initora config</code> - Editar configuração</li>
+                        </ul>
+                    </div>
+                    <div class="doc-card">
+                        <h4>Customização</h4>
+                        <ul>
+                            <li>Editar <code>~/.config/initora/initora.config</code></li>
+                            <li>Adicionar pacotes RPM em <code>data/rpm-pkgs.list</code></li>
+                            <li>Adicionar Flatpaks em <code>data/flatpak-pkgs.list</code></li>
+                            <li>Criar novos módulos em <code>modules/</code></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="docs-link">
+                    <a href="https://github.com/lucasbt/initora/blob/main/README.md" target="_blank" class="btn btn-primary">Documentação Completa</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta">
+            <div class="container">
+                <h3>Pronto para transformar seu Fedora?</h3>
+                <p>Comece com um clique e tenha um ambiente de desenvolvimento completo em minutos.</p>
+                <a href="#install" class="btn btn-primary">Instalar Agora</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Initora. Mantido por <a href="https://github.com/lucasbt" target="_blank">lucasbt</a></p>
+            <p>Licença MIT • <a href="https://github.com/lucasbt/initora" target="_blank">GitHub</a></p>
+        </div>
+    </footer>
+</body>
+</html>
