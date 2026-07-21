@@ -475,7 +475,7 @@ _cmd_update() {
   echo ""
   echo -e "${CLR_BOLD}Latest changes:${CLR_RESET}"
 
-  git -C "$install_dir" \
+  git --no-pager -C "$install_dir" \
     log \
       --pretty=format:"  • %C(yellow)%h%Creset %s%n    %C(cyan)%an%Creset %C(dim white)(%cr)%Creset" \
       "${current_rev}..${new_rev}"
