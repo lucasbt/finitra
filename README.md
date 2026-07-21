@@ -35,6 +35,8 @@
 
 - **🖥️ Desktop Integration:** Appears in GNOME applications menu. Launch from Activities → "Initora".
 
+- **⌨️ Shell Autocomplete:** Bash tab-completion for all commands, flags, and module names — no need to memorize module numbers.
+
 ## 🚀 Quick Start
 
 **IMPORTANT:** Install `git` if not already present *(ships with Fedora Workstation)*
@@ -58,6 +60,8 @@ git clone https://github.com/lucasbt/initora ~/.local/share/initora
 cd ~/.local/share/initora
 bash bootstrap.sh
 ```
+
+> `bootstrap.sh` automatically installs bash tab-completion for `initora` (see [Shell Autocomplete](#-shell-autocomplete)). Open a new terminal after the first install to enable it.
 
 
 ## 🛠 Usage & CLI
@@ -104,6 +108,27 @@ initora uninstall
 ```
 Removes binary, config, cache, and aliases. *(Does not revert installed packages or system changes.)*
 
+## ⌨️ Shell Autocomplete
+
+Initora ships with a bash completion script that suggests:
+
+- **Top-level commands:** `install`, `list`, `update`, `uninstall`, `config`, `log`, `--help`
+- **`install` flags:** `--all`/`-a`, `--module`/`-m`
+- **Module names** for `-m`/`--module`, resolved dynamically from `initora list` (e.g. `system`, `dev-tools`, `desktop`, `optimizations`) — no need to remember module numbers
+
+```bash
+initora install -m <TAB>
+# system  packages  dev-tools  desktop  optimizations
+```
+
+**Installation:**
+- **New installs:** handled automatically by `bootstrap.sh` — the script is copied to `~/.local/share/bash-completion/completions/initora`.
+- **Existing installs:** applied automatically the next time you run `initora update`, via migration [`0002-bash-completion.sh`](migrations/0002-bash-completion.sh).
+
+In both cases, open a new terminal (or `source ~/.local/share/bash-completion/completions/initora`) to activate it in your current session.
+
+> Requires the `bash-completion` package for the completions directory to be sourced automatically. Most Fedora Workstation installs have it by default; if not, install it with `sudo dnf install bash-completion`.
+
 ## 📂 Structure of current repo
 
 ```text
@@ -113,12 +138,15 @@ Removes binary, config, cache, and aliases. *(Does not revert installed packages
 ├── initora-default.config  # Default configuration variables
 ├── utils.sh               # Shared helper functions
 ├── version                # Project version
+├── completions/           # Shell autocomplete scripts
+│   └── initora-completion.bash
 ├── data/                  # Data lists for automated installation
 │   ├── flatpak-pkgs.list  # List of Flatpak applications
 │   ├── gnome-settings.list # GSettings configuration list
 │   └── rpm-pkgs.list      # List of DNF/RPM packages
 ├── migrations/            # Database migration scripts
-│   └── 0001-desktop-entry.sh
+│   ├── 0001-desktop-entry.sh
+│   └── 0002-bash-completion.sh
 ├── modules/               # Modular setup scripts
 │   ├── 00-system.sh
 │   └── ...
@@ -335,6 +363,7 @@ Initora supports database migrations for applying updates between versions. Migr
 
 **Current migrations:**
 - `0001-desktop-entry.sh` — Adds GNOME application menu integration for existing installations.
+- `0002-bash-completion.sh` — Installs bash tab-completion for existing installations (see [Shell Autocomplete](#-shell-autocomplete)).
 
 ## 🔍 Logs & Troubleshooting
 
