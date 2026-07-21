@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="styles.css?v=2">
+    <link rel="stylesheet" href="styles.css?v=3">
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
@@ -29,6 +29,16 @@
                     button.classList.remove('copied');
                 }, 2000);
             });
+        }
+
+        function switchTab(button, panelId) {
+            const tabsContainer = button.closest('.install-tabs');
+
+            tabsContainer.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            tabsContainer.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+
+            button.classList.add('active');
+            tabsContainer.querySelector('#' + panelId).classList.add('active');
         }
     </script>
 </head>
@@ -109,29 +119,29 @@
         <!-- Installation Section -->
         <section id="install" class="installation">
             <div class="container">
-                <h3>🚀 Quick Start</h3>
+                <h3>⚡️ Quick Start</h3>
 
                 <div class="install-tabs">
                     <div class="tab-buttons">
-                        <button class="tab-btn active" onclick="switchTab(this, 'tab-quick')">Instalação em Uma Linha</button>
-                        <button class="tab-btn" onclick="switchTab(this, 'tab-manual')">Instalação Manual</button>
+                        <button class="tab-btn active" onclick="switchTab(this, 'tab-quick')" type="button">Instalação em Uma Linha</button>
+                        <button class="tab-btn" onclick="switchTab(this, 'tab-manual')" type="button">Instalação Manual</button>
                     </div>
 
                     <div class="tab-panel active" id="tab-quick">
                         <p>A forma mais fácil de provisionar seu sistema:</p>
                         <div class="code-block">
-        <pre><code>curl -fsSL https://raw.githubusercontent.com/lucasbt/initora/main/bootstrap.sh | bash</code></pre>
-                            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+<pre><code>curl -fsSL https://raw.githubusercontent.com/lucasbt/initora/main/bootstrap.sh | bash</code></pre>
+                            <button class="copy-btn" onclick="copyCode(this)" type="button">Copiar</button>
                         </div>
                     </div>
 
                     <div class="tab-panel" id="tab-manual">
                         <p>Se preferir inspecionar o código antes de executar:</p>
                         <div class="code-block">
-        <pre><code>git clone https://github.com/lucasbt/initora ~/.local/share/initora
+<pre><code>git clone https://github.com/lucasbt/initora ~/.local/share/initora
 cd ~/.local/share/initora
 bash bootstrap.sh</code></pre>
-                            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                            <button class="copy-btn" onclick="copyCode(this)" type="button">Copiar</button>
                         </div>
                     </div>
                 </div>
@@ -144,23 +154,23 @@ bash bootstrap.sh</code></pre>
                 <h3>🔧 Módulos Disponíveis</h3>
                 <div class="modules-list">
                     <div class="module-item">
-                        <h4>[00] System Base</h4>
+                        <h4>System Base</h4>
                         <p>Setup core, DNF parallelization, RPM Fusion, codecs multimídia.</p>
                     </div>
                     <div class="module-item">
-                        <h4>[10] Packages</h4>
+                        <h4>Packages</h4>
                         <p>Aplicativos nativos e em sandbox - Chrome, Obsidian, Bitwarden, VSCode.</p>
                     </div>
                     <div class="module-item">
-                        <h4>[20] Dev Tools</h4>
+                        <h4>Dev Tools</h4>
                         <p>Runtimes, IDEs, containers - Java, Node.js, Rust, Golang, Podman, kubectl.</p>
                     </div>
                     <div class="module-item">
-                        <h4>[30] Desktop</h4>
+                        <h4>Desktop</h4>
                         <p>Customização GNOME, Nerd Fonts, Ptyxis terminal personalizado.</p>
                     </div>
                     <div class="module-item">
-                        <h4>[40] Optimizations</h4>
+                        <h4>Optimizations</h4>
                         <p>Tuning de kernel, scheduler I/O, SSD TRIM, gerenciamento de journal.</p>
                     </div>
                 </div>
@@ -170,7 +180,7 @@ bash bootstrap.sh</code></pre>
         <!-- Docs Section -->
         <section id="docs" class="documentation">
             <div class="container">
-                <h3>📄 Documentação</h3>
+                <h3>📖 Documentação</h3>
                 <div class="docs-grid">
                     <div class="doc-card">
                         <h4>Comandos CLI</h4>
