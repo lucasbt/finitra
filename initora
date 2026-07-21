@@ -728,7 +728,6 @@ initora v${SCRIPT_VERSION} -- Fedora Workstation Bootstrap for Developers
 
 Usage:
   initora                      Interactive menu
-  fi                           Short alias
 
   initora install              Run all modules in sequence
   initora install --all        Run all modules (explicit)
