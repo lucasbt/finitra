@@ -247,25 +247,28 @@ section h3 {
 
 .code-block {
     position: relative;
-    max-width: 100%;
-    background-color: var(--bg-dark, #1a1a1a);
-    border-radius: 8px;
+    background-color: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
     margin: 1rem 0;
+    overflow: hidden;
 }
 
 .code-block pre {
     margin: 0;
     padding: 1rem;
-    padding-right: 5.5rem; /* espaço pro botão não sobrepor o texto */
-    max-width: 100%;
-    overflow-x: auto;        /* scroll só dentro do bloco, se precisar, nunca na página */
-    white-space: pre-wrap;    /* quebra a linha em vez de estourar a tela */
-    word-break: break-all;    /* quebra até URLs longas sem espaço */
+    padding-right: 5rem;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: pre-wrap;
+    overflow-x: hidden;
 }
 
 .code-block code {
     font-family: 'Fira Code', 'Courier New', monospace;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    color: var(--primary-light);
+    line-height: 1.5;
 }
 
 .copy-btn {
@@ -273,17 +276,18 @@ section h3 {
     top: 0.6rem;
     right: 0.6rem;
     padding: 0.35rem 0.8rem;
-    font-size: 0.8rem;
-    border: 1px solid var(--border-color, #444);
+    font-size: 0.75rem;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
-    background-color: var(--bg-light, #2a2a2a);
-    color: var(--text-primary, #fff);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
     cursor: pointer;
     transition: background-color 0.2s ease;
+    white-space: nowrap;
 }
 
 .copy-btn:hover {
-    background-color: var(--accent, #6c2ba0);
+    background-color: var(--primary-color);
 }
 
 .copy-btn.copied {
