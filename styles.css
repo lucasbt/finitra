@@ -240,7 +240,7 @@ section h3 {
 }
 
 .install-tabs {
-    max-width: 700px;
+    max-width: 900px;
     margin: 0 auto;
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
