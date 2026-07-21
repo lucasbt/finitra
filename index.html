@@ -16,6 +16,21 @@
     <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/initora_icon_32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/initora_icon_16.png">
+
+    <script>
+        function copyCode(button) {
+            const code = button.previousElementSibling.innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copiado!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
 </head>
 <body>
     <header>
@@ -24,7 +39,7 @@
                 <div class="nav-content">
                     <h1 class="logo">
                         <img src="assets/initora_icon_512.png" alt="Initora" class="logo-icon">
-                        Initora
+                        INITORA
                     </h1>
                     <ul class="nav-links">
                         <li><a href="#features">Features</a></li>
@@ -99,14 +114,20 @@
                     <div class="install-step">
                         <h4>Instalação em Uma Linha</h4>
                         <p>A forma mais fácil de provisionar seu sistema:</p>
-                        <pre><code>curl -fsSL https://raw.githubusercontent.com/lucasbt/initora/main/bootstrap.sh | bash</code></pre>
+                        <div class="code-block">
+                            <pre><code>curl -fsSL https://raw.githubusercontent.com/lucasbt/initora/main/bootstrap.sh | bash</code></pre>
+                            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                        </div>
                     </div>
                     <div class="install-step">
                         <h4>Instalação Manual</h4>
                         <p>Se preferir inspecionar o código antes de executar:</p>
-                        <pre><code>git clone https://github.com/lucasbt/initora ~/.local/share/initora
-cd ~/.local/share/initora
-bash bootstrap.sh</code></pre>
+                        <div class="code-block">
+                            <pre><code>git clone https://github.com/lucasbt/initora ~/.local/share/initora
+        cd ~/.local/share/initora
+        bash bootstrap.sh</code></pre>
+                            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                        </div>
                     </div>
                 </div>
             </div>

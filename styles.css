@@ -234,10 +234,61 @@ section h3 {
     border-top: 1px solid var(--border-color);
 }
 
+.installation .container {
+    max-width: 100%;
+    padding: 0 1rem;
+}
+
 .install-content {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
     gap: 2rem;
+}
+
+.code-block {
+    position: relative;
+    max-width: 100%;
+    background-color: var(--bg-dark, #1a1a1a);
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.code-block pre {
+    margin: 0;
+    padding: 1rem;
+    padding-right: 5.5rem; /* espaço pro botão não sobrepor o texto */
+    max-width: 100%;
+    overflow-x: auto;        /* scroll só dentro do bloco, se precisar, nunca na página */
+    white-space: pre-wrap;    /* quebra a linha em vez de estourar a tela */
+    word-break: break-all;    /* quebra até URLs longas sem espaço */
+}
+
+.code-block code {
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.copy-btn {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    padding: 0.35rem 0.8rem;
+    font-size: 0.8rem;
+    border: 1px solid var(--border-color, #444);
+    border-radius: 6px;
+    background-color: var(--bg-light, #2a2a2a);
+    color: var(--text-primary, #fff);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.copy-btn:hover {
+    background-color: var(--accent, #6c2ba0);
+}
+
+.copy-btn.copied {
+    background-color: #2ba05c;
+    border-color: #2ba05c;
 }
 
 .install-step {
