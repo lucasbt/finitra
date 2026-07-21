@@ -50,6 +50,7 @@
                 'nav.features': 'Recursos',
                 'nav.install': 'Instalação',
                 'nav.docs': 'Documentação',
+                'nav.contributing': 'Contribuir',
                 'hero.title': 'Bootstrap Automatizado do Fedora Workstation para Desenvolvedores',
                 'hero.subtitle': 'Transforme uma instalação fresca do Fedora Workstation em um ambiente de desenvolvimento profissional, modular, otimizado e pronto para IA.',
                 'hero.btn.install': 'Instalar Agora',
@@ -98,6 +99,19 @@
                 'docs.custom.i3': 'Adicionar Flatpaks em <code>data/flatpak-pkgs.list</code>',
                 'docs.custom.i4': 'Criar novos módulos em <code>modules/</code>',
                 'docs.btn': 'Documentação Completa',
+                'contributing.title': '🤝 Contribua com o Projeto',
+                'contributing.desc': 'Contribuições são o que fazem a comunidade open-source um lugar incrível para aprender, inspirar e criar. Toda ajuda é bem-vinda!',
+                'contributing.steps.title': 'Como contribuir',
+                'contributing.step1': 'Faça um <strong>Fork</strong> do projeto.',
+                'contributing.step2': 'Crie sua <strong>Feature Branch</strong> (<code>git checkout -b feature/MinhaFeature</code>).',
+                'contributing.step3': 'Faça o <strong>Commit</strong> das suas alterações (<code>git commit -m \'Add some MinhaFeature\'</code>).',
+                'contributing.step4': 'Faça o <strong>Push</strong> para a Branch (<code>git push origin feature/MinhaFeature</code>).',
+                'contributing.step5': 'Abra um <strong>Pull Request</strong>.',
+                'contributing.guidelines.title': 'Diretrizes',
+                'contributing.guidelines.i1': 'Convenções de nomenclatura de branches (ex: <code>feature/</code>, <code>fix/</code>, <code>release/</code>)',
+                'contributing.guidelines.i2': 'Versionamento automatizado e fluxo de releases',
+                'contributing.guidelines.i3': 'Processo de Pull Request',
+                'contributing.btn': 'Ver CONTRIBUTING.md',
                 'cta.title': 'Pronto para transformar seu Fedora?',
                 'cta.desc': 'Comece com um clique e tenha um ambiente de desenvolvimento completo em minutos.',
                 'cta.btn': 'Instalar Agora',
@@ -109,6 +123,7 @@
                 'nav.features': 'Features',
                 'nav.install': 'Install',
                 'nav.docs': 'Docs',
+                'nav.contributing': 'Contributing',
                 'hero.title': 'Automated Fedora Workstation Bootstrap for Developers',
                 'hero.subtitle': 'Turn a fresh Fedora Workstation install into a professional, modular, optimized, AI-ready development environment.',
                 'hero.btn.install': 'Install Now',
@@ -157,6 +172,19 @@
                 'docs.custom.i3': 'Add Flatpaks in <code>data/flatpak-pkgs.list</code>',
                 'docs.custom.i4': 'Create new modules in <code>modules/</code>',
                 'docs.btn': 'Full Documentation',
+                'contributing.title': '🤝 Contribute to the Project',
+                'contributing.desc': 'Contributions are what make the open-source community an amazing place to learn, inspire, and create. All help is welcome!',
+                'contributing.steps.title': 'How to contribute',
+                'contributing.step1': 'Fork the <strong>Project</strong>.',
+                'contributing.step2': 'Create your <strong>Feature Branch</strong> (<code>git checkout -b feature/AmazingFeature</code>).',
+                'contributing.step3': 'Commit your <strong>Changes</strong> (<code>git commit -m \'Add some AmazingFeature\'</code>).',
+                'contributing.step4': 'Push to the <strong>Branch</strong> (<code>git push origin feature/AmazingFeature</code>).',
+                'contributing.step5': 'Open a <strong>Pull Request</strong>.',
+                'contributing.guidelines.title': 'Guidelines',
+                'contributing.guidelines.i1': 'Branch naming conventions (e.g., <code>feature/</code>, <code>fix/</code>, <code>release/</code>)',
+                'contributing.guidelines.i2': 'Automated versioning and release workflow',
+                'contributing.guidelines.i3': 'Pull request process',
+                'contributing.btn': 'View CONTRIBUTING.md',
                 'cta.title': 'Ready to transform your Fedora?',
                 'cta.desc': 'Get started with one click and have a complete dev environment in minutes.',
                 'cta.btn': 'Install Now',
@@ -218,6 +246,7 @@
                         <li><a href="#features" data-i18n="nav.features">Features</a></li>
                         <li><a href="#install" data-i18n="nav.install">Instalação</a></li>
                         <li><a href="#docs" data-i18n="nav.docs">Documentação</a></li>
+                        <li><a href="#contributing" data-i18n="nav.contributing">Contribuir</a></li>
                         <li><a href="https://github.com/lucasbt/initora" target="_blank">GitHub</a></li>
                     </ul>
                     <div class="lang-switch" role="group" aria-label="Language selector">
@@ -371,6 +400,37 @@ bash bootstrap.sh</code></pre>
                 </div>
                 <div class="docs-link">
                     <a href="https://github.com/lucasbt/initora/blob/main/README.md" target="_blank" class="btn btn-primary" data-i18n="docs.btn">Documentação Completa</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contributing Section -->
+        <section id="contributing" class="contributing">
+            <div class="container">
+                <h3 data-i18n="contributing.title">🤝 Contribua com o Projeto</h3>
+                <p class="contributing-intro" data-i18n="contributing.desc">Contribuições são o que fazem a comunidade open-source um lugar incrível para aprender, inspirar e criar. Toda ajuda é bem-vinda!</p>
+                <div class="docs-grid">
+                    <div class="doc-card">
+                        <h4 data-i18n="contributing.steps.title">Como contribuir</h4>
+                        <ol class="contributing-steps">
+                            <li data-i18n="contributing.step1">Faça um <strong>Fork</strong> do projeto.</li>
+                            <li data-i18n="contributing.step2">Crie sua <strong>Feature Branch</strong> (<code>git checkout -b feature/MinhaFeature</code>).</li>
+                            <li data-i18n="contributing.step3">Faça o <strong>Commit</strong> das suas alterações (<code>git commit -m 'Add some MinhaFeature'</code>).</li>
+                            <li data-i18n="contributing.step4">Faça o <strong>Push</strong> para a Branch (<code>git push origin feature/MinhaFeature</code>).</li>
+                            <li data-i18n="contributing.step5">Abra um <strong>Pull Request</strong>.</li>
+                        </ol>
+                    </div>
+                    <div class="doc-card">
+                        <h4 data-i18n="contributing.guidelines.title">Diretrizes</h4>
+                        <ul>
+                            <li data-i18n="contributing.guidelines.i1">Convenções de nomenclatura de branches (ex: <code>feature/</code>, <code>fix/</code>, <code>release/</code>)</li>
+                            <li data-i18n="contributing.guidelines.i2">Versionamento automatizado e fluxo de releases</li>
+                            <li data-i18n="contributing.guidelines.i3">Processo de Pull Request</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="docs-link">
+                    <a href="https://github.com/lucasbt/initora/blob/main/CONTRIBUTING.md" target="_blank" class="btn btn-primary" data-i18n="contributing.btn">Ver CONTRIBUTING.md</a>
                 </div>
             </div>
         </section>

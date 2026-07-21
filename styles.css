@@ -508,6 +508,59 @@ footer a:hover {
     text-decoration: underline;
 }
 
+/* Contributing Section */
+.contributing {
+    border-top: 1px solid var(--border-color);
+}
+
+.contributing-intro {
+    text-align: center;
+    color: var(--text-secondary);
+    max-width: 700px;
+    margin: -2rem auto 2.5rem;
+    font-size: 1.05rem;
+}
+
+.contributing-steps {
+    list-style: none;
+    counter-reset: step-counter;
+}
+
+.contributing-steps li {
+    counter-increment: step-counter;
+    padding: 0.5rem 0 0.5rem 2.2rem;
+    position: relative;
+    color: var(--text-secondary);
+}
+
+.contributing-steps li::before {
+    content: counter(step-counter);
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.contributing-steps code,
+.doc-card .contributing-steps code {
+    background-color: var(--bg-dark);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.3rem;
+}
+
+.contributing-steps strong {
+    color: var(--text-primary);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .nav-content {
