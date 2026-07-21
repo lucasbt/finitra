@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Initora - Automated Fedora Workstation Bootstrap</title>
+    <title data-i18n="meta.title">Initora - Automated Fedora Workstation Bootstrap</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="styles.css?v=5">
+    <link rel="stylesheet" href="styles.css?v=6">
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
@@ -22,7 +22,7 @@
             const code = button.previousElementSibling.innerText;
             navigator.clipboard.writeText(code).then(() => {
                 const originalText = button.textContent;
-                button.textContent = 'Copiado!';
+                button.textContent = translations[currentLang]['common.copied'] || 'Copiado!';
                 button.classList.add('copied');
                 setTimeout(() => {
                     button.textContent = originalText;
@@ -41,6 +41,169 @@
             tabsContainer.querySelector('#' + panelId).classList.add('active');
         }
     </script>
+
+    <!-- i18n: dicionário de traduções e lógica de troca de idioma -->
+    <script>
+        const translations = {
+            pt: {
+                'meta.title': 'Initora - Bootstrap Automatizado para Fedora Workstation',
+                'nav.features': 'Recursos',
+                'nav.install': 'Instalação',
+                'nav.docs': 'Documentação',
+                'hero.title': 'Bootstrap Automatizado do Fedora Workstation para Desenvolvedores',
+                'hero.subtitle': 'Transforme uma instalação fresca do Fedora Workstation em um ambiente de desenvolvimento profissional, modular, otimizado e pronto para IA.',
+                'hero.btn.install': 'Instalar Agora',
+                'hero.btn.github': 'Ver no GitHub',
+                'features.title': '✨ Principais Características',
+                'features.f1.title': 'Arquitetura Modular',
+                'features.f1.desc': '5 módulos independentes para controle granular. Execute específicos ou tudo de uma vez.',
+                'features.f2.title': 'Foco no Desempenho',
+                'features.f2.desc': 'Parallelização DNF, otimização I/O NVMe/SATA e endurecimento do kernel.',
+                'features.f3.title': 'Caixa de ferramentas poliglota',
+                'features.f3.desc': 'Java, Node.js, Rust, Golang e mais - tudo gerenciado automaticamente.',
+                'features.f4.title': 'Preparado para IA',
+                'features.f4.desc': 'Suporte integrado para Antigravity CLI, GitHub Copilot CLI e OpenCode.',
+                'features.f5.title': 'Excelência Visual',
+                'features.f5.desc': 'Dark mode GNOME, 7 Nerd Fonts com ligaduras e wallpapers curados.',
+                'features.f6.title': 'Ecossistema Completo',
+                'features.f6.desc': 'VSCode, IntelliJ, Podman, kubectl, Obsidian, Bitwarden e muito mais.',
+                'install.title': '⚡️ Início Rápido',
+                'install.tab.quick': 'Instalação em Uma Linha',
+                'install.tab.manual': 'Instalação Manual',
+                'install.quick.desc': 'A forma mais fácil de provisionar seu sistema:',
+                'install.manual.desc': 'Se preferir inspecionar o código antes de executar:',
+                'common.copy': 'Copiar',
+                'common.copied': 'Copiado!',
+                'modules.title': '🔧 Módulos Disponíveis',
+                'modules.m1.title': 'System Base',
+                'modules.m1.desc': 'Setup core, DNF parallelization, RPM Fusion, codecs multimídia.',
+                'modules.m2.title': 'Packages',
+                'modules.m2.desc': 'Aplicativos nativos e em sandbox - Chrome, Obsidian, Bitwarden, VSCode.',
+                'modules.m3.title': 'Dev Tools',
+                'modules.m3.desc': 'Runtimes, IDEs, containers - Java, Node.js, Rust, Golang, Podman, kubectl.',
+                'modules.m4.title': 'Desktop',
+                'modules.m4.desc': 'Customização GNOME, Nerd Fonts, Ptyxis terminal personalizado.',
+                'modules.m5.title': 'Optimizations',
+                'modules.m5.desc': 'Tuning de kernel, scheduler I/O, SSD TRIM, gerenciamento de journal.',
+                'docs.title': '✐ Documentação',
+                'docs.cli.title': 'Comandos CLI',
+                'docs.cli.i1': '<code>initora</code> - Seletor interativo de módulos',
+                'docs.cli.i2': '<code>initora install</code> - Executar todos os 5 módulos',
+                'docs.cli.i3': '<code>initora install -m 20</code> - Executar módulo específico',
+                'docs.cli.i4': '<code>initora list</code> - Listar módulos disponíveis',
+                'docs.cli.i5': '<code>initora config</code> - Editar configuração',
+                'docs.custom.title': 'Customização',
+                'docs.custom.i1': 'Editar <code>~/.config/initora/initora.config</code>',
+                'docs.custom.i2': 'Adicionar pacotes RPM em <code>data/rpm-pkgs.list</code>',
+                'docs.custom.i3': 'Adicionar Flatpaks em <code>data/flatpak-pkgs.list</code>',
+                'docs.custom.i4': 'Criar novos módulos em <code>modules/</code>',
+                'docs.btn': 'Documentação Completa',
+                'cta.title': 'Pronto para transformar seu Fedora?',
+                'cta.desc': 'Comece com um clique e tenha um ambiente de desenvolvimento completo em minutos.',
+                'cta.btn': 'Instalar Agora',
+                'footer.maintained': 'Mantido por',
+                'footer.license': 'Licença MIT',
+            },
+            en: {
+                'meta.title': 'Initora - Automated Fedora Workstation Bootstrap',
+                'nav.features': 'Features',
+                'nav.install': 'Install',
+                'nav.docs': 'Docs',
+                'hero.title': 'Automated Fedora Workstation Bootstrap for Developers',
+                'hero.subtitle': 'Turn a fresh Fedora Workstation install into a professional, modular, optimized, AI-ready development environment.',
+                'hero.btn.install': 'Install Now',
+                'hero.btn.github': 'View on GitHub',
+                'features.title': '✨ Key Features',
+                'features.f1.title': 'Modular Architecture',
+                'features.f1.desc': '5 independent modules for granular control. Run specific ones or all at once.',
+                'features.f2.title': 'Performance-First',
+                'features.f2.desc': 'DNF parallelization, NVMe/SATA I/O tuning, and kernel hardening.',
+                'features.f3.title': 'Polyglot Toolchain',
+                'features.f3.desc': 'Java, Node.js, Rust, Golang, and more - all managed automatically.',
+                'features.f4.title': 'AI-Ready',
+                'features.f4.desc': 'Built-in support for Antigravity CLI, GitHub Copilot CLI, and OpenCode.',
+                'features.f5.title': 'Visual Excellence',
+                'features.f5.desc': 'GNOME dark mode, 7 Nerd Fonts with ligatures, and curated wallpapers.',
+                'features.f6.title': 'Complete Ecosystem',
+                'features.f6.desc': 'VSCode, IntelliJ, Podman, kubectl, Obsidian, Bitwarden, and much more.',
+                'install.title': '⚡️ Quick Start',
+                'install.tab.quick': 'One-Line Install',
+                'install.tab.manual': 'Manual Install',
+                'install.quick.desc': 'The easiest way to provision your system:',
+                'install.manual.desc': 'If you prefer to inspect the code before running it:',
+                'common.copy': 'Copy',
+                'common.copied': 'Copied!',
+                'modules.title': '🔧 Available Modules',
+                'modules.m1.title': 'System Base',
+                'modules.m1.desc': 'Core setup, DNF parallelization, RPM Fusion, multimedia codecs.',
+                'modules.m2.title': 'Packages',
+                'modules.m2.desc': 'Native and sandboxed apps - Chrome, Obsidian, Bitwarden, VSCode.',
+                'modules.m3.title': 'Dev Tools',
+                'modules.m3.desc': 'Runtimes, IDEs, containers - Java, Node.js, Rust, Golang, Podman, kubectl.',
+                'modules.m4.title': 'Desktop',
+                'modules.m4.desc': 'GNOME customization, Nerd Fonts, custom Ptyxis terminal.',
+                'modules.m5.title': 'Optimizations',
+                'modules.m5.desc': 'Kernel tuning, I/O scheduler, SSD TRIM, journal management.',
+                'docs.title': '✐ Documentation',
+                'docs.cli.title': 'CLI Commands',
+                'docs.cli.i1': '<code>initora</code> - Interactive module selector',
+                'docs.cli.i2': '<code>initora install</code> - Run all 5 modules',
+                'docs.cli.i3': '<code>initora install -m 20</code> - Run a specific module',
+                'docs.cli.i4': '<code>initora list</code> - List available modules',
+                'docs.cli.i5': '<code>initora config</code> - Edit configuration',
+                'docs.custom.title': 'Customization',
+                'docs.custom.i1': 'Edit <code>~/.config/initora/initora.config</code>',
+                'docs.custom.i2': 'Add RPM packages in <code>data/rpm-pkgs.list</code>',
+                'docs.custom.i3': 'Add Flatpaks in <code>data/flatpak-pkgs.list</code>',
+                'docs.custom.i4': 'Create new modules in <code>modules/</code>',
+                'docs.btn': 'Full Documentation',
+                'cta.title': 'Ready to transform your Fedora?',
+                'cta.desc': 'Get started with one click and have a complete dev environment in minutes.',
+                'cta.btn': 'Install Now',
+                'footer.maintained': 'Maintained by',
+                'footer.license': 'MIT License',
+            }
+        };
+
+        let currentLang = 'en';
+
+        function applyTranslations(lang) {
+            document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                const text = translations[lang][key];
+                if (text !== undefined) {
+                    el.innerHTML = text;
+                }
+            });
+
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+
+            document.title = translations[lang]['meta.title'];
+        }
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('initora-lang', lang);
+            applyTranslations(lang);
+        }
+
+        function initLanguage() {
+            const saved = localStorage.getItem('initora-lang');
+            if (saved && translations[saved]) {
+                currentLang = saved;
+            } else {
+                const browserLang = navigator.language || navigator.userLanguage || 'en';
+                currentLang = browserLang.toLowerCase().startsWith('pt') ? 'pt' : 'en';
+            }
+            applyTranslations(currentLang);
+        }
+
+        document.addEventListener('DOMContentLoaded', initLanguage);
+    </script>
 </head>
 <body>
     <header>
@@ -52,11 +215,15 @@
                         INITORA
                     </h1>
                     <ul class="nav-links">
-                        <li><a href="#features">Features</a></li>
-                        <li><a href="#install">Instalação</a></li>
-                        <li><a href="#docs">Documentação</a></li>
+                        <li><a href="#features" data-i18n="nav.features">Features</a></li>
+                        <li><a href="#install" data-i18n="nav.install">Instalação</a></li>
+                        <li><a href="#docs" data-i18n="nav.docs">Documentação</a></li>
                         <li><a href="https://github.com/lucasbt/initora" target="_blank">GitHub</a></li>
                     </ul>
+                    <div class="lang-switch" role="group" aria-label="Language selector">
+                        <button class="lang-btn" data-lang="en" onclick="setLanguage('en')" type="button">EN</button>
+                        <button class="lang-btn" data-lang="pt" onclick="setLanguage('pt')" type="button">PT</button>
+                    </div>
                 </div>
             </div>
         </nav>
@@ -67,11 +234,11 @@
         <section class="hero">
             <div class="container">
                 <div class="hero-content">
-                    <h2>Automated Fedora Workstation Bootstrap for Developers</h2>
-                    <p>Transforme uma instalação fresca do Fedora Workstation em um ambiente de desenvolvimento profissional, modular, otimizado e pronto para IA.</p>
+                    <h2 data-i18n="hero.title">Automated Fedora Workstation Bootstrap for Developers</h2>
+                    <p data-i18n="hero.subtitle">Transforme uma instalação fresca do Fedora Workstation em um ambiente de desenvolvimento profissional, modular, otimizado e pronto para IA.</p>
                     <div class="hero-buttons">
-                        <a href="#install" class="btn btn-primary">Instalar Agora</a>
-                        <a href="https://github.com/lucasbt/initora" target="_blank" class="btn btn-secondary">Ver no GitHub</a>
+                        <a href="#install" class="btn btn-primary" data-i18n="hero.btn.install">Instalar Agora</a>
+                        <a href="https://github.com/lucasbt/initora" target="_blank" class="btn btn-secondary" data-i18n="hero.btn.github">Ver no GitHub</a>
                     </div>
                 </div>
             </div>
@@ -80,37 +247,37 @@
         <!-- Features Section -->
         <section id="features" class="features">
             <div class="container">
-                <h3>✨ Principais Características</h3>
+                <h3 data-i18n="features.title">✨ Principais Características</h3>
                 <div class="features-grid">
                     <div class="feature-card">
                         <div class="feature-icon">🎯</div>
-                        <h4>Arquitetura Modular</h4>
-                        <p>5 módulos independentes para controle granular. Execute específicos ou tudo de uma vez.</p>
+                        <h4 data-i18n="features.f1.title">Arquitetura Modular</h4>
+                        <p data-i18n="features.f1.desc">5 módulos independentes para controle granular. Execute específicos ou tudo de uma vez.</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">🚀</div>
-                        <h4>Performance-First</h4>
-                        <p>Parallelização DNF, otimização I/O NVMe/SATA e endurecimento do kernel.</p>
+                        <h4 data-i18n="features.f2.title">Performance-First</h4>
+                        <p data-i18n="features.f2.desc">Parallelização DNF, otimização I/O NVMe/SATA e endurecimento do kernel.</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">💻</div>
-                        <h4>Polyglot Toolchain</h4>
-                        <p>Java, Node.js, Rust, Golang e mais - tudo gerenciado automaticamente.</p>
+                        <h4 data-i18n="features.f3.title">Polyglot Toolchain</h4>
+                        <p data-i18n="features.f3.desc">Java, Node.js, Rust, Golang e mais - tudo gerenciado automaticamente.</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">🤖</div>
-                        <h4>AI-Ready</h4>
-                        <p>Suporte integrado para Antigravity CLI, GitHub Copilot CLI e OpenCode.</p>
+                        <h4 data-i18n="features.f4.title">AI-Ready</h4>
+                        <p data-i18n="features.f4.desc">Suporte integrado para Antigravity CLI, GitHub Copilot CLI e OpenCode.</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">🎨</div>
-                        <h4>Excelência Visual</h4>
-                        <p>Dark mode GNOME, 7 Nerd Fonts com ligaduras e wallpapers curados.</p>
+                        <h4 data-i18n="features.f5.title">Excelência Visual</h4>
+                        <p data-i18n="features.f5.desc">Dark mode GNOME, 7 Nerd Fonts com ligaduras e wallpapers curados.</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">📦</div>
-                        <h4>Ecossistema Completo</h4>
-                        <p>VSCode, IntelliJ, Podman, kubectl, Obsidian, Bitwarden e muito mais.</p>
+                        <h4 data-i18n="features.f6.title">Ecossistema Completo</h4>
+                        <p data-i18n="features.f6.desc">VSCode, IntelliJ, Podman, kubectl, Obsidian, Bitwarden e muito mais.</p>
                     </div>
                 </div>
             </div>
@@ -119,29 +286,29 @@
         <!-- Installation Section -->
         <section id="install" class="installation">
             <div class="container">
-                <h3>⚡️ Quick Start</h3>
+                <h3 data-i18n="install.title">⚡️ Quick Start</h3>
 
                 <div class="install-tabs">
                     <div class="tab-buttons">
-                        <button class="tab-btn active" onclick="switchTab(this, 'tab-quick')" type="button">Instalação em Uma Linha</button>
-                        <button class="tab-btn" onclick="switchTab(this, 'tab-manual')" type="button">Instalação Manual</button>
+                        <button class="tab-btn active" onclick="switchTab(this, 'tab-quick')" type="button" data-i18n="install.tab.quick">Instalação em Uma Linha</button>
+                        <button class="tab-btn" onclick="switchTab(this, 'tab-manual')" type="button" data-i18n="install.tab.manual">Instalação Manual</button>
                     </div>
 
                     <div class="tab-panel active" id="tab-quick">
-                        <p>A forma mais fácil de provisionar seu sistema:</p>
+                        <p data-i18n="install.quick.desc">A forma mais fácil de provisionar seu sistema:</p>
                         <div class="code-block">
 <pre><code>curl -fsSL https://raw.githubusercontent.com/lucasbt/initora/main/bootstrap.sh | bash</code></pre>
-                            <button class="copy-btn" onclick="copyCode(this)" type="button">Copiar</button>
+                            <button class="copy-btn" onclick="copyCode(this)" type="button" data-i18n="common.copy">Copiar</button>
                         </div>
                     </div>
 
                     <div class="tab-panel" id="tab-manual">
-                        <p>Se preferir inspecionar o código antes de executar:</p>
+                        <p data-i18n="install.manual.desc">Se preferir inspecionar o código antes de executar:</p>
                         <div class="code-block">
 <pre><code>git clone https://github.com/lucasbt/initora ~/.local/share/initora
 cd ~/.local/share/initora
 bash bootstrap.sh</code></pre>
-                            <button class="copy-btn" onclick="copyCode(this)" type="button">Copiar</button>
+                            <button class="copy-btn" onclick="copyCode(this)" type="button" data-i18n="common.copy">Copiar</button>
                         </div>
                     </div>
                 </div>
@@ -151,27 +318,27 @@ bash bootstrap.sh</code></pre>
         <!-- Modules Section -->
         <section id="modules" class="modules">
             <div class="container">
-                <h3>🔧 Módulos Disponíveis</h3>
+                <h3 data-i18n="modules.title">🔧 Módulos Disponíveis</h3>
                 <div class="modules-list">
                     <div class="module-item">
-                        <h4>System Base</h4>
-                        <p>Setup core, DNF parallelization, RPM Fusion, codecs multimídia.</p>
+                        <h4 data-i18n="modules.m1.title">System Base</h4>
+                        <p data-i18n="modules.m1.desc">Setup core, DNF parallelization, RPM Fusion, codecs multimídia.</p>
                     </div>
                     <div class="module-item">
-                        <h4>Packages</h4>
-                        <p>Aplicativos nativos e em sandbox - Chrome, Obsidian, Bitwarden, VSCode.</p>
+                        <h4 data-i18n="modules.m2.title">Packages</h4>
+                        <p data-i18n="modules.m2.desc">Aplicativos nativos e em sandbox - Chrome, Obsidian, Bitwarden, VSCode.</p>
                     </div>
                     <div class="module-item">
-                        <h4>Dev Tools</h4>
-                        <p>Runtimes, IDEs, containers - Java, Node.js, Rust, Golang, Podman, kubectl.</p>
+                        <h4 data-i18n="modules.m3.title">Dev Tools</h4>
+                        <p data-i18n="modules.m3.desc">Runtimes, IDEs, containers - Java, Node.js, Rust, Golang, Podman, kubectl.</p>
                     </div>
                     <div class="module-item">
-                        <h4>Desktop</h4>
-                        <p>Customização GNOME, Nerd Fonts, Ptyxis terminal personalizado.</p>
+                        <h4 data-i18n="modules.m4.title">Desktop</h4>
+                        <p data-i18n="modules.m4.desc">Customização GNOME, Nerd Fonts, Ptyxis terminal personalizado.</p>
                     </div>
                     <div class="module-item">
-                        <h4>Optimizations</h4>
-                        <p>Tuning de kernel, scheduler I/O, SSD TRIM, gerenciamento de journal.</p>
+                        <h4 data-i18n="modules.m5.title">Optimizations</h4>
+                        <p data-i18n="modules.m5.desc">Tuning de kernel, scheduler I/O, SSD TRIM, gerenciamento de journal.</p>
                     </div>
                 </div>
             </div>
@@ -180,30 +347,30 @@ bash bootstrap.sh</code></pre>
         <!-- Docs Section -->
         <section id="docs" class="documentation">
             <div class="container">
-                <h3>✐ Documentação</h3>
+                <h3 data-i18n="docs.title">✐ Documentação</h3>
                 <div class="docs-grid">
                     <div class="doc-card">
-                        <h4>Comandos CLI</h4>
+                        <h4 data-i18n="docs.cli.title">Comandos CLI</h4>
                         <ul>
-                            <li><code>initora</code> - Seletor interativo de módulos</li>
-                            <li><code>initora install</code> - Executar todos os 5 módulos</li>
-                            <li><code>initora install -m 20</code> - Executar módulo específico</li>
-                            <li><code>initora list</code> - Listar módulos disponíveis</li>
-                            <li><code>initora config</code> - Editar configuração</li>
+                            <li data-i18n="docs.cli.i1"><code>initora</code> - Seletor interativo de módulos</li>
+                            <li data-i18n="docs.cli.i2"><code>initora install</code> - Executar todos os 5 módulos</li>
+                            <li data-i18n="docs.cli.i3"><code>initora install -m 20</code> - Executar módulo específico</li>
+                            <li data-i18n="docs.cli.i4"><code>initora list</code> - Listar módulos disponíveis</li>
+                            <li data-i18n="docs.cli.i5"><code>initora config</code> - Editar configuração</li>
                         </ul>
                     </div>
                     <div class="doc-card">
-                        <h4>Customização</h4>
+                        <h4 data-i18n="docs.custom.title">Customização</h4>
                         <ul>
-                            <li>Editar <code>~/.config/initora/initora.config</code></li>
-                            <li>Adicionar pacotes RPM em <code>data/rpm-pkgs.list</code></li>
-                            <li>Adicionar Flatpaks em <code>data/flatpak-pkgs.list</code></li>
-                            <li>Criar novos módulos em <code>modules/</code></li>
+                            <li data-i18n="docs.custom.i1">Editar <code>~/.config/initora/initora.config</code></li>
+                            <li data-i18n="docs.custom.i2">Adicionar pacotes RPM em <code>data/rpm-pkgs.list</code></li>
+                            <li data-i18n="docs.custom.i3">Adicionar Flatpaks em <code>data/flatpak-pkgs.list</code></li>
+                            <li data-i18n="docs.custom.i4">Criar novos módulos em <code>modules/</code></li>
                         </ul>
                     </div>
                 </div>
                 <div class="docs-link">
-                    <a href="https://github.com/lucasbt/initora/blob/main/README.md" target="_blank" class="btn btn-primary">Documentação Completa</a>
+                    <a href="https://github.com/lucasbt/initora/blob/main/README.md" target="_blank" class="btn btn-primary" data-i18n="docs.btn">Documentação Completa</a>
                 </div>
             </div>
         </section>
@@ -211,17 +378,17 @@ bash bootstrap.sh</code></pre>
         <!-- CTA Section -->
         <section class="cta">
             <div class="container">
-                <h3>Pronto para transformar seu Fedora?</h3>
-                <p>Comece com um clique e tenha um ambiente de desenvolvimento completo em minutos.</p>
-                <a href="#install" class="btn btn-primary">Instalar Agora</a>
+                <h3 data-i18n="cta.title">Pronto para transformar seu Fedora?</h3>
+                <p data-i18n="cta.desc">Comece com um clique e tenha um ambiente de desenvolvimento completo em minutos.</p>
+                <a href="#install" class="btn btn-primary" data-i18n="cta.btn">Instalar Agora</a>
             </div>
         </section>
     </main>
 
     <footer>
         <div class="container">
-            <p>&copy; 2026 Initora. Mantido por <a href="https://github.com/lucasbt" target="_blank">Lucas Bittencourt</a></p>
-            <p>Licença MIT • <a href="https://github.com/lucasbt/initora" target="_blank">GitHub</a></p>
+            <p>&copy; 2026 Initora. <span data-i18n="footer.maintained">Mantido por</span> <a href="https://github.com/lucasbt" target="_blank">Lucas Bittencourt</a></p>
+            <p><span data-i18n="footer.license">Licença MIT</span> • <a href="https://github.com/lucasbt/initora" target="_blank">GitHub</a></p>
         </div>
     </footer>
 </body>
