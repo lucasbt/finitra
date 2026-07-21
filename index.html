@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="styles.css?v=7">
+    <link rel="stylesheet" href="styles.css?v=8">
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
@@ -99,7 +99,7 @@
                 'docs.custom.i3': 'Adicionar Flatpaks em <code>data/flatpak-pkgs.list</code>',
                 'docs.custom.i4': 'Criar novos módulos em <code>modules/</code>',
                 'docs.btn': 'Documentação Completa',
-                'contributing.title': '🤝 Contribua com o Projeto',
+                'contributing.title': '💪🏼 Contribua com o Projeto',
                 'contributing.desc': 'Contribuições são o que fazem a comunidade open-source um lugar incrível para aprender, inspirar e criar. Toda ajuda é bem-vinda!',
                 'contributing.steps.title': 'Como contribuir',
                 'contributing.step1': 'Faça um <strong>Fork</strong> do projeto.',
@@ -172,7 +172,7 @@
                 'docs.custom.i3': 'Add Flatpaks in <code>data/flatpak-pkgs.list</code>',
                 'docs.custom.i4': 'Create new modules in <code>modules/</code>',
                 'docs.btn': 'Full Documentation',
-                'contributing.title': '🤝 Contribute to the Project',
+                'contributing.title': '💪🏼 Contribute to the Project',
                 'contributing.desc': 'Contributions are what make the open-source community an amazing place to learn, inspire, and create. All help is welcome!',
                 'contributing.steps.title': 'How to contribute',
                 'contributing.step1': 'Fork the <strong>Project</strong>.',
@@ -407,22 +407,37 @@ bash bootstrap.sh</code></pre>
         <!-- Contributing Section -->
         <section id="contributing" class="contributing">
             <div class="container">
-                <h3 data-i18n="contributing.title">🤝 Contribua com o Projeto</h3>
+                <h3 data-i18n="contributing.title">💪🏼 Contribua com o Projeto</h3>
                 <p class="contributing-intro" data-i18n="contributing.desc">Contribuições são o que fazem a comunidade open-source um lugar incrível para aprender, inspirar e criar. Toda ajuda é bem-vinda!</p>
                 <div class="docs-grid">
                     <div class="doc-card">
                         <h4 data-i18n="contributing.steps.title">Como contribuir</h4>
-                        <ol class="contributing-steps">
-                            <li data-i18n="contributing.step1">Faça um <strong>Fork</strong> do projeto.</li>
-                            <li data-i18n="contributing.step2">Crie sua <strong>Feature Branch</strong> (<code>git checkout -b feature/MinhaFeature</code>).</li>
-                            <li data-i18n="contributing.step3">Faça o <strong>Commit</strong> das suas alterações (<code>git commit -m 'Add some MinhaFeature'</code>).</li>
-                            <li data-i18n="contributing.step4">Faça o <strong>Push</strong> para a Branch (<code>git push origin feature/MinhaFeature</code>).</li>
-                            <li data-i18n="contributing.step5">Abra um <strong>Pull Request</strong>.</li>
-                        </ol>
+                        <div class="contributing-steps">
+                            <div class="contributing-step">
+                                <span class="step-number">1</span>
+                                <p data-i18n="contributing.step1">Faça um <strong>Fork</strong> do projeto.</p>
+                            </div>
+                            <div class="contributing-step">
+                                <span class="step-number">2</span>
+                                <p data-i18n="contributing.step2">Crie sua <strong>Feature Branch</strong> (<code>git checkout -b feature/MinhaFeature</code>).</p>
+                            </div>
+                            <div class="contributing-step">
+                                <span class="step-number">3</span>
+                                <p data-i18n="contributing.step3">Faça o <strong>Commit</strong> das suas alterações (<code>git commit -m 'Add some MinhaFeature'</code>).</p>
+                            </div>
+                            <div class="contributing-step">
+                                <span class="step-number">4</span>
+                                <p data-i18n="contributing.step4">Faça o <strong>Push</strong> para a Branch (<code>git push origin feature/MinhaFeature</code>).</p>
+                            </div>
+                            <div class="contributing-step">
+                                <span class="step-number">5</span>
+                                <p data-i18n="contributing.step5">Abra um <strong>Pull Request</strong>.</p>
+                            </div>
+                        </div>
                     </div>
                     <div class="doc-card">
                         <h4 data-i18n="contributing.guidelines.title">Diretrizes</h4>
-                        <ul>
+                        <ul class="guidelines-list">
                             <li data-i18n="contributing.guidelines.i1">Convenções de nomenclatura de branches (ex: <code>feature/</code>, <code>fix/</code>, <code>release/</code>)</li>
                             <li data-i18n="contributing.guidelines.i2">Versionamento automatizado e fluxo de releases</li>
                             <li data-i18n="contributing.guidelines.i3">Processo de Pull Request</li>

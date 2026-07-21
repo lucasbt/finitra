@@ -522,43 +522,93 @@ footer a:hover {
 }
 
 .contributing-steps {
-    list-style: none;
-    counter-reset: step-counter;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
 }
 
-.contributing-steps li {
-    counter-increment: step-counter;
-    padding: 0.5rem 0 0.5rem 2.2rem;
-    position: relative;
-    color: var(--text-secondary);
+.contributing-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
 }
 
-.contributing-steps li::before {
-    content: counter(step-counter);
-    position: absolute;
-    left: 0;
-    top: 0.5rem;
-    width: 1.5rem;
-    height: 1.5rem;
+.step-number {
+    flex-shrink: 0;
+    width: 1.6rem;
+    height: 1.6rem;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     color: var(--text-primary);
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-weight: 700;
+    font-family: 'Poppins', sans-serif;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-top: 0.15rem;
 }
 
-.contributing-steps code,
-.doc-card .contributing-steps code {
-    background-color: var(--bg-dark);
-    padding: 0.2rem 0.4rem;
-    border-radius: 0.3rem;
+.contributing-step p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
 }
 
-.contributing-steps strong {
+.contributing-step strong {
     color: var(--text-primary);
+}
+
+.contributing-step code {
+    background-color: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    padding: 0.15rem 0.4rem;
+    border-radius: 0.3rem;
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+.guidelines-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.guidelines-list li {
+    position: relative;
+    padding-left: 1.4rem;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.guidelines-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.55rem;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+.guidelines-list code {
+    background-color: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    padding: 0.15rem 0.4rem;
+    border-radius: 0.3rem;
+    font-size: 0.82rem;
+}
+
+#contributing .docs-grid {
+    align-items: stretch;
+}
+
+#contributing .doc-card {
+    display: flex;
+    flex-direction: column;
 }
 
 /* Responsive Design */
