@@ -587,8 +587,7 @@ footer a:hover {
     content: '';
     position: absolute;
     left: 0;
-    /* Centraliza o bullet perfeitamente em relação à PRIMEIRA linha do texto (usando a metade da line-height) */
-    top: calc(0.8em - 3.5px); 
+    top: 15px; 
     width: 7px;
     height: 7px;
     border-radius: 50%;
