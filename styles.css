@@ -312,6 +312,59 @@ section h3 {
     margin-bottom: 1rem;
 }
 
+.install-tabs {
+    max-width: 700px;
+    margin: 0 auto;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.tab-buttons {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 1rem;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 2px solid transparent;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background-color: rgba(124, 58, 237, 0.05);
+}
+
+.tab-btn.active {
+    color: var(--primary-light);
+    border-bottom: 2px solid var(--primary-color);
+    background-color: rgba(124, 58, 237, 0.08);
+}
+
+.tab-panel {
+    display: none;
+    padding: 2rem;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+.tab-panel p {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
 pre {
     background-color: var(--bg-dark);
     border: 1px solid var(--border-color);

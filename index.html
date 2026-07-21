@@ -110,17 +110,22 @@
         <section id="install" class="installation">
             <div class="container">
                 <h3>🚀 Quick Start</h3>
-                <div class="install-content">
-                    <div class="install-step">
-                        <h4>Instalação em Uma Linha</h4>
+
+                <div class="install-tabs">
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" onclick="switchTab(this, 'tab-quick')">Instalação em Uma Linha</button>
+                        <button class="tab-btn" onclick="switchTab(this, 'tab-manual')">Instalação Manual</button>
+                    </div>
+
+                    <div class="tab-panel active" id="tab-quick">
                         <p>A forma mais fácil de provisionar seu sistema:</p>
                         <div class="code-block">
         <pre><code>curl -fsSL https://raw.githubusercontent.com/lucasbt/initora/main/bootstrap.sh | bash</code></pre>
                             <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
                         </div>
                     </div>
-                    <div class="install-step">
-                        <h4>Instalação Manual</h4>
+
+                    <div class="tab-panel" id="tab-manual">
                         <p>Se preferir inspecionar o código antes de executar:</p>
                         <div class="code-block">
         <pre><code>git clone https://github.com/lucasbt/initora ~/.local/share/initora
@@ -165,7 +170,7 @@ bash bootstrap.sh</code></pre>
         <!-- Docs Section -->
         <section id="docs" class="documentation">
             <div class="container">
-                <h3>📚 Documentação</h3>
+                <h3>📄 Documentação</h3>
                 <div class="docs-grid">
                     <div class="doc-card">
                         <h4>Comandos CLI</h4>
@@ -205,7 +210,7 @@ bash bootstrap.sh</code></pre>
 
     <footer>
         <div class="container">
-            <p>&copy; 2026 Initora. Mantido por <a href="https://github.com/lucasbt" target="_blank">lucasbt</a></p>
+            <p>&copy; 2026 Initora. Mantido por <a href="https://github.com/lucasbt" target="_blank">Lucas Bittencourt</a></p>
             <p>Licença MIT • <a href="https://github.com/lucasbt/initora" target="_blank">GitHub</a></p>
         </div>
     </footer>
