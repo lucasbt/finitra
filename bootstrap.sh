@@ -20,6 +20,8 @@ CONFIG_DIR="${HOME}/.config/initora"
 CONFIG_FILE="${CONFIG_DIR}/initora.config"
 DESKTOP_DIR="${HOME}/.local/share/applications"
 DESKTOP_FILE="${DESKTOP_DIR}/initora.desktop"
+COMPLETION_DIR="${HOME}/.local/share/bash-completion/completions"
+COMPLETION_FILE="${COMPLETION_DIR}/initora"
 
 # --- Colors ---
 CLR_RESET='\033[0m'
@@ -53,7 +55,7 @@ _print_banner() {
 # 1. Install required dependencies with user approval
 # =============================================================================
 _install_deps() {
-  local deps=(git curl gum)
+  local deps=(git curl gum bash-completion)
   local missing=()
 
   for dep in "${deps[@]}"; do
@@ -181,6 +183,27 @@ _setup_default_config() {
 }
 
 # =============================================================================
+# 4b. Install bash completion (user-level, no sudo required)
+# =============================================================================
+_setup_completion() {
+  local completion_src="${INSTALL_DIR}/completions/initora-completion.bash"
+
+  if [[ ! -f "$completion_src" ]]; then
+    warn "Completion script not found at: $completion_src -- skipping"
+    return
+  fi
+
+  mkdir -p "$COMPLETION_DIR"
+  cp -f "$completion_src" "$COMPLETION_FILE"
+  ok "Bash completion installed at: $COMPLETION_FILE"
+
+  if ! rpm -q bash-completion &>/dev/null; then
+    warn "Package 'bash-completion' not detected -- completions may not"
+    warn "load automatically. Install it with: sudo dnf install bash-completion"
+  fi
+}
+
+# =============================================================================
 # 5. Create .desktop entry so initora shows up in the GNOME menu, launched
 #    inside Ptyxis (Fedora Workstation's default terminal)
 # =============================================================================
@@ -229,6 +252,7 @@ main() {
   _setup_repo
   _setup_bin_and_alias
   _setup_default_config
+  _setup_completion
   _setup_desktop_entry
 
   echo ""
@@ -236,6 +260,9 @@ main() {
   echo ""
   echo -e "  Run setup with:"
   echo -e "  ${CLR_GREEN}initora${CLR_RESET}"
+  echo ""
+  echo -e "  Bash completion installed -- open a new terminal (or run"
+  echo -e "  ${CLR_GREEN}source ${COMPLETION_FILE}${CLR_RESET}) to enable it in this session."
   echo ""
 }
 
