@@ -529,7 +529,7 @@ footer a:hover {
 
 .contributing-step {
     display: flex;
-    align-items: flex-start;
+    align-items: baseline; /* Alinha o número perfeitamente com a primeira linha do texto */
     gap: 0.9rem;
 }
 
@@ -543,16 +543,16 @@ footer a:hover {
     font-size: 0.8rem;
     font-weight: 700;
     font-family: 'Poppins', sans-serif;
-    display: flex;
+    display: inline-flex; /* Alterado de flex para inline-flex para melhor alinhamento */
     align-items: center;
     justify-content: center;
-    margin-top: 0.15rem;
 }
 
 .contributing-step p {
     color: var(--text-secondary);
     font-size: 0.95rem;
     line-height: 1.6;
+    margin: 0; /* Garante que margens padrões do p não desalinhem */
 }
 
 .contributing-step strong {
@@ -587,7 +587,8 @@ footer a:hover {
     content: '';
     position: absolute;
     left: 0;
-    top: 0.55rem;
+    /* Centraliza o bullet perfeitamente em relação à PRIMEIRA linha do texto (usando a metade da line-height) */
+    top: calc(0.8em - 3.5px); 
     width: 7px;
     height: 7px;
     border-radius: 50%;
